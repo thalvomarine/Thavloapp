@@ -1,0 +1,304 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+@import "@fontsource/montserrat/700.css";
+@import "@fontsource/montserrat/900.css";
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/inter/700.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-deep: var(--deep);
+  --color-teal: var(--teal);
+  --color-sand: var(--sand);
+  --color-amber: var(--amber);
+  --color-aqua: var(--aqua);
+  --color-gold: var(--gold);
+  --shadow-marine: 0 10px 30px -10px color-mix(in oklab, var(--deep) 50%, transparent);
+  --shadow-float: 0 4px 14px -4px color-mix(in oklab, var(--deep) 25%, transparent);
+  --shadow-amber: 0 10px 30px -8px color-mix(in oklab, var(--amber) 55%, transparent);
+  --shadow-aqua: 0 10px 30px -8px color-mix(in oklab, var(--aqua) 55%, transparent);
+}
+
+:root {
+  --radius: 0.875rem;
+  /* THALVO marine palette — Deep navy #0A192F, ocean white #F4F7F6, amber #FFB020, aqua dive accent #00B4D8 */
+  --deep: oklch(0.19 0.05 258);
+  --teal: oklch(0.7 0.12 200);
+  --sand: oklch(0.96 0.02 90);
+  --amber: oklch(0.81 0.16 75);
+  --aqua: oklch(0.68 0.14 220);
+  /* Restrained premium gold — used only for commission / trusted money highlights. */
+  --gold: oklch(0.82 0.11 82);
+
+  --background: oklch(0.975 0.004 200);
+  --foreground: oklch(0.19 0.05 258);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.19 0.05 258);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.19 0.05 258);
+  --primary: oklch(0.19 0.05 258);
+  --primary-foreground: oklch(0.985 0.004 200);
+  --secondary: oklch(0.94 0.012 220);
+  --secondary-foreground: oklch(0.19 0.05 258);
+  --muted: oklch(0.94 0.01 220);
+  --muted-foreground: oklch(0.45 0.03 240);
+  --accent: oklch(0.7 0.12 200);
+  --accent-foreground: oklch(0.15 0.05 258);
+  --destructive: oklch(0.58 0.22 27);
+  --destructive-foreground: oklch(0.99 0 0);
+  --success: oklch(0.7 0.16 155);
+  --success-foreground: oklch(0.15 0.05 155);
+  --warning: oklch(0.81 0.16 75);
+  --warning-foreground: oklch(0.22 0.06 70);
+  --border: oklch(0.9 0.012 220);
+  --input: oklch(0.92 0.012 220);
+  --ring: oklch(0.7 0.12 200);
+}
+
+@layer base {
+  * { border-color: var(--color-border); }
+  html, body {
+    /* The native WebView/window canvas behind everything — always the deep
+       ECDIS navy, never a flash of white, whether that's the initial paint
+       before hydration, iOS rubber-band bounce past a scroll edge, or a
+       stray horizontal-overflow gutter on a page that hasn't fully clipped
+       one of its own children yet. Actual page content still paints its
+       own (light or dark) surface on top of this canvas as normal. */
+    background-color: #0a192f;
+    color: var(--color-foreground);
+    -webkit-tap-highlight-color: transparent;
+    /* Native-app feel on mobile/Capacitor: no browser pull-to-refresh and no
+       rubber-band horizontal pan past the map edges. Vertical scrolling on
+       normal (non-fullBleed) pages still works — overscroll-behavior only
+       intercepts the *chain* past a scroll boundary, not scrolling itself. */
+    overscroll-behavior-y: none;
+    touch-action: pan-x pan-y;
+    /* Belt-and-suspenders against horizontal page overflow (e.g. a
+       `overflow-x-auto` tab strip whose flex ancestor forgot `min-w-0`):
+       the document itself never grows a horizontal scrollbar, no matter
+       what a descendant tries to do. */
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100vw;
+  }
+  body { font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+}
+
+@utility marine-gradient {
+  background-image: linear-gradient(135deg, var(--deep) 0%, oklch(0.26 0.07 250) 60%, var(--teal) 130%);
+}
+@utility teal-gradient {
+  background-image: linear-gradient(135deg, var(--teal) 0%, oklch(0.6 0.13 210) 100%);
+}
+@utility amber-gradient {
+  background-image: linear-gradient(135deg, oklch(0.84 0.16 80) 0%, oklch(0.74 0.18 60) 100%);
+}
+@utility aqua-gradient {
+  background-image: linear-gradient(135deg, var(--deep) 0%, oklch(0.34 0.09 235) 45%, var(--aqua) 130%);
+}
+@utility no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@keyframes pulse-slow {
+  0%, 100% { box-shadow: 0 20px 50px -10px rgba(255,176,32,0.55), 0 0 0 0 rgba(255,176,32,0.55); }
+  50% { box-shadow: 0 20px 50px -10px rgba(255,176,32,0.55), 0 0 0 18px rgba(255,176,32,0); }
+}
+@utility animate-pulse-slow {
+  animation: pulse-slow 2.4s ease-out infinite;
+}
+
+@keyframes mission-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@utility mission-rise {
+  animation: mission-rise 420ms cubic-bezier(.2,.7,.2,1) both;
+}
+
+/* Scoped MarineOS dark cockpit tokens — only apply inside .thalvo-dark */
+.thalvo-dark {
+  color-scheme: dark;
+  --background: oklch(0.16 0.02 250);
+  --foreground: oklch(0.97 0.005 220);
+  --card: oklch(0.21 0.025 255);
+  --card-foreground: oklch(0.97 0.005 220);
+  --popover: oklch(0.21 0.025 255);
+  --popover-foreground: oklch(0.97 0.005 220);
+  --primary: oklch(0.72 0.13 210);
+  --primary-foreground: oklch(0.12 0.02 250);
+  --secondary: oklch(0.24 0.02 250);
+  --secondary-foreground: oklch(0.97 0.005 220);
+  --muted: oklch(0.24 0.02 250);
+  --muted-foreground: oklch(0.68 0.02 235);
+  --accent: oklch(0.68 0.14 220);
+  --accent-foreground: oklch(0.12 0.02 250);
+  --destructive: oklch(0.68 0.22 25);
+  --destructive-foreground: oklch(0.99 0 0);
+  --border: oklch(0.32 0.02 250 / 0.55);
+  --input: oklch(0.26 0.02 250);
+  --ring: oklch(0.7 0.13 210);
+}
+
+/* Cockpit surface — deep radial vignette behind everything */
+.thalvo-cockpit {
+  background:
+    radial-gradient(120% 80% at 50% -10%, oklch(0.24 0.05 245) 0%, transparent 55%),
+    radial-gradient(90% 60% at 100% 100%, oklch(0.22 0.04 220 / 0.6) 0%, transparent 60%),
+    oklch(0.11 0.015 250);
+}
+
+/* Premium glass panel */
+@utility glass-panel {
+  background: color-mix(in oklab, var(--card) 72%, transparent);
+  border: 1px solid color-mix(in oklab, var(--foreground) 8%, transparent);
+  backdrop-filter: blur(18px) saturate(140%);
+  box-shadow:
+    0 1px 0 0 color-mix(in oklab, var(--foreground) 6%, transparent) inset,
+    0 24px 60px -30px oklch(0 0 0 / 0.55);
+}
+
+/* ---------------------------------------------------------------------------
+ * Scoped premium palette — ONLY used by `/` and `/auth`.
+ * Deliberately additive: it does not touch --deep/--amber/--aqua, .thalvo-dark
+ * or .thalvo-cockpit, so every other screen renders byte-identically.
+ * ------------------------------------------------------------------------- */
+.thalvo-premium {
+  color-scheme: dark;
+  /* surface base gradient #06101F -> #0B1B33 */
+  --pm-base-from: oklch(0.1723 0.0352 257.2);
+  --pm-base-to: oklch(0.2228 0.0519 258.3);
+  /* accent gold #D9B86A */
+  --pm-gold: oklch(0.7949 0.1045 87.1);
+  /* secondary platinum #9FB8C8 */
+  --pm-platinum: oklch(0.7689 0.0358 236);
+  /* text #F2F6F8 */
+  --pm-text: oklch(0.9707 0.005 228.8);
+  --pm-panel: rgb(255 255 255 / 0.06);
+  --pm-panel-border: rgb(255 255 255 / 0.1);
+
+  background:
+    radial-gradient(120% 90% at 50% -10%, oklch(0.26 0.06 250 / 0.55) 0%, transparent 60%),
+    linear-gradient(180deg, var(--pm-base-from) 0%, var(--pm-base-to) 100%);
+  background-attachment: fixed;
+  color: var(--pm-text);
+}
+
+@utility pm-panel {
+  background: rgb(255 255 255 / 0.06);
+  border: 1px solid rgb(255 255 255 / 0.1);
+  backdrop-filter: blur(18px) saturate(130%);
+}
+
+@utility pm-gold-cta {
+  background-image: linear-gradient(135deg, oklch(0.84 0.1 88) 0%, oklch(0.7408 0.1036 85.1) 100%);
+  color: oklch(0.19 0.04 258);
+}
+
+/* Feature balloons — transform-only drift, six desynchronised tracks. */
+@keyframes pm-drift-a {
+  0% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -10px, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+@keyframes pm-drift-b {
+  0% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(6px, 8px, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+@keyframes pm-drift-c {
+  0% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(-7px, -6px, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+/* Drift only where the balloons are absolutely positioned (lg+). In the stacked
+   mobile grid a transform would push a card into its neighbour. */
+@media (min-width: 1024px) {
+  .pm-balloon { will-change: transform; }
+  .pm-balloon-0 { animation: pm-drift-a 13s ease-in-out -0.5s infinite; }
+  .pm-balloon-1 { animation: pm-drift-b 17s ease-in-out -3s infinite; }
+  .pm-balloon-2 { animation: pm-drift-c 19s ease-in-out -6s infinite; }
+  .pm-balloon-3 { animation: pm-drift-b 15s ease-in-out -9s infinite; }
+  .pm-balloon-4 { animation: pm-drift-c 21s ease-in-out -2s infinite; }
+  .pm-balloon-5 { animation: pm-drift-a 23s ease-in-out -7s infinite; }
+}
+
+@keyframes pm-nudge {
+  0%, 100% { transform: translate3d(0, 0, 0); opacity: 0.55; }
+  50% { transform: translate3d(0, 5px, 0); opacity: 1; }
+}
+.pm-scroll-hint { animation: pm-nudge 2.6s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pm-balloon,
+  .pm-scroll-hint {
+    animation: none !important;
+  }
+}
+
+/* ECDIS night chart — dark Carto base, neon seamarks, navy void. */
+.thalvo-ecdis {
+  background: #07111E;
+}
+.thalvo-ecdis .leaflet-container,
+.thalvo-ecdis .leaflet-pane,
+.thalvo-ecdis .leaflet-tile-pane,
+.thalvo-ecdis .leaflet-tile-container {
+  background: #07111E;
+}
+.thalvo-ecdis .leaflet-tile-container,
+.thalvo-ecdis .leaflet-zoom-animated {
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.thalvo-ecdis .leaflet-tile {
+  transition: opacity 0.22s ease-out;
+}
+.thalvo-dark-tiles {
+  filter: saturate(0.92) contrast(1.05) brightness(0.92);
+}
+.thalvo-seamark-tiles {
+  filter: saturate(1.35) contrast(1.15) brightness(1.05);
+}
+/* leaflet-rotate default compass — we use ChartFabStack instead. */
+.leaflet-control-rotate {
+  display: none !important;
+}
+
+
+

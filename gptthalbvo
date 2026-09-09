@@ -1,0 +1,12 @@
+/docs
+  /product
+    PRODUCT_BIBLE.md
+    DESIGN_BIBLE.md
+    TECHNICAL_BIBLE.md
+    DATABASE_BIBLE.md
+    AI_BIBLE.md
+    SECURITY_BIBLE.md
+  /tasks
+    TASK-001-Mission-Control.md
+    TASK-002-Live-Map.md
+    TASK-003-SOS-Engine.md
