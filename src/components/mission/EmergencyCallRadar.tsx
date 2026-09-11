@@ -12,16 +12,17 @@ import {
 import { calculateMarineEta } from "@/lib/geo-eta";
 import { getFix, isValidCoordinate } from "@/lib/geolocation";
 import { requestMapFocus } from "@/lib/map-focus-bus";
-import { playSonarPing } from "@/lib/sonar";
+import { createRealtimeBuffer } from "@/lib/schedule";
 
 interface Props {
   userId: string;
+  hideChart?: boolean;
 }
 
 /**
  * Provider Missions radar — realtime pending calls + accept → en_route + chart route.
  */
-export function EmergencyCallRadar({ userId }: Props) {
+export function EmergencyCallRadar({ userId, hideChart = false }: Props) {
   const { t } = useTranslation();
   const [pending, setPending] = useState<EmergencyServiceRequest[]>([]);
   const [mine, setMine] = useState<EmergencyServiceRequest[]>([]);
@@ -55,12 +56,6 @@ export function EmergencyCallRadar({ userId }: Props) {
     if (primed.current) {
       const fresh = openRows.filter((r) => !knownIds.current.has(r.id));
       if (fresh.length > 0) {
-        playSonarPing("alert");
-        try {
-          navigator.vibrate?.([80, 40, 80, 40, 120]);
-        } catch {
-          /* haptic is optional */
-        }
         setFlash(true);
         window.setTimeout(() => setFlash(false), 2800);
       }
@@ -74,17 +69,19 @@ export function EmergencyCallRadar({ userId }: Props) {
   useEffect(() => {
     void locate();
     void load();
+    const buffer = createRealtimeBuffer(() => {
+      void load();
+    }, 180);
     const ch = supabase
       .channel(`esr-radar:${userId}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "emergency_service_requests" },
-        () => {
-          void load();
-        },
+        () => buffer.ping(),
       )
       .subscribe();
     return () => {
+      buffer.dispose();
       supabase.removeChannel(ch);
     };
   }, [userId, load, locate]);
@@ -135,7 +132,7 @@ export function EmergencyCallRadar({ userId }: Props) {
         </span>
       </div>
 
-      {active && route.length > 0 && (
+      {active && route.length > 0 && !hideChart && (
         <div className="overflow-hidden rounded-xl border border-cyan-400/25">
           <LiveMap
             providers={[]}

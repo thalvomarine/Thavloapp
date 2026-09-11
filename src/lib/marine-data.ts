@@ -144,6 +144,7 @@ export async function fetchMarineZones(includeInactive = false): Promise<MarineZ
     )
     .order("created_at", { ascending: false });
   if (!includeInactive) zonesQuery = zonesQuery.eq("active", true);
+  zonesQuery = zonesQuery.limit(800);
   const primary = await zonesQuery;
 
   // `metadata` (added alongside the curated coastal seed data) may predate
@@ -156,8 +157,12 @@ export async function fetchMarineZones(includeInactive = false): Promise<MarineZ
       .select("id, kind, name, lat, lng, vhf_channel, depth_m, description, active, created_at")
       .order("created_at", { ascending: false });
     if (!includeInactive) fallbackQuery = fallbackQuery.eq("active", true);
+    fallbackQuery = fallbackQuery.limit(800);
     const fallback = await fallbackQuery;
-    if (fallback.error) throw new Error(fallback.error.message);
+    if (fallback.error) {
+      console.warn("[marine] marine_zones unavailable", fallback.error.message);
+      return [];
+    }
     rows = fallback.data;
   }
 
@@ -190,8 +195,12 @@ export async function fetchCommunityReports(status?: ReportStatus): Promise<Comm
     )
     .order("created_at", { ascending: false });
   if (status) q = q.eq("status", status);
+  q = q.limit(400);
   const { data, error } = await q;
-  if (error) throw new Error(error.message);
+  if (error) {
+    console.warn("[marine] community_reports unavailable", error.message);
+    return [];
+  }
   return (data ?? []).map((r) => ({
     ...r,
     category: r.category as ReportCategory,

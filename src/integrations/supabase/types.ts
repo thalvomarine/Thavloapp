@@ -1260,6 +1260,22 @@ export type Database = {
           role: Database["public"]["Enums"]["user_role"]
         }[]
       }
+      admin_set_user_available: {
+        Args: { _available: boolean; _user_id: string }
+        Returns: undefined
+      }
+      admin_set_directory_role: {
+        Args: { _kind: string; _user_id: string }
+        Returns: undefined
+      }
+      admin_reassign_job: {
+        Args: { _job_id: string; _provider_id: string }
+        Returns: undefined
+      }
+      admin_close_job: { Args: { _job_id: string }; Returns: undefined }
+      admin_delete_job: { Args: { _job_id: string }; Returns: undefined }
+      ensure_superadmin: { Args: never; Returns: boolean }
+      claim_open_job: { Args: { _job_id: string }; Returns: undefined }
       approve_part: { Args: { _part_id: string }; Returns: undefined }
       book_service_package: {
         Args: {

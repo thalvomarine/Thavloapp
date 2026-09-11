@@ -65,7 +65,7 @@ export function PartCard({ part, currencyFormat, onAdd, onNotify, onAskAi, actio
   return (
     <article className="rounded-2xl border border-cyan-500/20 bg-slate-900/80 p-4 backdrop-blur-md transition-all hover:border-cyan-400/40">
       <div className="flex gap-4">
-        <div className="grid h-24 w-24 shrink-0 place-items-center overflow-hidden rounded-xl border border-white/5 bg-[#07111E]">
+        <div className="grid h-24 w-24 shrink-0 place-items-center overflow-hidden rounded-xl border-2 border-cyan-400/35 bg-[#132337] shadow-[inset_0_0_18px_rgba(0,240,255,0.08)]">
           {part.imageUrl ? (
             <img
               src={part.imageUrl}
@@ -75,7 +75,7 @@ export function PartCard({ part, currencyFormat, onAdd, onNotify, onAskAi, actio
             />
           ) : (
             <div
-              className="flex flex-col items-center gap-1 text-cyan-200/50"
+              className="flex h-full w-full flex-col items-center justify-center gap-1 bg-[#1a2f4a] text-cyan-300"
               aria-label={t("marketplace.product.no_image")}
             >
               <Ship className="size-7" />
@@ -98,9 +98,21 @@ export function PartCard({ part, currencyFormat, onAdd, onNotify, onAskAi, actio
                 <p className="mt-0.5 font-mono text-xs text-slate-400">{part.sku}</p>
               )}
             </div>
-            <p className="shrink-0 text-lg font-bold tabular-nums text-amber-400">
-              {currencyFormat(part.price)}
-            </p>
+            <div className="flex shrink-0 items-start gap-1">
+              {onAskAi && (
+                <button
+                  type="button"
+                  onClick={() => onAskAi(part)}
+                  aria-label="Ask AI"
+                  className="grid size-8 place-items-center rounded-lg border border-white/10 bg-slate-800/80 text-cyan-300 transition-colors hover:bg-slate-700/80"
+                >
+                  <Sparkles className="size-3.5" />
+                </button>
+              )}
+              <p className="text-lg font-bold tabular-nums text-amber-400">
+                {currencyFormat(part.price)}
+              </p>
+            </div>
           </div>
 
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
@@ -151,42 +163,29 @@ export function PartCard({ part, currencyFormat, onAdd, onNotify, onAskAi, actio
         )}
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
-        {actionSlot ?? (
-          <>
-            {onAskAi && (
+      <div className="mt-3 flex items-center justify-end">
+        {actionSlot ??
+          (outOfStock ? (
+            <button
+              type="button"
+              onClick={() => onNotify?.(part)}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-600 bg-slate-800 px-3 py-2 text-xs font-medium text-slate-200"
+            >
+              <Bell className="size-3.5" />
+              {t("marketplace.product.notify_me")}
+            </button>
+          ) : (
+            onAdd && (
               <button
                 type="button"
-                onClick={() => onAskAi(part)}
-                aria-label="Ask AI"
-                className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-white/10 bg-slate-800/80 px-3 text-slate-300 transition-colors hover:bg-slate-700/80"
+                onClick={() => onAdd(part)}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-3.5 py-2 text-xs font-semibold text-white shadow-lg shadow-cyan-950/40 transition-transform hover:from-cyan-400 hover:to-blue-500 active:scale-95"
               >
-                <Sparkles className="size-3.5 text-cyan-300" />
+                <Plus className="size-3.5" />
+                {t("marketplace.product.add_to_cart")}
               </button>
-            )}
-            {outOfStock ? (
-              <button
-                type="button"
-                onClick={() => onNotify?.(part)}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-2 text-xs text-slate-300"
-              >
-                <Bell className="size-3.5" />
-                {t("marketplace.product.notify_me")}
-              </button>
-            ) : (
-              onAdd && (
-                <button
-                  type="button"
-                  onClick={() => onAdd(part)}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-3.5 py-2 text-xs font-medium text-white shadow-lg shadow-cyan-950/40 transition-transform hover:from-cyan-400 hover:to-blue-500 active:scale-95"
-                >
-                  <Plus className="size-3.5" />
-                  {t("marketplace.product.add_to_cart")}
-                </button>
-              )
-            )}
-          </>
-        )}
+            )
+          ))}
       </div>
     </article>
   );

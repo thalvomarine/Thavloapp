@@ -1,8 +1,10 @@
+import "leaflet/dist/leaflet.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
   Link,
   createRootRouteWithContext,
+  redirect,
   useRouter,
   HeadContent,
   Scripts,
@@ -11,7 +13,7 @@ import { useEffect, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 import appCss from "../styles.css?url";
-import "../i18n";
+import { applyPreferredLanguage } from "../i18n";
 import { Toaster } from "sonner";
 import { stripVendorBadge } from "@/lib/strip-vendor-badge";
 import { NetworkStatusBanner } from "@/components/pwa/NetworkStatusBanner";
@@ -58,12 +60,12 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
           >
             {t("shell.error.retry")}
           </button>
-          <a
-            href="/"
+          <Link
+            to="/"
             className="rounded-full border border-input bg-background px-5 py-2.5 font-medium"
           >
             {t("shell.error.home")}
-          </a>
+          </Link>
         </div>
       </div>
     </div>
@@ -71,6 +73,15 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  beforeLoad: ({ location }) => {
+    const path = location.pathname;
+    // Capacitor / PWA cold starts often land on /index.html, which is not a
+    // file route. Hash history on native avoids this; this redirect covers
+    // browser-history fallbacks (file:// or a stray /index.html visit).
+    if (path === "/index.html" || path === "/index.htm") {
+      throw redirect({ to: "/" });
+    }
+  },
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -124,13 +135,35 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   errorComponent: ErrorComponent,
 });
 
+function isSpaShell() {
+  return typeof document !== "undefined" && Boolean(document.getElementById("thalvo-root"));
+}
+
 function RootShell({ children }: { children: ReactNode }) {
+  // Vercel / Capacitor CSR shell mounts into `#thalvo-root`. Nesting a
+  // second <html>/<body> inside that node is invalid and hydrates as #418.
+  if (isSpaShell()) {
+    return (
+      <>
+        <HeadContent />
+        {children}
+      </>
+    );
+  }
+
   return (
-    <html lang="tr" className="h-full w-full max-w-[100vw] overflow-x-hidden bg-[#0A192F]">
+    <html
+      lang="tr"
+      className="h-full w-full max-w-[100vw] overflow-x-hidden bg-[#0A192F]"
+      suppressHydrationWarning
+    >
       <head>
         <HeadContent />
       </head>
-      <body className="h-full w-full max-w-[100vw] overflow-x-hidden bg-[#0A192F]">
+      <body
+        className="h-full w-full max-w-[100vw] overflow-x-hidden bg-[#0A192F]"
+        suppressHydrationWarning
+      >
         {children}
         <Scripts />
       </body>
@@ -141,9 +174,11 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   useEffect(() => {
+    applyPreferredLanguage();
     void initNativeShell();
     void registerPwa();
     stripVendorBadge();
+    document.getElementById("thalvo-sos-fallback")?.remove();
   }, []);
   return (
     <QueryClientProvider client={queryClient}>
@@ -153,10 +188,10 @@ function RootComponent() {
           a flex ancestor without `min-w-0`) can never stretch the whole
           document horizontally — see also the html/body safeguard in
           styles.css. */}
-      <div className="w-full max-w-[100vw] overflow-x-hidden">
+      <div className="w-full max-w-[100vw] overflow-x-hidden" data-thalvo-app>
         <Outlet />
       </div>
-      <Toaster position="top-center" richColors closeButton />
+      <Toaster position="top-center" richColors closeButton className="!z-[300]" />
     </QueryClientProvider>
   );
 }

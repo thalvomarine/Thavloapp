@@ -45,7 +45,10 @@ function Services() {
 
   useEffect(() => {
     supabase.from("service_packages").select("*").order("key")
-      .then(({ data }) => setPackages((data as never) ?? []));
+      .then(({ data, error }) => {
+        if (error) console.warn("[services] service_packages unavailable", error.message);
+        setPackages((data as never) ?? []);
+      });
   }, []);
 
   const visible = useMemo(() => packages.filter((p) => p.category === filter), [packages, filter]);

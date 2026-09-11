@@ -30,8 +30,13 @@ export default defineConfig({
     tanstackStart({
       srcDirectory: "src",
       server: { entry: "server" },
+      client: { entry: "client" },
     }),
     nitro({
+      // Pin the Node preset so `VERCEL=1` does not switch Nitro to the
+      // serverless output tree (no `.output/public`). Vercel still serves
+      // the static `dist/` SPA from vercel.json.
+      preset: "node-server",
       defaultPreset: "node-server",
     }),
     viteReact(),

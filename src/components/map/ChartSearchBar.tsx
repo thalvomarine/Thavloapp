@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Anchor, Search, X } from "lucide-react";
+import { LeafletPointerGuard, stopMapEvent } from "@/lib/leaflet-dom";
 import {
   chartPointCoords,
   chartPointName,
@@ -26,9 +27,9 @@ interface Props {
 }
 
 /**
- * Map cockpit top chrome — one flex column so the search field never
- * paints over the logo / account controls. Row 1 is brand + actions;
- * row 2 is the full-width search bar.
+ * Map cockpit top chrome — one flex column so nothing shares a row:
+ * brand/actions, then search, then the geo banner, then HUD chips.
+ * `pt` includes the iPhone notch / Dynamic Island safe-area inset.
  */
 export function ChartSearchBar({
   zones,
@@ -62,16 +63,16 @@ export function ChartSearchBar({
   const hasHeader = Boolean(headerLeft || headerRight);
 
   return (
-    <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex flex-col px-3 pt-[calc(env(safe-area-inset-top)+0.5rem)]">
+    <div className="pointer-events-none absolute inset-x-0 top-0 z-[500] flex flex-col gap-1.5 px-3 pt-[calc(env(safe-area-inset-top)+0.5rem)]">
       {hasHeader && (
-        <div className="pointer-events-auto relative z-[10] flex items-center justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-2">{headerLeft}</div>
-          <div className="flex shrink-0 items-center gap-1.5">{headerRight}</div>
-        </div>
+        <LeafletPointerGuard className="pointer-events-none relative z-[10] flex h-9 min-w-0 items-center justify-between gap-2">
+          <div className="pointer-events-auto flex min-w-0 items-center gap-2 overflow-hidden">{headerLeft}</div>
+          <div className="pointer-events-auto flex shrink-0 items-center justify-end gap-1.5">{headerRight}</div>
+        </LeafletPointerGuard>
       )}
 
-      <div className={"pointer-events-auto relative z-0 w-full " + (hasHeader ? "mt-2" : "")}>
-        <div className="flex items-center gap-2 overflow-hidden rounded-full border border-cyan-500/30 bg-[#0a192f]/90 px-3.5 py-2 shadow-2xl backdrop-blur-md">
+      <LeafletPointerGuard className="pointer-events-auto relative z-0 min-w-0 w-full">
+        <div className="flex min-w-0 items-center gap-2 overflow-hidden rounded-full border border-cyan-500/30 bg-[#0a192f]/90 px-3.5 py-2 shadow-2xl backdrop-blur-md">
           <Search className="size-3.5 shrink-0 text-cyan-300/80" />
           <input
             ref={inputRef}
@@ -85,7 +86,8 @@ export function ChartSearchBar({
           {query && (
             <button
               type="button"
-              onClick={() => {
+              onClick={(e) => {
+                stopMapEvent(e);
                 setQuery("");
                 inputRef.current?.focus();
               }}
@@ -96,8 +98,6 @@ export function ChartSearchBar({
             </button>
           )}
         </div>
-
-        {banner}
 
         {showDropdown && (
           <div className="mt-1.5 max-h-[40vh] overflow-y-auto rounded-xl border border-cyan-500/30 bg-[#0a192f]/95 shadow-2xl backdrop-blur-md">
@@ -119,7 +119,8 @@ export function ChartSearchBar({
                     >
                       <button
                         type="button"
-                        onClick={() => {
+                        onClick={(e) => {
+                          stopMapEvent(e);
                           setQuery("");
                           setFocused(false);
                           onSelect(point);
@@ -148,10 +149,16 @@ export function ChartSearchBar({
             )}
           </div>
         )}
-      </div>
+      </LeafletPointerGuard>
+
+      {banner ? (
+        <LeafletPointerGuard className="pointer-events-auto min-w-0 w-full">{banner}</LeafletPointerGuard>
+      ) : null}
 
       {below && (
-        <div className="pointer-events-auto mt-2 flex flex-col items-start gap-2">{below}</div>
+        <div className="pointer-events-none flex min-w-0 w-full flex-col items-start gap-1.5">
+          {below}
+        </div>
       )}
     </div>
   );

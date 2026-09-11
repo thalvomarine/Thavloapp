@@ -1,23 +1,45 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { LiveMap, type LivePin } from "@/components/LiveMap";
 import { pickValidCoordinates } from "@/lib/geolocation";
 import { ThalvoLoader } from "@/components/ThalvoLoader";
 import { Wordmark } from "@/components/Wordmark";
-import { n, useSessionUser, type Profile } from "@/lib/session";
+import { n, useSessionUser, type Profile, cockpitFallbackProfile, recalledCockpitRole } from "@/lib/session";
 import { MissionShell } from "@/components/mission/MissionShell";
 import { GlassPanel } from "@/components/mission/GlassPanel";
 import { EmergencyCallRadar } from "@/components/mission/EmergencyCallRadar";
+import { ActiveJobPool } from "@/components/mission/ActiveJobPool";
+import { ensureAdminAccess } from "@/lib/superadmin";
 import { AccountMenuButton } from "@/components/mission/AccountMenuButton";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { AiAdvisor, type AiRecommendation } from "@/components/mission/AiAdvisor";
 import { openThalvoSos } from "@/lib/sos-bus";
 import { MissionStatusTrack, stageFromJob } from "@/components/mission/MissionStatusTrack";
 import { emitEvent } from "@/lib/events";
+import { createRealtimeBuffer, runWhenIdle } from "@/lib/schedule";
 import { Anchor, Wrench, Radio, Gauge, Activity, Loader2, Send, ChevronRight } from "lucide-react";
 import { TrustMark } from "@/components/brand/ProductMarks";
+
+const EMPTY_PINS: LivePin[] = [];
+
+const MapHeaderActions = ({ profile }: { profile: Profile }) => {
+  const { user } = useSessionUser();
+  const [isAdmin, setIsAdmin] = useState(false);
+  useEffect(() => {
+    if (!user) return;
+    return runWhenIdle(() => {
+      void ensureAdminAccess(user).then(setIsAdmin);
+    }, 1400);
+  }, [user]);
+  return (
+    <>
+      <LanguageSwitcher tone="dark" />
+      <AccountMenuButton profile={profile} isAdmin={isAdmin} compact />
+    </>
+  );
+};
 
 export const Route = createFileRoute("/_authenticated/app/")({
   ssr: false,
@@ -28,12 +50,20 @@ function MissionControl() {
   const routeUser = Route.useRouteContext().user;
   const { user: sessionUser, loading: sessionLoading } = useSessionUser();
   const user = sessionUser ?? routeUser;
-  const { profile, loading } = n(user?.id);
-  if ((!user && sessionLoading) || loading) return <ThalvoLoader />;
-  if (!profile) return null;
+  const { profile } = n(user?.id);
+  // Auth is enough to paint the chart. Profile / admin / job lists fill in behind it.
+  if (!user && sessionLoading) return <ThalvoLoader />;
+  if (!user) return null;
+  const cockpitProfile =
+    profile ?? cockpitFallbackProfile(user.id, recalledCockpitRole(user.id) ?? "Client");
+  const mapCockpit = cockpitProfile.role === "Client" || cockpitProfile.role === "Provider";
   return (
-    <MissionShell profile={profile} fullBleed={profile.role === "Client"}>
-      {profile.role === "Client" ? <CaptainCockpit profile={profile} /> : <OperatorCockpit />}
+    <MissionShell profile={cockpitProfile} fullBleed={mapCockpit}>
+      {cockpitProfile.role === "Provider" ? (
+        <OperatorCockpit profile={cockpitProfile} />
+      ) : (
+        <CaptainCockpit profile={cockpitProfile} />
+      )}
     </MissionShell>
   );
 }
@@ -55,29 +85,33 @@ function CaptainCockpit({ profile }: { profile: Profile }) {
       eta_minutes: number | null;
     }[]
   >([]);
-  const [isAdmin, setIsAdmin] = useState(false);
   const { t } = useTranslation();
 
   useEffect(() => {
-    supabase
-      .from("provider_details")
-      .select("id, service_type, lat, lng, live_status, profiles(full_name)")
-      .eq("live_status", "Available")
-      .then(({ data }) => {
-        if (!data) return;
-        setProviders(
-          pickValidCoordinates(data)
-            // Only providers with a real, validated position are plotted.
-            .map((r) => ({
-              id: r.id,
-              name:
-                (r as { profiles: { full_name: string } | null }).profiles?.full_name ?? "Provider",
-              lat: r.lat,
-              lng: r.lng,
-              kind: r.service_type === "Underwater Diver" ? "diver" : "mechanic",
-            })),
-        );
-      });
+    return runWhenIdle(() => {
+      supabase
+        .from("provider_details")
+        .select("id, service_type, lat, lng, live_status, profiles(full_name)")
+        .eq("live_status", "Available")
+        .then(({ data, error }) => {
+          if (error) {
+            console.warn("[cockpit] provider_details unavailable", error.message);
+            return;
+          }
+          if (!data) return;
+          setProviders(
+            pickValidCoordinates(data)
+              .map((r) => ({
+                id: r.id,
+                name:
+                  (r as { profiles: { full_name: string } | null }).profiles?.full_name ?? "Provider",
+                lat: r.lat,
+                lng: r.lng,
+                kind: r.service_type === "Underwater Diver" ? "diver" : "mechanic",
+              })),
+          );
+        });
+    }, 900);
   }, []);
 
   useEffect(() => {
@@ -89,33 +123,39 @@ function CaptainCockpit({ profile }: { profile: Profile }) {
         .eq("client_id", user.id)
         .not("status", "in", "(Completed,Cancelled)")
         .order("created_at", { ascending: false })
-        .then(({ data }) => setActiveJobs((data as never) ?? []));
-    load();
+        .then(({ data, error }) => {
+          if (error) {
+            console.warn("[cockpit] jobs unavailable", error.message);
+            setActiveJobs([]);
+            return;
+          }
+          setActiveJobs((data as never) ?? []);
+        });
+    const stopIdle = runWhenIdle(() => {
+      void load();
+    }, 800);
+    const buffer = createRealtimeBuffer(load, 180);
     const ch = supabase
       .channel(`client-jobs:${user.id}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "jobs", filter: `client_id=eq.${user.id}` },
-        load,
+        () => buffer.ping(),
       )
       .subscribe();
     return () => {
+      stopIdle();
+      buffer.dispose();
       supabase.removeChannel(ch);
     };
   }, [user]);
 
-  useEffect(() => {
-    // UI-level gate; server RPCs still enforce has_role('admin') for real data.
-    supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", profile.id)
-      .eq("role", "admin")
-      .maybeSingle()
-      .then(({ data }) => setIsAdmin(!!data));
-  }, [profile.id]);
-
   const primaryMission = activeJobs[0] ?? null;
+
+  const headerRight = useMemo(
+    () => <MapHeaderActions profile={profile} />,
+    [profile],
+  );
 
   const brand: ReactNode = primaryMission ? (
     <Link
@@ -134,6 +174,7 @@ function CaptainCockpit({ profile }: { profile: Profile }) {
   ) : null;
 
   return (
+    <div className="relative h-full min-h-[500px] w-full">
     <LiveMap
       providers={providers}
       variant="dark"
@@ -142,22 +183,18 @@ function CaptainCockpit({ profile }: { profile: Profile }) {
       enableDetailSheet
       scrollZoom
       headerLeft={<Wordmark size="sm" className="text-white" decorative />}
-      headerRight={
-        <>
-          <LanguageSwitcher tone="dark" />
-          <AccountMenuButton profile={profile} isAdmin={isAdmin} compact />
-        </>
-      }
+      headerRight={headerRight}
       brand={brand}
       onRequestEmergency={() => openThalvoSos("mechanic")}
     />
+    </div>
   );
 }
 
 /* ============================================================ */
 /* OPERATOR COCKPIT (Provider)                                  */
 /* ============================================================ */
-function OperatorCockpit() {
+function OperatorCockpit({ profile }: { profile: Profile }) {
   const { user } = useSessionUser();
   const { t } = useTranslation();
   const [requests, setRequests] = useState<
@@ -173,43 +210,47 @@ function OperatorCockpit() {
   const [activeJobs, setActiveJobs] = useState<
     Array<{ id: string; problem_category: string; status: string }>
   >([]);
-  const [completedJobs, setCompletedJobs] = useState<
-    Array<{ id: string; problem_category: string; status: string; updated_at: string }>
-  >([]);
 
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const { data } = await supabase
-        .from("jobs")
-        .select(
-          "id, problem_category, description, marina, service_type, profiles!jobs_client_id_fkey(full_name, boat_name)",
-        )
-        .eq("status", "Pending")
-        .order("created_at", { ascending: false });
-      setRequests((data as never) ?? []);
-      const { data: mine } = await supabase
-        .from("jobs")
-        .select("id, problem_category, status")
-        .eq("provider_id", user.id)
-        .not("status", "in", "(Completed,Cancelled)")
-        .order("created_at", { ascending: false });
-      setActiveJobs((mine as never) ?? []);
-      const { data: done } = await supabase
-        .from("jobs")
-        .select("id, problem_category, status, updated_at")
-        .eq("provider_id", user.id)
-        .eq("status", "Completed")
-        .order("updated_at", { ascending: false })
-        .limit(20);
-      setCompletedJobs((done as never) ?? []);
+      try {
+        const pending = await supabase
+          .from("jobs")
+          .select(
+            "id, problem_category, description, marina, service_type, profiles!jobs_client_id_fkey(full_name, boat_name)",
+          )
+          .eq("status", "Pending")
+          .order("created_at", { ascending: false });
+        if (pending.error) console.warn("[cockpit] jobs pending unavailable", pending.error.message);
+        setRequests((pending.data as never) ?? []);
+        const mine = await supabase
+          .from("jobs")
+          .select("id, problem_category, status")
+          .eq("provider_id", user.id)
+          .not("status", "in", "(Completed,Cancelled)")
+          .order("created_at", { ascending: false });
+        if (mine.error) console.warn("[cockpit] jobs mine unavailable", mine.error.message);
+        setActiveJobs((mine.data as never) ?? []);
+      } catch (e) {
+        console.warn("[cockpit] jobs load failed", e);
+        setRequests([]);
+        setActiveJobs([]);
+      }
     };
-    load();
+    const stopIdle = runWhenIdle(() => {
+      void load();
+    }, 800);
+    const buffer = createRealtimeBuffer(() => {
+      void load();
+    }, 180);
     const ch = supabase
       .channel(`prov-jobs:${user.id}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "jobs" }, load)
+      .on("postgres_changes", { event: "*", schema: "public", table: "jobs" }, () => buffer.ping())
       .subscribe();
     return () => {
+      stopIdle();
+      buffer.dispose();
       supabase.removeChannel(ch);
     };
   }, [user]);
@@ -226,145 +267,128 @@ function OperatorCockpit() {
         ]
       : [];
 
+  const headerRight = useMemo(
+    () => <MapHeaderActions profile={profile} />,
+    [profile],
+  );
+
   return (
-    <div className="space-y-6">
-      {user && <EmergencyCallRadar userId={user.id} />}
-      <section className="mission-rise" style={{ animationDelay: "60ms" }}>
-        <SectionTitle icon={<Activity className="size-3.5" />} eyebrow="Your missions">
-          Active jobs
-        </SectionTitle>
-        {activeJobs.length === 0 ? (
-          <GlassPanel className="text-sm text-muted-foreground">
-            No active jobs. Watch the feed below.
-          </GlassPanel>
-        ) : (
-          <ul className="space-y-2">
-            {activeJobs.map((j) => {
-              const stage = stageFromJob(j.status);
-              return (
-                <li key={j.id}>
-                  <Link
-                    to="/app/job/$id"
-                    params={{ id: j.id }}
-                    className="block rounded-2xl border border-white/10 bg-white/[0.05] hover:bg-white/[0.08] p-4"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="min-w-0">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40">
-                          Mission opportunity
-                        </p>
-                        <p className="text-sm font-semibold text-white truncate mt-0.5">
-                          {t(`problems.${j.problem_category}`, {
-                            defaultValue: j.problem_category,
-                          })}
-                        </p>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">
-                          {t(`status.${j.status}`)}
-                        </p>
-                      </div>
-                      <ChevronRight className="size-4 text-white/40" />
-                    </div>
-                    <div className="mt-3 pt-3 border-t border-white/[0.06]">
-                      <MissionStatusTrack stage={stage} compact />
-                    </div>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </section>
-
-      <section className="mission-rise" style={{ animationDelay: "90ms" }}>
-        <SectionTitle icon={<Activity className="size-3.5" />} eyebrow="Your missions">
-          {t("provider.completed_missions", { defaultValue: "Completed missions" })}
-        </SectionTitle>
-        {completedJobs.length === 0 ? (
-          <GlassPanel className="text-sm text-muted-foreground">
-            {t("provider.no_completed", { defaultValue: "No completed missions yet." })}
-          </GlassPanel>
-        ) : (
-          <ul className="space-y-2">
-            {completedJobs.map((j) => (
-              <li key={j.id}>
-                <Link
-                  to="/app/job/$id"
-                  params={{ id: j.id }}
-                  className="block rounded-2xl border border-white/10 bg-white/[0.05] hover:bg-white/[0.08] p-4"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="min-w-0">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40">
-                        {t("status.Completed", { defaultValue: "Completed" })}
-                      </p>
-                      <p className="text-sm font-semibold text-white truncate mt-0.5">
-                        {t(`problems.${j.problem_category}`, { defaultValue: j.problem_category })}
-                      </p>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">
-                        {new Date(j.updated_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <ChevronRight className="size-4 text-white/40" />
-                  </div>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section className="mission-rise" style={{ animationDelay: "120ms" }}>
-        <SectionTitle icon={<Radio className="size-3.5" />} eyebrow="Incoming">
-          Request feed
-        </SectionTitle>
-        {requests.length === 0 ? (
-          <GlassPanel className="text-sm text-muted-foreground">
-            No pending requests in your area right now.
-          </GlassPanel>
-        ) : (
-          <ul className="space-y-2">
-            {requests.map((r) => (
-              <RequestCard key={r.id} request={r} />
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section className="mission-rise" style={{ animationDelay: "180ms" }}>
-        <details className="group rounded-2xl border border-white/10 bg-white/[0.03]">
-          <summary className="list-none cursor-pointer select-none flex items-center justify-between gap-3 px-4 py-3">
-            <span className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/60">
-              <Gauge className="size-3.5" /> Overview details
-            </span>
-            <ChevronRight className="size-4 text-white/40 transition-transform group-open:rotate-90" />
+    <div className="relative h-full min-h-[500px] w-full">
+      <LiveMap
+        providers={EMPTY_PINS}
+        variant="dark"
+        fullscreen
+        hud
+        scrollZoom
+        headerLeft={<Wordmark size="sm" className="text-white" decorative />}
+        headerRight={headerRight}
+      />
+      <div className="pointer-events-none absolute inset-x-0 bottom-28 z-[50] flex justify-center px-16">
+        <details className="pointer-events-auto w-full max-w-[20rem] overflow-hidden rounded-2xl border border-cyan-400/25 bg-[#0A192F]/92 shadow-2xl backdrop-blur-md">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan-100">
+            <span>{t("ops_alerts.pool_title")}</span>
+            <ChevronRight className="size-4 shrink-0 text-cyan-200/70" />
           </summary>
-          <div className="px-4 pb-4 pt-1 space-y-4">
-            <div className="grid gap-3 sm:grid-cols-3">
-              <StatCard
-                label="Active jobs"
-                value={activeJobs.length}
-                icon={<Activity className="size-4" />}
-                accent="text-sky-300"
-              />
-              <StatCard
-                label="Open requests"
-                value={requests.length}
-                icon={<Radio className="size-4" />}
-                accent="text-amber-300"
-              />
-              <Link to="/app/reputation" className="block">
-                <StatCard
-                  label="THALVO Trust"
-                  value="Open reputation →"
-                  icon={<TrustMark size={18} />}
-                  accent="text-emerald-300"
-                />
-              </Link>
-            </div>
-            <AiAdvisor recommendations={recs} title="THALVO AI · Operator brief" />
+          <div className="max-h-[36vh] space-y-4 overflow-y-auto px-3 pb-3">
+            {user && <EmergencyCallRadar userId={user.id} hideChart />}
+            {user && <ActiveJobPool userId={user.id} />}
+            <section>
+              <SectionTitle icon={<Activity className="size-3.5" />} eyebrow="Your missions">
+                Active jobs
+              </SectionTitle>
+              {activeJobs.length === 0 ? (
+                <GlassPanel className="text-sm text-muted-foreground">
+                  No active jobs. Watch the feed below.
+                </GlassPanel>
+              ) : (
+                <ul className="space-y-2">
+                  {activeJobs.map((j) => {
+                    const stage = stageFromJob(j.status);
+                    return (
+                      <li key={j.id}>
+                        <Link
+                          to="/app/job/$id"
+                          params={{ id: j.id }}
+                          className="block rounded-2xl border border-white/10 bg-white/[0.05] p-4 hover:bg-white/[0.08]"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="min-w-0">
+                              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40">
+                                Mission opportunity
+                              </p>
+                              <p className="mt-0.5 truncate text-sm font-semibold text-white">
+                                {t(`problems.${j.problem_category}`, {
+                                  defaultValue: j.problem_category,
+                                })}
+                              </p>
+                              <p className="mt-0.5 text-[11px] text-muted-foreground">
+                                {t(`status.${j.status}`)}
+                              </p>
+                            </div>
+                            <ChevronRight className="size-4 text-white/40" />
+                          </div>
+                          <div className="mt-3 border-t border-white/[0.06] pt-3">
+                            <MissionStatusTrack stage={stage} compact />
+                          </div>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </section>
+            <section>
+              <SectionTitle icon={<Radio className="size-3.5" />} eyebrow="Incoming">
+                Request feed
+              </SectionTitle>
+              {requests.length === 0 ? (
+                <GlassPanel className="text-sm text-muted-foreground">
+                  No pending requests in your area right now.
+                </GlassPanel>
+              ) : (
+                <ul className="space-y-2">
+                  {requests.map((r) => (
+                    <RequestCard key={r.id} request={r} />
+                  ))}
+                </ul>
+              )}
+            </section>
+            <details className="group rounded-2xl border border-white/10 bg-white/[0.03]">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 select-none">
+                <span className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/60">
+                  <Gauge className="size-3.5" /> Overview details
+                </span>
+                <ChevronRight className="size-4 text-white/40 transition-transform group-open:rotate-90" />
+              </summary>
+              <div className="space-y-4 px-4 pt-1 pb-4">
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <StatCard
+                    label="Active jobs"
+                    value={activeJobs.length}
+                    icon={<Activity className="size-4" />}
+                    accent="text-sky-300"
+                  />
+                  <StatCard
+                    label="Open requests"
+                    value={requests.length}
+                    icon={<Radio className="size-4" />}
+                    accent="text-amber-300"
+                  />
+                  <Link to="/app/reputation" className="block">
+                    <StatCard
+                      label="THALVO Trust"
+                      value="Open reputation →"
+                      icon={<TrustMark size={18} />}
+                      accent="text-emerald-300"
+                    />
+                  </Link>
+                </div>
+                <AiAdvisor recommendations={recs} title="THALVO AI · Operator brief" />
+              </div>
+            </details>
           </div>
         </details>
-      </section>
+      </div>
     </div>
   );
 }

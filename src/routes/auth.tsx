@@ -1,11 +1,15 @@
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Wordmark } from "@/components/Wordmark";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { Loader2, Ship, Wrench, Anchor, Store, Eye, EyeOff, AlertCircle } from "lucide-react";
+import { getValidUser } from "@/lib/auth-guard";
 import { sanitizeNext } from "@/lib/nav";
+import { markSignupWelcome } from "@/lib/signup-welcome";
+import { normalizeAppLng } from "@/i18n";
 import { SeaBackdrop } from "@/components/brand/SeaBackdrop";
 
 export const Route = createFileRoute("/auth")({
@@ -15,11 +19,11 @@ export const Route = createFileRoute("/auth")({
     return n ? { next: n } : {};
   },
   beforeLoad: async ({ search }) => {
-    const { data } = await supabase.auth.getSession();
-    if (data.session) {
-      if (search.next) throw redirect({ href: search.next });
-      throw redirect({ to: "/app" });
-    }
+    const user = await getValidUser();
+    if (!user) return;
+    const next = sanitizeNext(search.next);
+    if (next) throw redirect({ href: next });
+    throw redirect({ to: "/app" });
   },
   component: AuthPage,
 });
@@ -61,9 +65,6 @@ function AuthPage() {
   const [homeMarina, setHomeMarina] = useState("Göcek");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  // Set when the backend stored the chosen role as a *request* only
-  // (profiles.requested_role) and the live role is still 'Client'.
-  const [pendingRole, setPendingRole] = useState<string | null>(null);
 
   const toggleBrand = (b: string) =>
     setBrands((prev) => (prev.includes(b) ? prev.filter((x) => x !== b) : [...prev, b]));
@@ -84,21 +85,25 @@ function AuthPage() {
               role,
               phone: phone.trim() || null,
               account_type: role === "Client" ? accountType : null,
-              preferred_language: i18n.resolvedLanguage?.startsWith("en") ? "en" : "tr",
+              preferred_language: normalizeAppLng(i18n.resolvedLanguage) === "en" ? "en" : "tr",
             },
           },
         });
         if (error) throw error;
-        // Ensure instant sign-in even if a session wasn't returned.
+
+        // Never park the captain on an "awaiting email confirmation" screen.
+        // Prefer the session from signUp; otherwise open the cockpit with password.
         if (!data.session) {
           const { error: siErr } = await supabase.auth.signInWithPassword({ email, password });
           if (siErr) throw siErr;
         }
-        if (role === "Provider" && data.user) {
+
+        const userId = data.user?.id ?? (await supabase.auth.getUser()).data.user?.id;
+        if (role === "Provider" && userId) {
           // No coordinates at signup: a provider position is only ever written
           // from a real device GPS fix (see src/lib/geolocation.ts).
           await supabase.from("provider_details").upsert({
-            id: data.user.id,
+            id: userId,
             service_type: serviceType,
             specialized_brands: serviceType === "Marine Mechanic" ? brands : [],
             certification_url: serviceType === "Underwater Diver" ? certUrl : null,
@@ -106,7 +111,7 @@ function AuthPage() {
             lng: null,
           });
         }
-        if (role === "Supplier" && data.user) {
+        if (role === "Supplier" && userId) {
           // Marina is a label only — never derive or fabricate coordinates from it.
           await supabase
             .from("profiles")
@@ -114,22 +119,11 @@ function AuthPage() {
               business_name: businessName || fullName,
               home_marina: homeMarina,
             })
-            .eq("id", data.user.id);
+            .eq("id", userId);
         }
-        // The role picker expresses a *request*: the backend always creates the
-        // account as a Client and stores the choice in profiles.requested_role
-        // until an admin approves it. Never fake an approved state here.
-        if (data.user) {
-          const { data: prof } = await supabase
-            .from("profiles")
-            .select("role, requested_role")
-            .eq("id", data.user.id)
-            .maybeSingle();
-          if (prof?.requested_role && prof.role === "Client") {
-            setPendingRole(prof.requested_role);
-            return;
-          }
-        }
+
+        markSignupWelcome();
+        toast.success(t("auth.signup_welcome_toast"), { duration: 7000 });
         goNext();
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -396,20 +390,6 @@ function AuthPage() {
               />
               {mode === "signup" && (
                 <p className="text-[10px] text-muted-foreground -mt-1">{t("auth.password_hint")}</p>
-              )}
-
-              {pendingRole && (
-                <div className="rounded-xl border border-warning/40 bg-warning/10 px-3 py-2.5 text-[11px] leading-relaxed space-y-2">
-                  <p className="font-bold">{t("auth.verification_pending_title")}</p>
-                  <p className="opacity-80">{t("auth.verification_pending_body")}</p>
-                  <button
-                    type="button"
-                    onClick={goNext}
-                    className="w-full h-9 rounded-lg border border-input bg-background text-xs font-bold"
-                  >
-                    {t("auth.verification_pending_continue")}
-                  </button>
-                </div>
               )}
 
               {err && (

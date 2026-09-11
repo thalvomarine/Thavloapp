@@ -13,6 +13,7 @@ function resolveLocale(locale: string | undefined, currency: string): string {
     const base = locale.toLowerCase().split("-")[0];
     if (base === "tr") return "tr-TR";
     if (base === "en") return "en-IE";
+    if (base === "el") return "el-GR";
     return locale;
   }
   return currency === "TRY" ? "tr-TR" : "en-IE";

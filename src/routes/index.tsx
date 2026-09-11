@@ -2,7 +2,7 @@ import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import type { ComponentType, ReactNode } from "react";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { supabase } from "@/integrations/supabase/client";
+import { getValidUser } from "@/lib/auth-guard";
 import { Wordmark } from "@/components/Wordmark";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { PartCard } from "@/components/marketplace/PartCard";
@@ -45,8 +45,10 @@ export const Route = createFileRoute("/")({
     ],
   }),
   beforeLoad: async () => {
-    const { data } = await supabase.auth.getSession();
-    if (data.session) throw redirect({ to: "/app" });
+    // Verify the JWT with Supabase — a stale local token must not send
+    // captains into /app, which then 404/errors them out of the tree.
+    const user = await getValidUser();
+    if (user) throw redirect({ to: "/app" });
   },
   component: Landing,
 });
@@ -247,7 +249,7 @@ function Landing() {
 
   return (
     <div className="thalvo-premium thalvo-dark relative min-h-dvh flex flex-col overflow-x-hidden">
-      <header className="relative z-20 flex items-center justify-between gap-3 px-5 pt-5">
+      <header className="relative z-20 flex min-w-0 items-center justify-between gap-3 px-5 pt-[calc(env(safe-area-inset-top)+1.25rem)]">
         <Wordmark size="sm" />
 
         <div className="flex items-center gap-2">

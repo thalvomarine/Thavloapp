@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as OfflineRouteImport } from './routes/offline'
 import { Route as ServicesRouteImport } from './routes/services'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
 import { Route as AuthenticatedAppAdminRouteImport } from './routes/_authenticated/app.admin'
 import { Route as AuthenticatedAppDealerRouteImport } from './routes/_authenticated/app.dealer'
@@ -57,6 +58,11 @@ const ServicesRoute = ServicesRouteImport.update({
   id: '/services',
   path: '/services',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
   id: '/app/',
@@ -135,6 +141,7 @@ export interface FileRoutesByFullPath {
   '/marketplace': typeof MarketplaceRoute
   '/offline': typeof OfflineRoute
   '/services': typeof ServicesRoute
+  '/admin': typeof AuthenticatedAdminRoute
   '/app/admin': typeof AuthenticatedAppAdminRoute
   '/app/dealer': typeof AuthenticatedAppDealerRoute
   '/app/marketplace': typeof AuthenticatedAppMarketplaceRoute
@@ -155,6 +162,7 @@ export interface FileRoutesByTo {
   '/marketplace': typeof MarketplaceRoute
   '/offline': typeof OfflineRoute
   '/services': typeof ServicesRoute
+  '/admin': typeof AuthenticatedAdminRoute
   '/app/admin': typeof AuthenticatedAppAdminRoute
   '/app/dealer': typeof AuthenticatedAppDealerRoute
   '/app/marketplace': typeof AuthenticatedAppMarketplaceRoute
@@ -177,6 +185,7 @@ export interface FileRoutesById {
   '/marketplace': typeof MarketplaceRoute
   '/offline': typeof OfflineRoute
   '/services': typeof ServicesRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/app/admin': typeof AuthenticatedAppAdminRoute
   '/_authenticated/app/dealer': typeof AuthenticatedAppDealerRoute
   '/_authenticated/app/marketplace': typeof AuthenticatedAppMarketplaceRoute
@@ -199,6 +208,7 @@ export interface FileRouteTypes {
     | '/marketplace'
     | '/offline'
     | '/services'
+    | '/admin'
     | '/app/admin'
     | '/app/dealer'
     | '/app/marketplace'
@@ -219,6 +229,7 @@ export interface FileRouteTypes {
     | '/marketplace'
     | '/offline'
     | '/services'
+    | '/admin'
     | '/app/admin'
     | '/app/dealer'
     | '/app/marketplace'
@@ -240,6 +251,7 @@ export interface FileRouteTypes {
     | '/marketplace'
     | '/offline'
     | '/services'
+    | '/_authenticated/admin'
     | '/_authenticated/app/admin'
     | '/_authenticated/app/dealer'
     | '/_authenticated/app/marketplace'
@@ -307,6 +319,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/services'
       preLoaderRoute: typeof ServicesRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/app/': {
       id: '/_authenticated/app/'
@@ -403,6 +422,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedAppAdminRoute: typeof AuthenticatedAppAdminRoute
   AuthenticatedAppDealerRoute: typeof AuthenticatedAppDealerRoute
   AuthenticatedAppMarketplaceRoute: typeof AuthenticatedAppMarketplaceRoute
@@ -419,6 +439,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedAppAdminRoute: AuthenticatedAppAdminRoute,
   AuthenticatedAppDealerRoute: AuthenticatedAppDealerRoute,
   AuthenticatedAppMarketplaceRoute: AuthenticatedAppMarketplaceRoute,

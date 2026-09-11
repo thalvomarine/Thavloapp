@@ -17,4 +17,7 @@ test("sanitizeNext rejects off-origin and malformed values", () => {
   assert.equal(sanitizeNext(undefined), undefined);
   assert.equal(sanitizeNext(42), undefined);
   assert.equal(sanitizeNext({ next: "/app" }), undefined);
+  assert.equal(sanitizeNext("/auth"), undefined);
+  assert.equal(sanitizeNext("/index.html"), undefined);
+  assert.equal(sanitizeNext("/index.htm"), undefined);
 });

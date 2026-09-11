@@ -8,10 +8,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, Store, User, UserCircle2 } from "lucide-react";
+import { LogOut, Shield, Store, User, UserCircle2 } from "lucide-react";
 import { RescueMark, ControlTowerMark } from "@/components/brand/ProductMarks";
 import type { Profile } from "@/lib/session";
+import { useSessionUser } from "@/lib/session";
 import { setMapChromeOverlay } from "@/lib/map-chrome";
+import { isSuperAdminEmail } from "@/lib/superadmin";
+import { useTranslation } from "react-i18next";
 
 interface Props {
   profile: Profile;
@@ -26,8 +29,11 @@ interface Props {
  */
 export function AccountMenuButton({ profile, isAdmin, compact = false }: Props) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { user } = useSessionUser();
   const isSupplier = profile.role === "Supplier";
   const isProvider = profile.role === "Provider";
+  const isSuper = isSuperAdminEmail(user?.email);
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -77,7 +83,18 @@ export function AccountMenuButton({ profile, isAdmin, compact = false }: Props) 
             </Link>
           </DropdownMenuItem>
         )}
-        {isAdmin && (
+        {isSuper && (
+          <DropdownMenuItem asChild>
+            <Link
+              to="/admin"
+              className="font-semibold text-amber-200 focus:bg-rose-500/20 focus:text-amber-100"
+            >
+              <Shield className="size-4 mr-2 text-rose-300" />
+              {t("admin.super.menu")}
+            </Link>
+          </DropdownMenuItem>
+        )}
+        {(isAdmin || isSuper) && (
           <DropdownMenuItem asChild>
             <Link to="/app/admin">
               <span className="mr-2 inline-grid place-items-center size-4">

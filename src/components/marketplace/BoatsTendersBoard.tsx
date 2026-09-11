@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
@@ -154,8 +154,12 @@ function BoatDetailSheet({
 }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
-  if (typeof document === "undefined") return null;
+  if (!isMounted) return null;
 
   return createPortal(
     <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center" onClick={onClose}>

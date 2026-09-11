@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { n, useSessionUser } from "@/lib/session";
+import { ensureAdminAccess } from "@/lib/superadmin";
 import { ThalvoLoader } from "@/components/ThalvoLoader";
 import { MissionShell } from "@/components/mission/MissionShell";
 import { GlassPanel } from "@/components/mission/GlassPanel";
@@ -21,6 +22,7 @@ import { pickValidCoordinates, isValidCoordinate } from "@/lib/geolocation";
 import { computeRouteEta, DEFAULT_RESPONSE_SPEED_KTS, type RouteEta } from "@/lib/geo-eta";
 import type { LiveRoute } from "@/components/LiveMap";
 import { playSonarPing } from "@/lib/sonar";
+import { createRealtimeBuffer } from "@/lib/schedule";
 import {
   PlatformEventFeed,
   type PlatformEvent,
@@ -93,13 +95,7 @@ function AdminControlTowerPage() {
 
   useEffect(() => {
     if (!user) return;
-    supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .eq("role", "admin")
-      .maybeSingle()
-      .then(({ data }) => setIsAdmin(!!data));
+    void ensureAdminAccess(user).then(setIsAdmin);
   }, [user]);
 
   if ((!user && sessionLoading) || loading || isAdmin === null) return <ThalvoLoader />;
@@ -453,6 +449,9 @@ function ControlTower() {
   // SOS/service call gets a toast + sonar chime so the tower never has to
   // sit on a stale list waiting for a page reload.
   useEffect(() => {
+    const jobBuffer = createRealtimeBuffer(() => {
+      void loadJobs();
+    }, 180);
     const channel = supabase
       .channel("admin-tower-realtime")
       .on(
@@ -465,7 +464,7 @@ function ControlTower() {
         },
       )
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "jobs" }, (payload) => {
-        void loadJobs();
+        jobBuffer.ping();
         const row = payload.new as { status?: string; problem_category?: string } | null;
         if (row?.status === "Requested") {
           toast.warning(
@@ -478,6 +477,7 @@ function ControlTower() {
       })
       .subscribe();
     return () => {
+      jobBuffer.dispose();
       supabase.removeChannel(channel);
     };
     // loadReports/loadJobs are stable useCallback refs; t/toast/playSonarPing

@@ -1,3 +1,6 @@
+/* Leaflet pane/transform rules must load with the app shell — if they
+   arrive late (or not at all), iconAnchor + zoom transforms drift. */
+@import "leaflet/dist/leaflet.css";
 @import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
@@ -272,28 +275,80 @@
   }
 }
 
-/* ECDIS night chart — dark Carto base, neon seamarks, navy void. */
+/* ECDIS night chart — keyless OSM dark grade, neon seamarks, navy void.
+   Do not force height with !important: Leaflet writes an inline pixel
+   height in invalidateSize(), and !important would pin a 0% parent forever. */
+/* Splash HTML used to ship a body-level SOS fallback. Never paint it. */
+#thalvo-sos-fallback {
+  display: none !important;
+}
+
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  min-height: 500px;
+  pointer-events: auto !important;
+  /* Leaflet owns pinch/drag. html/body `touch-action: pan-x pan-y` would
+     otherwise swallow two-finger zoom and make one-finger pan feel locked. */
+  touch-action: none !important;
+}
+.thalvo-map-gpu {
+  /* Avoid will-change:transform — it allocates a full-screen compositor
+     layer and multiplies tile GPU memory on mobile WebViews. */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+.thalvo-map-gpu .leaflet-container {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
 .thalvo-ecdis {
-  background: #07111E;
+  background: #0b132b;
 }
 .thalvo-ecdis .leaflet-container,
 .thalvo-ecdis .leaflet-pane,
 .thalvo-ecdis .leaflet-tile-pane,
 .thalvo-ecdis .leaflet-tile-container {
-  background: #07111E;
+  background: #0b132b;
 }
+/* Never put a CSS transform transition on zoom-animated panes/markers.
+   Leaflet (and leaflet-rotate) already writes translate3d each frame;
+   a 280ms easing makes icons swim off their lat/lng during zoom/pan. */
 .thalvo-ecdis .leaflet-tile-container,
-.thalvo-ecdis .leaflet-zoom-animated {
-  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
-}
-.thalvo-ecdis .leaflet-tile {
-  transition: opacity 0.22s ease-out;
+.thalvo-ecdis .leaflet-zoom-animated,
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
+  transition: none !important;
 }
 .thalvo-dark-tiles {
-  filter: saturate(0.92) contrast(1.05) brightness(0.92);
+  /* OSM Carto → Dark Matter-grade night chart, no API key. */
+  filter: invert(1) hue-rotate(180deg) brightness(0.88) contrast(1.08) saturate(0.45);
 }
-.thalvo-seamark-tiles {
-  filter: saturate(1.35) contrast(1.15) brightness(1.05);
+.thalvo-seamark-tiles,
+.thalvo-seamark-tiles img {
+  pointer-events: none !important;
+  /* No CSS filter here — filter forces an offscreen bitmap per tile and
+     OOMs Capacitor WebViews when stacked on satellite/OSM. */
+}
+.leaflet-marker-pane,
+.leaflet-tooltip-pane,
+.leaflet-popup-pane,
+.leaflet-interactive {
+  pointer-events: auto !important;
+}
+/* Pin HTML markers to the map CRS. Do not add transform / will-change here —
+   Leaflet writes translate3d on this same node each zoom frame. Extra
+   transforms (or preserve-3d) make icons swim off their lat/lng. */
+.leaflet-div-icon.thalvo-map-marker,
+.leaflet-marker-icon.thalvo-map-marker,
+.thalvo-map-marker {
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.thalvo-map-marker .thalvo-marker-face,
+.thalvo-map-marker > div {
+  transform: none !important;
 }
 /* leaflet-rotate default compass — we use ChartFabStack instead. */
 .leaflet-control-rotate {

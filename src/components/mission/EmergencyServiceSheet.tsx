@@ -106,7 +106,7 @@ export function EmergencyServiceSheet({
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[100]" role="presentation">
+    <div className="fixed inset-0 z-[200]" role="presentation">
       <button
         type="button"
         aria-label={t("common.close")}

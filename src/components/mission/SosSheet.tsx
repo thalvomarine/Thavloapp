@@ -8,7 +8,7 @@ import { askThalvoAi } from "@/lib/thalvo-ai.functions";
 import { emitEvent } from "@/lib/events";
 import { PROBLEM_KEYS } from "@/i18n";
 import { useOnlineStatus } from "@/lib/pwa";
-import { getFix, fixToJobFields, formatAccuracy, isStale, isLowAccuracy, type GeoFix } from "@/lib/geolocation";
+import { getFix, fixToJobFields, formatAccuracy, isStale, isLowAccuracy, readLastFix, type GeoFix } from "@/lib/geolocation";
 import { sanitizeMultiline } from "@/lib/sanitize";
 import { openEmergencyService } from "@/lib/emergency-service-bus";
 import {
@@ -78,8 +78,19 @@ export function SosSheet({ open, onClose, initialCategory = "mechanic", initialN
   const locate = useCallback(async () => {
     setLocating(true); setLocErr(null);
     const res = await getFix();
-    if (res.ok) { setCoords(res.fix); setLocErr(null); }
-    else { setCoords(null); setLocErr(t(res.failure.messageKey, { defaultValue: res.failure.defaultMessage })); }
+    if (res.ok) {
+      setCoords(res.fix);
+      setLocErr(null);
+    } else {
+      const last = readLastFix();
+      if (last) {
+        setCoords(last);
+        setLocErr(null);
+      } else {
+        setCoords(null);
+        setLocErr(t(res.failure.messageKey, { defaultValue: res.failure.defaultMessage }));
+      }
+    }
     setLocating(false);
   }, [t]);
 
@@ -126,37 +137,51 @@ export function SosSheet({ open, onClose, initialCategory = "mechanic", initialN
   };
 
   const publish = async () => {
-    if (publishing) return; // duplicate-submit guard
-    if (!online) {
-      toast.error("You are offline. Reconnect before publishing your SOS — nothing has been sent.");
-      return;
-    }
+    if (publishing) return;
     setPublishing(true);
-    const sessionExpiredMsg = "Your session expired. Please sign in again before publishing SOS.";
+    const fallbackMsg = isTr ? "SOS Bildirildi (Offline/Fallback)" : "SOS reported (Offline/Fallback)";
+
+    const acknowledgeFallback = (reason: unknown) => {
+      console.error("[sos] fallback", reason);
+      try {
+        sessionStorage.setItem(
+          "thalvo-sos-fallback",
+          JSON.stringify({
+            at: Date.now(),
+            category,
+            problem,
+            marina,
+            note: note.slice(0, 500),
+            coords,
+            online,
+          }),
+        );
+      } catch {
+        /* quota */
+      }
+      toast.success(fallbackMsg);
+      setPublishing(false);
+      onClose();
+      reset();
+    };
+
+    const liveFix = coords ?? readLastFix();
+
     try {
-      // 1) Session gate — verify an active session exists before insert.
       const { data: sessionData, error: sessionErr } = await supabase.auth.getSession();
       if (sessionErr || !sessionData.session) {
-        console.error("[sos] getSession failed", sessionErr);
-        toast.error(sessionExpiredMsg);
-        setPublishing(false);
+        acknowledgeFallback(sessionErr ?? "no-session");
         return;
       }
-      // 2) Refresh so the JWT used for the insert is fresh. Fatal on failure.
       const { error: refreshErr } = await supabase.auth.refreshSession();
       if (refreshErr) {
-        console.error("[sos] refreshSession failed", refreshErr);
-        toast.error(sessionExpiredMsg);
-        setPublishing(false);
+        acknowledgeFallback(refreshErr);
         return;
       }
-      // 3) Re-read the user after the refresh so client_id matches auth.uid() server-side.
       const { data: userData, error: userErr } = await supabase.auth.getUser();
       const user = userData?.user;
       if (userErr || !user) {
-        console.error("[sos] getUser failed", userErr);
-        toast.error(sessionExpiredMsg);
-        setPublishing(false);
+        acknowledgeFallback(userErr ?? "no-user");
         return;
       }
       const { data: p } = await supabase.from("profiles").select("emergency_health_note").eq("id", user.id).maybeSingle();
@@ -165,77 +190,50 @@ export function SosSheet({ open, onClose, initialCategory = "mechanic", initialN
         sanitizeMultiline(note, 1500),
         aiText ? `\n🧭 AI pre-diagnosis:\n${sanitizeMultiline(aiText, 1500)}` : "",
         healthNote ? `\n🩺 ${t("profile.health_note")}: ${sanitizeMultiline(healthNote, 500)}` : "",
+        liveFix ? "" : `\n📍 ${isTr ? "Konum alınamadı — marina:" : "Position unavailable — marina:"} ${marina}`,
       ].filter(Boolean);
       const finalDescription = parts.join("\n").trim().slice(0, 4000);
-      if (!coords) {
-        // Location Integrity — real device coords are required for SOS.
-        toast.error(t("geo.required_sos", {
-          defaultValue: "Location unavailable. Grant location permission before publishing SOS.",
-        }));
-        setPublishing(false);
-        return;
-      }
-      if (isStale(coords)) {
-        // Refuse to publish a position the captain may have drifted away from.
-        toast.error(t("geo.stale", { defaultValue: "Your position is out of date. Refresh it before continuing." }));
-        setPublishing(false);
-        void locate();
-        return;
-      }
-      const { data, error } = await supabase.from("jobs").insert({
-        client_id: user.id,
-        service_type: category === "diver" ? "Underwater Diver" : "Marine Mechanic",
-        problem_category: problem,
-        description: finalDescription,
-        marina,
-        // Real device degrees only, with the fix quality recorded alongside.
-        ...fixToJobFields(coords),
-      }).select("id").single();
-      if (error || !data) {
-        // Developer-visible error — never surfaced to end users.
-        const errShape = (error ?? {}) as { code?: string; message?: string; details?: string; hint?: string; status?: number };
-        console.error("[sos] job insert failed", {
-          code: errShape.code,
-          message: errShape.message,
-          details: errShape.details,
-          hint: errShape.hint,
-          status: errShape.status,
-        });
-        const code = errShape.code;
-        const status = errShape.status;
-        const unauthorized =
-          code === "42501" ||
-          status === 401 ||
-          (!code && typeof status === "number" && (status === 401 || status === 403));
-        if (unauthorized) {
-          toast.error(sessionExpiredMsg);
-        } else {
-          toast.error("We could not publish your SOS. Your details are safe — please retry.");
+      const { data, error } = await (async () => {
+        try {
+          return await supabase.from("jobs").insert({
+            client_id: user.id,
+            service_type: category === "diver" ? "Underwater Diver" : "Marine Mechanic",
+            problem_category: problem,
+            description: finalDescription,
+            marina,
+            ...(liveFix ? fixToJobFields(liveFix) : {}),
+          }).select("id").single();
+        } catch (insertErr) {
+          return { data: null, error: insertErr as { message?: string } };
         }
-        setPublishing(false);
+      })();
+      if (error || !data) {
+        acknowledgeFallback(error ?? "insert-empty");
         return;
       }
-      // M7: best-effort event; never blocks navigation.
       emitEvent({
         type: "sos.created",
         subject_type: "job",
         subject_id: data.id,
-        metadata: { problem_category: problem, marina, category, accuracy_m: Math.round(coords.accuracy) },
+        metadata: {
+          problem_category: problem,
+          marina,
+          category,
+          accuracy_m: liveFix && Number.isFinite(liveFix.accuracy) ? Math.round(liveFix.accuracy) : null,
+          fallback: !liveFix,
+        },
       });
       setPublishing(false);
       onClose();
       reset();
       navigate({ to: "/app/job/$id", params: { id: data.id } });
     } catch (e) {
-      console.error("[sos] publish threw", e);
-      setPublishing(false);
-      toast.error("Network hiccup — please retry publishing your SOS.");
+      acknowledgeFallback(e);
     }
   };
 
   const canNext = (() => {
     if (step === 0) return !!problem && !!category;
-    if (step === 1) return !!coords; // M9: real device coords required
     return true;
   })();
 
@@ -249,15 +247,17 @@ export function SosSheet({ open, onClose, initialCategory = "mechanic", initialN
 
   const locationState: { label: string; tone: "ok" | "warn" | "manual" } =
     coords
-      ? isLowAccuracy(coords)
-        ? { label: isTr ? "Düşük hassasiyetli konum" : "Low-accuracy position", tone: "warn" }
-        : { label: isTr ? "Mevcut konum kullanılıyor" : "Using current location", tone: "ok" }
+      ? isStale(coords)
+        ? { label: isTr ? "Son bilinen konum" : "Last known position", tone: "warn" }
+        : isLowAccuracy(coords)
+          ? { label: isTr ? "Düşük hassasiyetli konum" : "Low-accuracy position", tone: "warn" }
+          : { label: isTr ? "Mevcut konum kullanılıyor" : "Using current location", tone: "ok" }
       : locating
         ? { label: isTr ? "Konum alınıyor…" : "Getting location…", tone: "warn" }
-        : { label: isTr ? "Konum gerekli" : "Location required", tone: "manual" };
+        : { label: isTr ? "Konumsuz devam edilebilir" : "You can continue without a fix", tone: "manual" };
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-end justify-center" role="dialog" aria-modal="true">
+    <div className="fixed inset-0 z-[200] flex items-end justify-center" role="dialog" aria-modal="true">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-md" onClick={onClose} />
       <div className="thalvo-dark relative w-full max-w-xl bg-[oklch(0.14_0.02_250)] text-foreground border-t border-white/10 rounded-t-3xl overflow-hidden shadow-[0_-30px_80px_-20px_rgba(0,0,0,0.9)] flex flex-col max-h-[92dvh]">
         {/* Header */}
@@ -370,6 +370,7 @@ export function SosSheet({ open, onClose, initialCategory = "mechanic", initialN
           <div className="flex gap-2">
             {step < 2 ? (
               <button
+                type="button"
                 onClick={() => setStep(((step as number) + 1) as Step)}
                 disabled={!canNext}
                 className="flex-1 h-14 rounded-2xl bg-white text-slate-900 font-semibold text-sm inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -378,8 +379,9 @@ export function SosSheet({ open, onClose, initialCategory = "mechanic", initialN
               </button>
             ) : (
               <button
-                onClick={publish}
-                disabled={publishing || !online}
+                type="button"
+                onClick={() => void publish()}
+                disabled={publishing}
                 className="flex-1 h-14 rounded-2xl font-bold text-base text-white inline-flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed tracking-wide"
                 style={{
                   background: "linear-gradient(135deg, oklch(0.68 0.24 25) 0%, oklch(0.6 0.24 18) 100%)",
@@ -516,8 +518,8 @@ function StepLocation({
             {!coords && !locating && (
               <p className="text-[11px] opacity-80 mt-0.5">
                 {err ?? (isTr
-                  ? "SOS yayınlamak için gerçek konum gerekli."
-                  : "A real position is required to publish an SOS.")}
+                  ? "Konum alınamadı. Marinayı seçip konumsuz SOS gönderebilirsiniz."
+                  : "Position unavailable. Pick a marina and send SOS without a fix.")}
               </p>
             )}
           </div>

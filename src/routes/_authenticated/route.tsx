@@ -2,17 +2,20 @@ import { createFileRoute, Link, Outlet, redirect, useRouter } from "@tanstack/re
 import { AlertOctagon, RefreshCcw, MapPin } from "lucide-react";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { supabase } from "@/integrations/supabase/client";
-
+import { getValidUser } from "@/lib/auth-guard";
+import { sanitizeNext } from "@/lib/nav";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   beforeLoad: async ({ location }) => {
-    const { data, error } = await supabase.auth.getUser();
+    const user = await getValidUser();
     // Carry the intended destination so /auth can return the visitor to it.
     // location.href is relative (path + search); /auth re-validates it.
-    if (error || !data.user) throw redirect({ to: "/auth", search: { next: location.href } });
-    return { user: data.user };
+    if (!user) {
+      const next = sanitizeNext(location.href);
+      throw redirect({ to: "/auth", search: next ? { next } : {} });
+    }
+    return { user };
   },
   component: () => <Outlet />,
   errorComponent: AuthErrorBoundary,

@@ -97,7 +97,7 @@ export function ChartDetailSheet({ point, fix, onClose, onNavigate, onEmergency 
   return (
     <div
       className={
-        "pointer-events-auto absolute inset-x-0 z-50 flex justify-center px-2 transition-transform duration-300 ease-out sm:px-4 " +
+        "pointer-events-none absolute inset-x-0 z-[500] flex justify-center px-2 transition-transform duration-300 ease-out sm:px-4 " +
         (visible ? "translate-y-0" : "translate-y-[calc(100%+2rem)]")
       }
       style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 5rem)" }}
@@ -105,7 +105,7 @@ export function ChartDetailSheet({ point, fix, onClose, onNavigate, onEmergency 
         if (!visible) setDisplayPoint(null);
       }}
     >
-      <div className="flex max-h-[min(70dvh,calc(100dvh-env(safe-area-inset-bottom)-6.5rem))] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-cyan-500/30 bg-[#0a192f]/95 shadow-[0_-20px_60px_-20px_rgba(0,0,0,0.85)] backdrop-blur-xl">
+      <div className="pointer-events-auto flex max-h-[min(70dvh,calc(100dvh-env(safe-area-inset-bottom)-6.5rem))] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-cyan-500/30 bg-[#0a192f]/95 shadow-[0_-20px_60px_-20px_rgba(0,0,0,0.85)] backdrop-blur-xl">
         <div className="h-px w-full shrink-0 bg-gradient-to-r from-transparent via-cyan-300/60 to-transparent" />
         <div className="flex shrink-0 items-start justify-between gap-3 p-4 pb-2">
           <div className="min-w-0">

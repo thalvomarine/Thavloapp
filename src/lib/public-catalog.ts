@@ -41,7 +41,10 @@ export async function fetchPublicParts(opts: {
   let q = client.from("public_parts_catalog").select("id, name, brand, category, sku, image_url, price, stock, compatibility, marina");
   void opts.dealerOnly; // the view only contains dealer-listed parts
   const { data, error } = await q.order("created_at", { ascending: false }).limit(opts.limit);
-  if (error) throw new Error(error.message);
+  if (error) {
+    console.warn("[catalog] public_parts_catalog unavailable", error.message);
+    return [];
+  }
   return (data as PartRow[] | null) ?? [];
 }
 
@@ -52,7 +55,10 @@ export async function fetchPublicPackages(opts: { limit?: number } = {}): Promis
     .order("category");
   if (opts.limit != null) q = q.limit(opts.limit);
   const { data, error } = await q;
-  if (error) throw new Error(error.message);
+  if (error) {
+    console.warn("[catalog] service_packages unavailable", error.message);
+    return [];
+  }
   return (data as PackageRow[] | null) ?? [];
 }
 

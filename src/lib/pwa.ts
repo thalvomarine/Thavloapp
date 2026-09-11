@@ -80,7 +80,7 @@ export function useInstallPrompt() {
  * Reactive online/offline status. SSR-safe: defaults to online during render.
  */
 export function useOnlineStatus() {
-  const [online, setOnline] = useState<boolean>(() => (isBrowser ? window.navigator.onLine : true));
+  const [online, setOnline] = useState(true);
   useEffect(() => {
     if (!isBrowser) return;
     const goOnline = () => setOnline(true);

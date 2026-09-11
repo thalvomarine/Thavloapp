@@ -5,7 +5,7 @@ import {
   Anchor, Bell, Camera, Check, ChevronLeft, ChevronRight, Compass,
   Globe2, MapPin, Ship, Sparkles, Store, Wrench, X,
 } from "lucide-react";
-import i18n from "@/i18n";
+import i18n, { normalizeAppLng, type AppLng } from "@/i18n";
 import type { Profile } from "@/lib/session";
 import {
   RescueMark, PassportMark, MarketplaceMark, ControlTowerMark,
@@ -39,7 +39,7 @@ export function OnboardingOverlay({ profile, isAdmin, onComplete }: Props) {
     return "captain";
   }, [profile.role]);
   const [role, setRole] = useState<RoleKey>(defaultRole);
-  const [lang, setLang] = useState<"tr" | "en">((i18n.language?.startsWith("en") ? "en" : "tr"));
+  const [lang, setLang] = useState<AppLng>(normalizeAppLng(i18n.language));
   const [permHint, setPermHint] = useState<string | null>(null);
 
   useEffect(() => {
@@ -65,7 +65,7 @@ export function OnboardingOverlay({ profile, isAdmin, onComplete }: Props) {
   const next = () => setStep((s) => Math.min(s + 1, total - 1));
   const back = () => setStep((s) => Math.max(s - 1, 0));
 
-  const changeLang = (l: "tr" | "en") => {
+  const changeLang = (l: AppLng) => {
     setLang(l);
     void i18n.changeLanguage(l);
     try { window.localStorage.setItem("thalvo-lang", l); } catch { /* noop */ }
@@ -160,9 +160,10 @@ export function OnboardingOverlay({ profile, isAdmin, onComplete }: Props) {
 
         {currentKey === "language" && (
           <StepShell eyebrow="Step 2" title="Choose your language" subtitle="Used across menus, alerts and mission briefings.">
-            <div className="mt-6 grid grid-cols-2 gap-3">
+            <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
               <LangCard active={lang === "tr"} onClick={() => changeLang("tr")} label="Türkçe" hint="Aegean & Mediterranean fleet" />
               <LangCard active={lang === "en"} onClick={() => changeLang("en")} label="English" hint="International crews" />
+              <LangCard active={lang === "el"} onClick={() => changeLang("el")} label="Ελληνικά" hint="Ελληνικά πληρώματα" />
             </div>
             <p className="mt-4 flex items-center gap-2 text-[11px] text-white/50">
               <Globe2 className="size-3.5" /> Preference is saved to this device automatically.

@@ -112,6 +112,35 @@ function fail(state: GeoFailure["state"]): GeoResult {
   return { ok: false, failure: { state, ...FAILURES[state] } };
 }
 
+const LAST_FIX_KEY = "thalvo-last-geo-fix";
+
+/** Persist a real device fix so SOS can continue if a later request is denied. */
+export function rememberFix(fix: GeoFix): void {
+  try {
+    sessionStorage.setItem(LAST_FIX_KEY, JSON.stringify(fix));
+  } catch {
+    /* private mode / quota */
+  }
+}
+
+/** Last successful device fix this session, or null. Never invents a marina. */
+export function readLastFix(): GeoFix | null {
+  try {
+    const raw = sessionStorage.getItem(LAST_FIX_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<GeoFix>;
+    if (!isValidCoordinate(parsed.lat, parsed.lng)) return null;
+    return {
+      lat: parsed.lat,
+      lng: parsed.lng,
+      accuracy: typeof parsed.accuracy === "number" ? parsed.accuracy : Number.NaN,
+      capturedAt: typeof parsed.capturedAt === "number" ? parsed.capturedAt : 0,
+    };
+  } catch {
+    return null;
+  }
+}
+
 /** Request one validated fix. Never resolves with a fabricated position. */
 export function getFix(options: PositionOptions = GEO_OPTIONS): Promise<GeoResult> {
   if (!isSupported()) return Promise.resolve(fail("unsupported"));
@@ -121,15 +150,14 @@ export function getFix(options: PositionOptions = GEO_OPTIONS): Promise<GeoResul
       (pos) => {
         const { latitude, longitude, accuracy } = pos.coords;
         if (!isValidCoordinate(latitude, longitude)) return resolve(fail("invalid"));
-        resolve({
-          ok: true,
-          fix: {
-            lat: latitude,
-            lng: longitude,
-            accuracy: Number.isFinite(accuracy) ? accuracy : Number.NaN,
-            capturedAt: pos.timestamp || Date.now(),
-          },
-        });
+        const fix: GeoFix = {
+          lat: latitude,
+          lng: longitude,
+          accuracy: Number.isFinite(accuracy) ? accuracy : Number.NaN,
+          capturedAt: pos.timestamp || Date.now(),
+        };
+        rememberFix(fix);
+        resolve({ ok: true, fix });
       },
       (err) => {
         if (err.code === err.PERMISSION_DENIED) return resolve(fail("denied"));
@@ -168,6 +196,12 @@ export function watchFix(
           onFailure?.({ state: "invalid", ...FAILURES.invalid });
           return;
         }
+        rememberFix({
+          lat: latitude,
+          lng: longitude,
+          accuracy: Number.isFinite(accuracy) ? accuracy : Number.NaN,
+          capturedAt: pos.timestamp || Date.now(),
+        });
         onFix({
           lat: latitude,
           lng: longitude,

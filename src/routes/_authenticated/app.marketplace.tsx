@@ -14,7 +14,6 @@ import { CartSheet } from "@/components/marketplace/CartSheet";
 import { FloatingCartBar } from "@/components/marketplace/FloatingCartBar";
 import { BoatsTendersBoard } from "@/components/marketplace/BoatsTendersBoard";
 import { GlassPanel } from "@/components/mission/GlassPanel";
-import { StatusChip } from "@/components/mission/StatusChip";
 import { GEO_OPTIONS, getFix, type GeoFailure } from "@/lib/geolocation";
 import { askThalvoAi } from "@/lib/thalvo-ai.functions";
 import { CreateBoatListingSheet } from "@/components/marketplace/CreateBoatListingSheet";
@@ -78,7 +77,10 @@ function Marketplace({ userId }: { userId: string }) {
     supabase.from("parts_catalog")
       .select("*, supplier:profiles!supplier_id(business_name, full_name, home_marina, home_lat, home_lng)")
       .eq("active", true).order("created_at", { ascending: false })
-      .then(({ data }) => setParts((data as never) ?? []));
+      .then(({ data, error }) => {
+        if (error) console.warn("[market] parts_catalog unavailable", error.message);
+        setParts((data as never) ?? []);
+      });
   };
 
 
@@ -90,7 +92,14 @@ function Marketplace({ userId }: { userId: string }) {
     // Active SOS-derived categories — flag parts that may resolve open missions.
     supabase.from("jobs").select("problem_category, status").eq("client_id", userId)
       .in("status", ["Pending", "Accepted", "EnRoute", "OnSite", "PartsPending", "InProgress"])
-      .then(({ data }) => setActiveSosCategories(((data as never[]) ?? []).map((j: { problem_category: string }) => j.problem_category)));
+      .then(({ data, error }) => {
+        if (error) {
+          console.warn("[market] jobs unavailable", error.message);
+          setActiveSosCategories([]);
+          return;
+        }
+        setActiveSosCategories(((data as never[]) ?? []).map((j: { problem_category: string }) => j.problem_category));
+      });
     void getFix(GEO_OPTIONS).then((res) => {
       if (res.ok) setMe({ lat: res.fix.lat, lng: res.fix.lng });
       else setGeoFailure(res.failure);
@@ -168,28 +177,28 @@ function Marketplace({ userId }: { userId: string }) {
       eyebrow={t("marketplace.eyebrow")}
       title={t("marketplace.title")}
       right={
-        <div className="flex items-center gap-2">
+        marketCategory === "boats" ? (
           <button
             type="button"
-            onClick={() => {
-              setMarketCategory("boats");
-              setCreateOpen(true);
-            }}
-            className="inline-flex h-11 items-center gap-1.5 rounded-2xl bg-cyan-400 px-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-900 shadow-[0_0_18px_rgba(0,240,255,0.25)]"
+            onClick={() => setCreateOpen(true)}
+            className="inline-flex h-10 min-w-0 w-full items-center justify-center gap-1.5 rounded-xl bg-cyan-400 px-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-900 shadow-[0_0_18px_rgba(0,240,255,0.25)] sm:w-auto"
           >
             <Plus className="size-4 shrink-0" />
             {t("boats.create_listing")}
           </button>
-          {marketCategory === "spare_parts" && (
-            <StatusChip tone={me ? "info" : geoFailure ? "warning" : "neutral"}>
-              {me
-                ? `${profile?.home_marina ?? t("marketplace.vessel_fallback")}`
-                : geoFailure
-                  ? t(geoFailure.messageKey, { defaultValue: geoFailure.defaultMessage })
-                  : t("marketplace.locating")}
-            </StatusChip>
-          )}
-        </div>
+        ) : undefined
+      }
+      banner={
+        !me ? (
+          <div
+            role="status"
+            className="w-full min-w-0 rounded-xl border border-amber-400/30 bg-amber-400/10 px-3 py-2 text-[11px] font-semibold leading-snug text-amber-200"
+          >
+            {geoFailure
+              ? t(geoFailure.messageKey, { defaultValue: geoFailure.defaultMessage })
+              : t("marketplace.locating")}
+          </div>
+        ) : null
       }
     >
       <MarketCategoryBar active={marketCategory} onSelect={setMarketCategory} />
@@ -236,7 +245,7 @@ function Marketplace({ userId }: { userId: string }) {
               <p className="text-sm text-white/60">{t("marketplace.no_parts_match")}</p>
             </GlassPanel>
           ) : (
-            <div className="grid grid-cols-1 gap-3 pb-24">
+            <div className="grid grid-cols-1 gap-3 pb-36">
               {enriched.map((p) => (
                 <PartCard
                   key={p.id}
@@ -263,7 +272,9 @@ function Marketplace({ userId }: { userId: string }) {
         </>
       )}
 
-      <FloatingCartBar onOpen={() => setCartOpen(true)} />
+      {marketCategory === "spare_parts" && !cartOpen && (
+        <FloatingCartBar onOpen={() => setCartOpen(true)} />
+      )}
       {cartOpen && <CartSheet onClose={() => setCartOpen(false)} onCatalogReload={loadParts} />}
       <CreateBoatListingSheet
         open={createOpen}

@@ -25,4 +25,7 @@ export async function initNativeShell(): Promise<void> {
   } catch (error) {
     console.warn("[native] status bar bootstrap failed", error);
   }
+
+  // Capgo notifyAppReady is owned by src/client.tsx (earliest possible).
+  // Do not await it here — StatusBar latency must not delay the handshake.
 }

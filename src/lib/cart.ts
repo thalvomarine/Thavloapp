@@ -25,8 +25,9 @@ function write(items: CartItem[]) {
 }
 
 export function useCart() {
-  const [items, setItems] = useState<CartItem[]>(() => read());
+  const [items, setItems] = useState<CartItem[]>([]);
   useEffect(() => {
+    setItems(read());
     const h = () => setItems(read());
     window.addEventListener("thalvo:cart", h);
     window.addEventListener("storage", h);

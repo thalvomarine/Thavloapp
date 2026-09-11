@@ -1,17 +1,14 @@
 import {
+  memo,
   useCallback,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
   type ReactNode,
 } from "react";
-import { createPortal } from "react-dom";
-import { useRouterState } from "@tanstack/react-router";
 import {
   MapContainer,
-  TileLayer,
   Marker,
   Popup,
   Circle,
@@ -23,6 +20,7 @@ import {
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet-rotate";
+import { isNativeWebView } from "@/lib/native-history";
 import { renderToStaticMarkup } from "react-dom/server";
 import { useTranslation } from "react-i18next";
 import {
@@ -69,9 +67,13 @@ import {
   ChartReadout,
   ChartDrawHint,
   ChartFabStack,
+  ChartFilterChips,
+  nextBasemap,
   type ChartLayers,
   type ChartLayerKey,
   type ChartRegion,
+  type PoiFilterKey,
+  type BasemapId,
 } from "@/components/map/ChartHud";
 import { ChartSearchBar } from "@/components/map/ChartSearchBar";
 import { ChartDetailSheet } from "@/components/map/ChartDetailSheet";
@@ -80,13 +82,15 @@ import {
   THALVO_MAP_FOCUS_EVENT,
   type MapFocusTarget,
 } from "@/lib/map-focus-bus";
-import { easeMapToNorth } from "@/lib/chart-north";
-import { setMapChromeOverlay, useMapChromeHidden } from "@/lib/map-chrome";
+import { easeMapToNorth, getMapBearing } from "@/lib/chart-north";
+import { setMapChromeOverlay } from "@/lib/map-chrome";
 import { publishCockpitContext } from "@/lib/ai-captain-context-bus";
 import { THALVO_LAYER_FILTER_EVENT, type LayerFilterRequest } from "@/lib/map-layers-bus";
 import { ReportModal } from "@/components/ReportModal";
 import { AdminZoneDialog } from "@/components/map/AdminZoneDialog";
 import { MetoceanHud } from "@/components/map/MetoceanHud";
+import { MapPlaceholder } from "@/components/ClientOnly";
+import { createRealtimeBuffer, debounce, runWhenIdle } from "@/lib/schedule";
 
 export interface LivePin {
   id: string;
@@ -140,82 +144,147 @@ const REGIONS: Record<ChartRegion, { lat: number; lng: number; zoom: number }> =
 };
 
 /**
- * Night cockpit basemap.
- *
- * Esri World Ocean Base only publishes tiles to zoom 13 — past that the
- * service returns a pale-blue "Map data not yet available" plate instead
- * of a real chart. Carto Dark Matter covers street-level zooms and stays
- * dark; OpenSeaMap seamarks ride on top as the navigation overlay.
+ * Cockpit rasters. Default is Esri World Imagery (real bays/coast) plus an
+ * OpenSeaMap seamark overlay. Nautical = OSM Mapnik + seamarks. Night =
+ * OSM inverted (Carto's public Dark Matter URL watermarks without a key).
  */
-const BASE_TILE_DARK =
-  "https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png";
-const BASE_TILE_LIGHT = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
-const CHART_VOID = "#07111E";
+const OSM_RASTER_TILE = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+const SAT_TILE =
+  "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
+const SEAMARK_TILE = "https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png";
+const CHART_VOID = "#0b132b";
+const CHART_MIN_ZOOM = 4;
+const CHART_MAX_ZOOM = 18;
+
+const DARK_ERROR_TILE =
+  "data:image/svg+xml;charset=UTF-8," +
+  encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"><rect width="256" height="256" fill="${CHART_VOID}"/></svg>`,
+  );
+const CLEAR_ERROR_TILE =
+  "data:image/svg+xml;charset=UTF-8," +
+  encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"/>`);
 
 /** Shared with small standalone map previews (e.g. admin report focus map). */
-export const MARINE_DARK_TILE_URL = BASE_TILE_DARK;
-export const MARINE_DARK_TILE_MAX_NATIVE_ZOOM = 20;
+export const MARINE_DARK_TILE_URL = SAT_TILE;
+export const MARINE_DARK_TILE_MAX_NATIVE_ZOOM = 18;
 
-function svgIcon(node: React.ReactElement, color: string, glow?: string) {
+const MARKER_SIZE = 36;
+const MARKER_ANCHOR = MARKER_SIZE / 2;
+
+type MarkerTone = "emerald" | "amber" | "sky" | "rose" | "slate";
+
+const MARKER_TONES: Record<MarkerTone, { border: string; glyph: string }> = {
+  emerald: { border: "rgba(16,185,129,0.40)", glyph: "#34d399" },
+  amber: { border: "rgba(245,158,11,0.40)", glyph: "#fbbf24" },
+  sky: { border: "rgba(56,189,248,0.40)", glyph: "#38bdf8" },
+  rose: { border: "rgba(244,63,94,0.40)", glyph: "#fb7185" },
+  slate: { border: "rgba(148,163,184,0.35)", glyph: "#e2e8f0" },
+};
+
+function svgIcon(node: React.ReactElement, tone: MarkerTone) {
+  const palette = MARKER_TONES[tone];
   const svg = renderToStaticMarkup(
     <div
+      className="thalvo-marker-face"
       style={{
-        background: color,
-        width: 34,
-        height: 34,
+        width: MARKER_SIZE,
+        height: MARKER_SIZE,
         borderRadius: 999,
         display: "grid",
         placeItems: "center",
-        color: "#fff",
-        border: "2px solid rgba(255,255,255,0.85)",
-        boxShadow: glow
-          ? `0 0 10px ${glow}, 0 0 18px ${glow}`
-          : "0 4px 10px rgba(0,0,0,.35)",
+        background: "rgba(15,23,42,0.92)",
+        border: `1px solid ${palette.border}`,
+        boxShadow: "0 4px 6px -1px rgba(0,0,0,0.5)",
+        color: palette.glyph,
       }}
     >
       {node}
     </div>,
   );
-  return L.divIcon({ html: svg, className: "", iconSize: [34, 34], iconAnchor: [17, 17] });
+  return L.divIcon({
+    html: svg,
+    className: "thalvo-map-marker",
+    iconSize: [MARKER_SIZE, MARKER_SIZE],
+    iconAnchor: [MARKER_ANCHOR, MARKER_ANCHOR],
+    popupAnchor: [0, -20],
+  });
 }
 
-const mechIcon = svgIcon(<Wrench size={16} />, "#0A192F");
-const diverIcon = svgIcon(<Anchor size={16} />, "#0891B2");
+const mechIcon = svgIcon(<Wrench size={16} />, "slate");
+const diverIcon = svgIcon(<Anchor size={16} />, "sky");
 
 const ZONE_ICONS: Record<MarineZoneKind, L.DivIcon> = {
-  marina: svgIcon(<Anchor size={16} />, "#0d3b2e", "rgba(57,255,20,0.75)"),
-  fuel: svgIcon(<Fuel size={16} />, "#3d3200", "rgba(245,217,10,0.8)"),
-  lighthouse: svgIcon(<Lightbulb size={16} />, "#3d3200", "rgba(245,217,10,0.95)"),
-  restaurant: svgIcon(<Utensils size={16} />, "#0d3b2e", "rgba(57,255,20,0.7)"),
-  hazard: svgIcon(<TriangleAlert size={16} />, "#4a0014", "rgba(255,45,85,0.9)"),
-  anchorage: svgIcon(<Anchor size={16} />, "#0d3b2e", "rgba(57,255,20,0.8)"),
+  marina: svgIcon(<Anchor size={16} />, "emerald"),
+  fuel: svgIcon(<Fuel size={16} />, "amber"),
+  lighthouse: svgIcon(<Lightbulb size={16} />, "amber"),
+  restaurant: svgIcon(<Utensils size={16} />, "emerald"),
+  hazard: svgIcon(<TriangleAlert size={16} />, "rose"),
+  anchorage: svgIcon(<Anchor size={16} />, "emerald"),
 };
 
 const meIcon = L.divIcon({
-  className: "",
-  iconSize: [22, 22],
-  iconAnchor: [11, 11],
-  html: `<div style="position:relative;width:22px;height:22px">
-      <span style="position:absolute;inset:0;border-radius:999px;background:#3b82f6;opacity:.35;animation:thalvoPing 1.6s ease-out infinite"></span>
-      <span style="position:absolute;inset:6px;border-radius:999px;background:#2563eb;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.4)"></span>
+  className: "thalvo-map-marker",
+  iconSize: [MARKER_SIZE, MARKER_SIZE],
+  iconAnchor: [MARKER_ANCHOR, MARKER_ANCHOR],
+  popupAnchor: [0, -20],
+  html: `<div class="thalvo-marker-face" style="width:36px;height:36px;border-radius:999px;display:grid;place-items:center;background:rgba(15,23,42,0.92);border:1px solid rgba(56,189,248,0.4);box-shadow:0 4px 6px -1px rgba(0,0,0,0.5)">
+      <span style="width:10px;height:10px;border-radius:999px;background:#38bdf8;opacity:.95;animation:thalvoFixPulse 1.8s ease-in-out infinite"></span>
     </div>
-    <style>@keyframes thalvoPing{0%{transform:scale(1);opacity:.6}100%{transform:scale(2.4);opacity:0}}</style>`,
+    <style>@keyframes thalvoFixPulse{0%,100%{opacity:.45}50%{opacity:1}}</style>`,
 });
 
-const reportIcon = svgIcon(<Anchor size={14} />, "#003d4d", "rgba(0,240,255,0.75)");
+const reportIcon = svgIcon(<Anchor size={14} />, "sky");
 
 function Recenter({
   center,
   suspend = false,
 }: {
-  center: { lat: number; lng: number };
+  center: { lat: number; lng: number } | null;
   suspend?: boolean;
 }) {
   const map = useMap();
+  const userMoved = useRef(false);
+  useMapEvents({
+    dragstart: () => {
+      userMoved.current = true;
+    },
+    zoomstart: () => {
+      userMoved.current = true;
+    },
+  });
   useEffect(() => {
-    if (suspend) return;
-    map.setView([center.lat, center.lng], map.getZoom());
-  }, [center.lat, center.lng, map, suspend]);
+    if (!center || suspend || userMoved.current) return;
+    map.setView([center.lat, center.lng], map.getZoom(), { animate: false });
+  }, [center, center?.lat, center?.lng, map, suspend]);
+  return null;
+}
+
+/** First GPS fix recenters once. Later watch updates must not steal the pan. */
+function BootstrapGps({ fix }: { fix: GeoFix | null }) {
+  const map = useMap();
+  const done = useRef(false);
+  useEffect(() => {
+    if (!fix || done.current) return;
+    done.current = true;
+    map.setView([fix.lat, fix.lng], Math.max(map.getZoom(), DEFAULT_ZOOM), { animate: false });
+  }, [fix, map]);
+  return null;
+}
+
+function MapInteractionUnlock() {
+  const map = useMap();
+  useEffect(() => {
+    map.dragging.enable();
+    map.touchZoom.enable();
+    map.scrollWheelZoom.enable();
+    map.doubleClickZoom.enable();
+    map.boxZoom.enable();
+    map.keyboard.enable();
+    const el = map.getContainer();
+    el.style.pointerEvents = "auto";
+    el.style.touchAction = "none";
+  }, [map]);
   return null;
 }
 
@@ -224,7 +293,7 @@ function MapBridge({
   onTelemetry,
   onClick,
 }: {
-  onTelemetry: (center: { lat: number; lng: number }, scaleNm: number | null) => void;
+  onTelemetry: (center: { lat: number; lng: number }, scaleNm: number | null, bearingDeg: number) => void;
   onClick?: (pos: { lat: number; lng: number }) => void;
 }) {
   const map = useMap();
@@ -235,28 +304,444 @@ function MapBridge({
     const west = map.containerPointToLatLng([0, size.y / 2]);
     const east = map.containerPointToLatLng([size.x, size.y / 2]);
     const nm = size.x > 0 ? toNauticalMiles(west.distanceTo(east)) : null;
-    onTelemetry({ lat: c.lat, lng: c.lng }, nm);
+    onTelemetry({ lat: c.lat, lng: c.lng }, nm, getMapBearing(map));
   }, [map, onTelemetry]);
+
+  const delayed = useMemo(
+    () => debounce(report, isNativeWebView() ? 280 : 160),
+    [report],
+  );
 
   useEffect(() => {
     report();
   }, [report]);
 
+  useEffect(() => () => delayed.cancel(), [delayed]);
+
+  useEffect(() => {
+    map.on("rotate", delayed);
+    return () => {
+      map.off("rotate", delayed);
+    };
+  }, [map, delayed]);
+
   useMapEvents({
-    move: report,
-    zoom: report,
+    moveend: delayed,
+    zoomend: delayed,
     click: (e) => onClick?.({ lat: e.latlng.lat, lng: e.latlng.lng }),
   });
 
   return null;
 }
 
-export function LiveMap({
+function MapSizeSync() {
+  const map = useMap();
+  useEffect(() => {
+    let lastW = 0;
+    let lastH = 0;
+    const kick = () => {
+      try {
+        const size = map.getSize();
+        // Guard: invalidateSize can nudge layout → ResizeObserver → infinite
+        // invalidate loop that freezes WKWebView / Chrome on mobile.
+        if (size.x === lastW && size.y === lastH && lastW > 0) return;
+        lastW = size.x;
+        lastH = size.y;
+        map.invalidateSize({ animate: false });
+        map.dragging.enable();
+        map.touchZoom.enable();
+        map.scrollWheelZoom.enable();
+      } catch {
+        /* map already torn down */
+      }
+    };
+    const delayed = debounce(kick, 180);
+    const raf = requestAnimationFrame(delayed);
+    const ids = [200, 800].map((ms) => window.setTimeout(delayed, ms));
+    window.addEventListener("resize", delayed);
+    window.addEventListener("orientationchange", delayed);
+    document.addEventListener("visibilitychange", delayed);
+    let observer: ResizeObserver | null = null;
+    const container = map.getContainer();
+    if (container && typeof ResizeObserver !== "undefined") {
+      observer = new ResizeObserver(() => delayed());
+      observer.observe(container);
+    }
+    return () => {
+      cancelAnimationFrame(raf);
+      ids.forEach((id) => window.clearTimeout(id));
+      delayed.cancel();
+      observer?.disconnect();
+      window.removeEventListener("resize", delayed);
+      window.removeEventListener("orientationchange", delayed);
+      document.removeEventListener("visibilitychange", delayed);
+    };
+  }, [map]);
+  return null;
+}
+
+function ChartRasterLayers({
+  basemap,
+  showSeamarks,
+}: {
+  basemap: BasemapId;
+  showSeamarks: boolean;
+}) {
+  const map = useMap();
+  const satelliteLayerRef = useRef<L.TileLayer | null>(null);
+  const seaLayerRef = useRef<L.TileLayer | null>(null);
+  const darkLayerRef = useRef<L.TileLayer | null>(null);
+  const seamarkLayerRef = useRef<L.TileLayer | null>(null);
+
+  useEffect(() => {
+    // Low keepBuffer on WebView — satellite + seamark tiles otherwise pin
+    // dozens of decoded bitmaps and OOM mid-range devices.
+    const keepBuffer = isNativeWebView() ? 1 : 2;
+    const raster = {
+      minZoom: CHART_MIN_ZOOM,
+      maxZoom: CHART_MAX_ZOOM,
+      errorTileUrl: DARK_ERROR_TILE,
+      keepBuffer,
+      updateWhenZooming: false,
+      updateWhenIdle: true,
+    };
+    const satellite = L.tileLayer(SAT_TILE, {
+      ...raster,
+      maxNativeZoom: 18,
+      attribution: "Tiles © Esri",
+    });
+    const sea = L.tileLayer(OSM_RASTER_TILE, {
+      ...raster,
+      maxNativeZoom: 19,
+      attribution: "© OpenStreetMap",
+    });
+    const dark = L.tileLayer(OSM_RASTER_TILE, {
+      ...raster,
+      maxNativeZoom: 19,
+      className: "thalvo-dark-tiles",
+      attribution: "© OpenStreetMap",
+    });
+    const seamark = L.tileLayer(SEAMARK_TILE, {
+      minZoom: CHART_MIN_ZOOM,
+      maxZoom: CHART_MAX_ZOOM,
+      maxNativeZoom: 18,
+      zIndex: 400,
+      errorTileUrl: CLEAR_ERROR_TILE,
+      keepBuffer,
+      updateWhenZooming: false,
+      updateWhenIdle: true,
+      className: "thalvo-seamark-tiles",
+    });
+
+    satelliteLayerRef.current = satellite;
+    seaLayerRef.current = sea;
+    darkLayerRef.current = dark;
+    seamarkLayerRef.current = seamark;
+
+    return () => {
+      map.removeLayer(satellite);
+      map.removeLayer(sea);
+      map.removeLayer(dark);
+      map.removeLayer(seamark);
+      satelliteLayerRef.current = null;
+      seaLayerRef.current = null;
+      darkLayerRef.current = null;
+      seamarkLayerRef.current = null;
+    };
+  }, [map]);
+
+  useEffect(() => {
+    const satellite = satelliteLayerRef.current;
+    const sea = seaLayerRef.current;
+    const dark = darkLayerRef.current;
+    const seamark = seamarkLayerRef.current;
+    if (!satellite || !sea || !dark || !seamark) return;
+
+    const show = (layer: L.TileLayer) => {
+      if (!map.hasLayer(layer)) map.addLayer(layer);
+    };
+    const hide = (layer: L.TileLayer) => {
+      if (!map.hasLayer(layer)) return;
+      map.removeLayer(layer);
+      // Purge decoded bitmaps from inactive basemaps (WebView OOM guard).
+      const tiles = (layer as unknown as { _tiles?: Record<string, { el?: HTMLElement }> })._tiles;
+      if (tiles) {
+        for (const key of Object.keys(tiles)) {
+          const el = tiles[key]?.el;
+          if (el?.parentNode) el.parentNode.removeChild(el);
+          delete tiles[key];
+        }
+      }
+    };
+
+    if (basemap === "sat") {
+      show(satellite);
+      hide(sea);
+      hide(dark);
+    } else if (basemap === "dark") {
+      show(dark);
+      hide(satellite);
+      hide(sea);
+    } else {
+      show(sea);
+      hide(satellite);
+      hide(dark);
+    }
+
+    if (showSeamarks) show(seamark);
+    else hide(seamark);
+  }, [map, basemap, showSeamarks]);
+
+  return null;
+}
+
+const FleetPinMarker = memo(function FleetPinMarker({ pin }: { pin: LivePin }) {
+  return (
+    <Marker position={[pin.lat, pin.lng]} icon={pin.kind === "diver" ? diverIcon : mechIcon}>
+      <Popup>
+        <span className="text-[12px] font-semibold">{pin.name}</span>
+      </Popup>
+    </Marker>
+  );
+});
+
+const ChartOverlays = memo(function ChartOverlays({
+  fix,
+  stale,
+  navTarget,
+  pins,
+  routes,
+  moorings,
+  hazards,
+  lights,
+  reports,
+  layers,
+  poiFilters,
+  enableDetailSheet,
+  onSelectZone,
+  onSelectReport,
+}: {
+  fix: GeoFix | null;
+  stale: boolean;
+  navTarget: { lat: number; lng: number } | null;
+  pins: LivePin[];
+  routes: LiveRoute[];
+  moorings: MarineZone[];
+  hazards: MarineZone[];
+  lights: MarineZone[];
+  reports: CommunityReport[];
+  layers: ChartLayers;
+  poiFilters: Record<PoiFilterKey, boolean>;
+  enableDetailSheet: boolean;
+  onSelectZone: (zone: MarineZone) => void;
+  onSelectReport: (report: CommunityReport) => void;
+}) {
+  const { t } = useTranslation();
+  const zonePopup = (z: MarineZone) => (
+    <div className="text-[12px] leading-snug">
+      <p className="font-semibold">{z.name}</p>
+      <p className="opacity-70">{t(ZONE_KIND_LABEL_KEYS[z.kind])}</p>
+      {z.vhf_channel && (
+        <p className="mt-1">{t("marine.vhf_channel", { channel: z.vhf_channel })}</p>
+      )}
+      {z.depth_m != null && <p>{t("marine.depth_m", { value: z.depth_m })}</p>}
+      {zoneBottomLabel(z) && <p>{zoneBottomLabel(z)}</p>}
+      {z.description && <p className="mt-1">{z.description}</p>}
+    </div>
+  );
+
+  return (
+    <>
+      {fix && <Marker position={[fix.lat, fix.lng]} icon={meIcon} opacity={stale ? 0.5 : 1} />}
+
+      {fix && navTarget && (
+        <Polyline
+          positions={[
+            [fix.lat, fix.lng],
+            [navTarget.lat, navTarget.lng],
+          ]}
+          pathOptions={{
+            color: "#00F0FF",
+            weight: 2.5,
+            opacity: 0.85,
+            dashArray: "1 10",
+            lineCap: "round",
+          }}
+        />
+      )}
+
+      {layers.fleet &&
+        poiFilters.service &&
+        routes.map((r) => (
+          <Polyline
+            key={`route-${r.id}`}
+            positions={[
+              [r.from.lat, r.from.lng],
+              [r.to.lat, r.to.lng],
+            ]}
+            pathOptions={{
+              color: "#00F0FF",
+              weight: 2.5,
+              opacity: 0.85,
+              dashArray: "1 10",
+              lineCap: "round",
+            }}
+          />
+        ))}
+
+      {layers.fleet &&
+        poiFilters.service &&
+        pins.map((p) => <FleetPinMarker key={p.id} pin={p} />)}
+
+      {layers.moorings &&
+        moorings.map((z) => (
+          <Marker
+            key={z.id}
+            position={[z.lat, z.lng]}
+            icon={ZONE_ICONS[z.kind]}
+            eventHandlers={
+              enableDetailSheet ? { click: () => onSelectZone(z) } : undefined
+            }
+          >
+            {!enableDetailSheet && <Popup>{zonePopup(z)}</Popup>}
+          </Marker>
+        ))}
+      {layers.moorings &&
+        moorings
+          .filter((z) => z.kind === "anchorage")
+          .map((z) => (
+            <Circle
+              key={`c-${z.id}`}
+              center={[z.lat, z.lng]}
+              radius={450}
+              pathOptions={{
+                color: "#34d399",
+                fillColor: "#34d399",
+                fillOpacity: 0.1,
+                weight: 1.25,
+              }}
+            />
+          ))}
+
+      {layers.seamarks &&
+        lights.map((z) => (
+          <Marker
+            key={z.id}
+            position={[z.lat, z.lng]}
+            icon={ZONE_ICONS.lighthouse}
+            eventHandlers={
+              enableDetailSheet ? { click: () => onSelectZone(z) } : undefined
+            }
+          >
+            {!enableDetailSheet && <Popup>{zonePopup(z)}</Popup>}
+          </Marker>
+        ))}
+
+      {layers.hazards &&
+        hazards.map((z) => (
+          <Circle
+            key={z.id}
+            center={[z.lat, z.lng]}
+            radius={300}
+            pathOptions={{
+              color: "#f43f5e",
+              fillColor: "#f43f5e",
+              fillOpacity: 0.14,
+              weight: 1.4,
+              dashArray: "4 4",
+            }}
+            eventHandlers={
+              enableDetailSheet ? { click: () => onSelectZone(z) } : undefined
+            }
+          >
+            {!enableDetailSheet && <Popup>{zonePopup(z)}</Popup>}
+          </Circle>
+        ))}
+
+      {layers.hazards && (
+        <Polygon
+          positions={[
+            [36.7395, 28.9165],
+            [36.7415, 28.9215],
+            [36.7385, 28.926],
+            [36.7345, 28.9235],
+            [36.734, 28.9185],
+          ]}
+          pathOptions={{
+            color: "#FF2D55",
+            fillColor: "#FF2D55",
+            fillOpacity: 0.26,
+            weight: 1.6,
+            dashArray: "4 4",
+          }}
+        >
+          <Popup>
+            <div className="text-[12px] leading-snug">
+              <p className="font-semibold">Dökükbaşı Resifi</p>
+              <p className="opacity-70">{t("marine.category_hazard")}</p>
+              <p className="mt-1">{t("marine.dokukbasi_warning")}</p>
+            </div>
+          </Popup>
+        </Polygon>
+      )}
+
+      {layers.reports &&
+        reports.map((r) => (
+          <Marker
+            key={r.id}
+            position={[r.lat, r.lng]}
+            icon={reportIcon}
+            eventHandlers={
+              enableDetailSheet ? { click: () => onSelectReport(r) } : undefined
+            }
+          >
+            {!enableDetailSheet && (
+              <Popup>
+                <div className="text-[12px] leading-snug">
+                  <p className="font-semibold">{t(REPORT_CATEGORY_LABEL_KEYS[r.category])}</p>
+                  <p className="opacity-70">{t("chart.report_from_captain")}</p>
+                  {r.depth_m != null && (
+                    <p className="mt-1">{t("marine.depth_m", { value: r.depth_m })}</p>
+                  )}
+                  {r.seabed && <p>{t(SEABED_LABEL_KEYS[r.seabed])}</p>}
+                  <p className="mt-1">{r.note}</p>
+                </div>
+              </Popup>
+            )}
+          </Marker>
+        ))}
+    </>
+  );
+});
+
+export const LiveMap = memo(function LiveMap(props: Props) {
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return (
+      <MapPlaceholder
+        className={props.className}
+        style={
+          props.fullscreen
+            ? { height: "100%", minHeight: 500, width: "100%" }
+            : { height: props.height ?? 500, minHeight: 500 }
+        }
+      />
+    );
+  }
+
+  return <LiveMapCanvas {...props} />;
+});
+
+function LiveMapCanvas({
   providers,
   routes = [],
   center,
   className = "",
-  height = 260,
+  height = 400,
   variant = "light",
   hud = true,
   fullscreen = false,
@@ -273,28 +758,29 @@ export function LiveMap({
   const [requesting, setRequesting] = useState(false);
   // Mobile "Layers" drawer (see ChartHud) — fades the Metocean widget out of
   // the way while it's open instead of letting the two fight for space.
-  const [layersDrawerOpen, setLayersDrawerOpen] = useState(false);
+  const [layersMenuOpen, setLayersMenuOpen] = useState(false);
+  const [hudOpen, setHudOpen] = useState(true);
+  const [basemap, setBasemap] = useState<BasemapId>("dark");
+  const [poiFilters, setPoiFilters] = useState<Record<PoiFilterKey, boolean>>({
+    marinas: true,
+    fuel: true,
+    service: true,
+  });
   // A dismissed geolocation failure band stays hidden until a *new* failure
   // comes in (tracked by reference below) — closing it once shouldn't mean
   // fighting it every retry, but a fresh error (e.g. a different reason)
   // should still surface.
   const [failureDismissed, setFailureDismissed] = useState(false);
-  // The fullscreen cockpit portals its overlay chrome to `document.body`
-  // (see the render below) so it can outrank the app shell's floating
-  // bottom dock nav in the *root* stacking context — a descendant's
-  // z-index can never escape its own positioned ancestor's stacking
-  // context, and the map tile wrapper below intentionally stays at a low
-  // z-index so the dock nav still paints over the map itself. Portals
-  // only run client-side, so this flips true one paint after mount.
-  const [mounted, setMounted] = useState(false);
-  useLayoutEffect(() => {
-    setMounted(true);
-  }, []);
   const [map, setMap] = useState<L.Map | null>(null);
+  const mapInstanceRef = useRef<L.Map | null>(null);
   const started = useRef(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [selectedPoint, setSelectedPoint] = useState<ChartPoint | null>(null);
   const [navTarget, setNavTarget] = useState<{ lat: number; lng: number } | null>(null);
+
+  useEffect(() => {
+    mapInstanceRef.current = map;
+  }, [map]);
 
   useEffect(() => {
     if (!map) return;
@@ -314,7 +800,8 @@ export function LiveMap({
   }, [map]);
 
   const [layers, setLayers] = useState<ChartLayers>({
-    seamarks: true,
+    // Seamark overlay + CSS filter doubles tile GPU cost — enable after idle.
+    seamarks: !isNativeWebView(),
     hazards: true,
     moorings: true,
     reports: true,
@@ -323,10 +810,20 @@ export function LiveMap({
   const [telemetry, setTelemetry] = useState<{
     center: { lat: number; lng: number };
     scaleNm: number | null;
+    bearingDeg: number;
   }>({
     center: GOCEK,
     scaleNm: null,
+    bearingDeg: 0,
   });
+  const lastPublishedCenter = useRef({ lat: GOCEK.lat, lng: GOCEK.lng });
+
+  useEffect(() => {
+    if (!isNativeWebView()) return;
+    return runWhenIdle(() => {
+      setLayers((v) => (v.seamarks ? v : { ...v, seamarks: true }));
+    }, 2500);
+  }, []);
 
   const [zones, setZones] = useState<MarineZone[]>([]);
   const [reports, setReports] = useState<CommunityReport[]>([]);
@@ -338,10 +835,6 @@ export function LiveMap({
   const [zonePos, setZonePos] = useState<{ lat: number; lng: number } | null>(null);
   const [reportDialog, setReportDialog] = useState(false);
   const [reportPos, setReportPos] = useState<{ lat: number; lng: number } | null>(null);
-  const path = useRouterState({ select: (s) => s.location.pathname });
-  const onMapRoute = path === "/app";
-  const overlayLocked = useMapChromeHidden();
-  const hideMapChrome = overlayLocked || !onMapRoute;
 
   useEffect(() => {
     const onFilter = (event: Event) => {
@@ -353,10 +846,13 @@ export function LiveMap({
     return () => window.removeEventListener(THALVO_LAYER_FILTER_EVENT, onFilter);
   }, []);
 
+  // AI Captain context: selection/GPS always publish; chart-pan is throttled
+  // so drag does not flood the main thread.
   useEffect(() => {
     const position = fix
       ? { lat: fix.lat, lng: fix.lng, source: "gps" as const }
       : { lat: telemetry.center.lat, lng: telemetry.center.lng, source: "chart" as const };
+
     if (selectedPoint?.kind === "zone") {
       publishCockpitContext({
         position,
@@ -388,11 +884,24 @@ export function LiveMap({
       return;
     }
     publishCockpitContext({ position, selectedBay: null });
-  }, [fix, telemetry.center.lat, telemetry.center.lng, selectedPoint]);
+  }, [fix, selectedPoint]);
 
   useEffect(() => {
-    setMapChromeOverlay("layers", layersDrawerOpen);
-  }, [layersDrawerOpen]);
+    if (fix || selectedPoint) return;
+    const lat = telemetry.center.lat;
+    const lng = telemetry.center.lng;
+    const prev = lastPublishedCenter.current;
+    if (Math.abs(lat - prev.lat) < 0.003 && Math.abs(lng - prev.lng) < 0.003) return;
+    lastPublishedCenter.current = { lat, lng };
+    publishCockpitContext({
+      position: { lat, lng, source: "chart" },
+      selectedBay: null,
+    });
+  }, [fix, selectedPoint, telemetry.center.lat, telemetry.center.lng]);
+
+  useEffect(() => {
+    setMapChromeOverlay("layers", layersMenuOpen);
+  }, [layersMenuOpen]);
   useEffect(() => {
     setMapChromeOverlay("bay", selectedPoint != null);
   }, [selectedPoint]);
@@ -454,49 +963,54 @@ export function LiveMap({
   }, []);
 
   useEffect(() => {
-    void loadChartData();
+    return runWhenIdle(() => {
+      void loadChartData();
+    }, 900);
   }, [loadChartData]);
 
-  // Realtime: an admin approving a report (or adding/editing a chart point)
-  // must appear on every open chart instantly — no manual refresh, no
-  // polling. Both tables are additionally gated by RLS, so an anonymous
-  // viewer's re-read here can only ever surface already-public rows.
   useEffect(() => {
+    const buffer = createRealtimeBuffer(() => {
+      void loadChartData();
+    }, 180);
     const channel = supabase
       .channel("live-map-chart-data")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "community_reports" },
-        () => void loadChartData(),
+        () => buffer.ping(),
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "marine_zones" },
-        () => void loadChartData(),
+        () => buffer.ping(),
       )
       .subscribe();
     return () => {
+      buffer.dispose();
       supabase.removeChannel(channel);
     };
   }, [loadChartData]);
 
   useEffect(() => {
     let cancelled = false;
-    void (async () => {
-      const { data: auth } = await supabase.auth.getUser();
-      if (cancelled) return;
-      setSignedIn(!!auth.user);
-      if (!auth.user) return;
-      const { data } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", auth.user.id)
-        .eq("role", "admin")
-        .maybeSingle();
-      if (!cancelled) setIsAdmin(!!data);
-    })();
+    const stopIdle = runWhenIdle(() => {
+      void (async () => {
+        const { data: auth } = await supabase.auth.getUser();
+        if (cancelled) return;
+        setSignedIn(!!auth.user);
+        if (!auth.user) return;
+        const { data } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", auth.user.id)
+          .eq("role", "admin")
+          .maybeSingle();
+        if (!cancelled) setIsAdmin(!!data);
+      })();
+    }, 1400);
     return () => {
       cancelled = true;
+      stopIdle();
     };
   }, []);
 
@@ -506,14 +1020,30 @@ export function LiveMap({
   const effectiveCenter = validCenter ?? fix ?? GOCEK;
 
   const pins = useMemo(() => pickValidCoordinates(providers), [providers]);
-
-  const tileUrl = variant === "dark" ? BASE_TILE_DARK : BASE_TILE_LIGHT;
-  const tileAttr = variant === "dark" ? "&copy; OpenStreetMap &copy; CARTO" : "";
-  const tileMaxNativeZoom = variant === "dark" ? MARINE_DARK_TILE_MAX_NATIVE_ZOOM : undefined;
+  const moorings = useMemo(
+    () =>
+      zones.filter((z) => {
+        if (!layers.moorings) return false;
+        if (z.kind === "fuel") return poiFilters.fuel;
+        if (z.kind === "marina" || z.kind === "anchorage" || z.kind === "restaurant") {
+          return poiFilters.marinas;
+        }
+        return false;
+      }),
+    [zones, layers.moorings, poiFilters.fuel, poiFilters.marinas],
+  );
+  const hazards = useMemo(() => zones.filter((z) => z.kind === "hazard"), [zones]);
+  const lights = useMemo(() => zones.filter((z) => z.kind === "lighthouse"), [zones]);
+  const onSelectZone = useCallback((zone: MarineZone) => {
+    setSelectedPoint({ kind: "zone", zone });
+  }, []);
+  const onSelectReport = useCallback((report: CommunityReport) => {
+    setSelectedPoint({ kind: "report", report });
+  }, []);
 
   const wrapperClass = fullscreen
-    ? "fixed inset-0 z-10 h-[100dvh] w-screen overflow-hidden " + className
-    : "relative z-10 w-full overflow-hidden " +
+    ? "thalvo-map-gpu absolute inset-0 isolate z-0 h-full min-h-[500px] w-full overflow-hidden " + className
+    : "thalvo-map-gpu relative isolate z-0 h-full min-h-[500px] w-full overflow-hidden " +
       (variant === "dark" ? "" : "rounded-2xl border border-border ") +
       className;
 
@@ -558,16 +1088,14 @@ export function LiveMap({
   // fresh one and fly to it as soon as it lands — either path leaves the
   // GEO_OPTIONS/failure handling identical to the initial auto-request.
   const onLocateMe = useCallback(async () => {
-    if (fix) {
-      map?.flyTo([fix.lat, fix.lng], Math.max(map.getZoom(), 15), { duration: 1 });
-      return;
-    }
     setRequesting(true);
     const res = await getFix(GEO_OPTIONS);
     if (res.ok) {
       setFix(res.fix);
       setFailure(null);
-      map?.flyTo([res.fix.lat, res.fix.lng], 15, { duration: 1 });
+      map?.flyTo([res.fix.lat, res.fix.lng], 14, { duration: 1 });
+    } else if (fix) {
+      map?.flyTo([fix.lat, fix.lng], 14, { duration: 1 });
     } else {
       setFailure(res.failure);
       setFailureDismissed(false);
@@ -610,313 +1138,152 @@ export function LiveMap({
   // without this the tiles freeze at the old size and leave grey gutters.
   useEffect(() => {
     if (!map) return;
-    const invalidate = () => map.invalidateSize();
+    const invalidate = debounce(() => map.invalidateSize({ animate: false }), 150);
     const raf = requestAnimationFrame(invalidate);
-    let ro: ResizeObserver | null = null;
-    if (wrapperRef.current && typeof ResizeObserver !== "undefined") {
-      ro = new ResizeObserver(() => invalidate());
-      ro.observe(wrapperRef.current);
-    }
-    window.addEventListener("resize", invalidate);
     window.addEventListener("orientationchange", invalidate);
     return () => {
       cancelAnimationFrame(raf);
-      ro?.disconnect();
-      window.removeEventListener("resize", invalidate);
+      invalidate.cancel();
       window.removeEventListener("orientationchange", invalidate);
     };
   }, [map]);
 
+  useEffect(() => {
+    if (!map) return;
+    const invalidate = debounce(() => map.invalidateSize({ animate: false }), 150);
+    invalidate();
+    return () => invalidate.cancel();
+  }, [map, layersMenuOpen, hudOpen]);
+
   const onMapTelemetry = useCallback(
-    (nextCenter: { lat: number; lng: number }, scaleNm: number | null) => {
+    (nextCenter: { lat: number; lng: number }, scaleNm: number | null, bearingDeg: number) => {
+      // Quantize so sub-pixel pan noise does not re-render the whole cockpit.
+      const lat = Math.round(nextCenter.lat * 1e5) / 1e5;
+      const lng = Math.round(nextCenter.lng * 1e5) / 1e5;
+      const nm = scaleNm == null ? null : Math.round(scaleNm * 100) / 100;
+      const bearing = Math.round(bearingDeg);
       setTelemetry((current) => {
         if (
-          current.center.lat === nextCenter.lat &&
-          current.center.lng === nextCenter.lng &&
-          current.scaleNm === scaleNm
+          current.center.lat === lat &&
+          current.center.lng === lng &&
+          current.scaleNm === nm &&
+          current.bearingDeg === bearing
         )
           return current;
-        return { center: nextCenter, scaleNm };
+        return { center: { lat, lng }, scaleNm: nm, bearingDeg: bearing };
       });
     },
     [],
   );
 
-  const moorings = zones.filter(
-    (z) =>
-      z.kind === "marina" || z.kind === "anchorage" || z.kind === "fuel" || z.kind === "restaurant",
-  );
-  const hazards = zones.filter((z) => z.kind === "hazard");
-  const lights = zones.filter((z) => z.kind === "lighthouse");
-
-  const zonePopup = (z: MarineZone) => (
-    <div className="text-[12px] leading-snug">
-      <p className="font-semibold">{z.name}</p>
-      <p className="opacity-70">{t(ZONE_KIND_LABEL_KEYS[z.kind])}</p>
-      {z.vhf_channel && (
-        <p className="mt-1">{t("marine.vhf_channel", { channel: z.vhf_channel })}</p>
-      )}
-      {z.depth_m != null && <p>{t("marine.depth_m", { value: z.depth_m })}</p>}
-      {zoneBottomLabel(z) && <p>{zoneBottomLabel(z)}</p>}
-      {z.description && <p className="mt-1">{z.description}</p>}
-    </div>
-  );
-
   return (
-    <div ref={wrapperRef} className={wrapperClass} style={fullscreen ? undefined : { height }}>
+    <div
+      ref={wrapperRef}
+      className={wrapperClass}
+      style={
+        fullscreen
+          ? {
+              height: "100%",
+              minHeight: 500,
+              width: "100%",
+            }
+          : {
+              height,
+              minHeight: 500,
+            }
+      }
+    >
+      <div
+        className="thalvo-map-gpu absolute inset-0 z-0 h-full min-h-[500px] w-full"
+        style={{
+          pointerEvents: "auto",
+          touchAction: "none",
+        }}
+      >
       <MapContainer
         ref={setMap}
         center={[effectiveCenter.lat, effectiveCenter.lng]}
         zoom={DEFAULT_ZOOM}
-        scrollWheelZoom={scrollZoom}
+        minZoom={CHART_MIN_ZOOM}
+        maxZoom={CHART_MAX_ZOOM}
+        dragging
+        touchZoom
+        scrollWheelZoom={fullscreen || scrollZoom}
+        doubleClickZoom
+        boxZoom
+        keyboard
         zoomControl={false}
         attributionControl={false}
-        fadeAnimation
-        zoomAnimation
-        markerZoomAnimation
+        fadeAnimation={false}
+        zoomAnimation={!isNativeWebView()}
+        markerZoomAnimation={false}
         zoomSnap={0.25}
         zoomDelta={0.5}
-        wheelPxPerZoomLevel={80}
-        className={variant === "dark" ? "thalvo-ecdis" : undefined}
+        wheelPxPerZoomLevel={60}
+        className={(variant === "dark" ? "thalvo-ecdis " : "") + "h-full w-full min-h-[500px]"}
         style={{
           width: "100%",
           height: "100%",
+          minHeight: "500px",
+          pointerEvents: "auto",
+          touchAction: "none",
           background: variant === "dark" ? CHART_VOID : undefined,
         }}
         {...({
-          rotate: true,
-          bearing: 0,
-          touchRotate: true,
-          shiftKeyRotate: true,
-          rotateControl: false,
+          tap: true,
+          scrollWheelZoom: Boolean(fullscreen || scrollZoom),
+          smoothWheelZoom: true,
         } as Record<string, unknown>)}
+        {...(isNativeWebView()
+          ? {}
+          : ({
+              rotate: true,
+              bearing: 0,
+              touchRotate: false,
+              shiftKeyRotate: true,
+              rotateControl: false,
+            } as Record<string, unknown>))}
       >
-        <TileLayer
-          key={tileUrl}
-          attribution={tileAttr}
-          url={tileUrl}
-          subdomains={variant === "dark" ? "abcd" : "abc"}
-          maxZoom={20}
-          maxNativeZoom={tileMaxNativeZoom}
-          keepBuffer={6}
-          updateWhenZooming
-          updateWhenIdle={false}
-          className={variant === "dark" ? "thalvo-dark-tiles" : undefined}
+        <MapSizeSync />
+        <MapInteractionUnlock />
+        {validCenter ? (
+          <Recenter center={validCenter} suspend={Boolean(navTarget)} />
+        ) : (
+          <BootstrapGps fix={fix} />
+        )}
+        <ChartRasterLayers
+          basemap={basemap}
+          showSeamarks={layers.seamarks}
         />
-        {layers.seamarks && (
-          <TileLayer
-            url="https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png"
-            attribution=""
-            opacity={1}
-            zIndex={10}
-            maxZoom={19}
-            keepBuffer={4}
-            className="thalvo-seamark-tiles"
-          />
-        )}
-        <Recenter center={effectiveCenter} suspend={Boolean(navTarget)} />
         <MapBridge onTelemetry={onMapTelemetry} onClick={onMapClick} />
-
-        {fix && <Marker position={[fix.lat, fix.lng]} icon={meIcon} opacity={stale ? 0.5 : 1} />}
-
-        {/* Captain-plotted course: own GPS fix -> a chart point picked from the detail sheet */}
-        {fix && navTarget && (
-          <Polyline
-            positions={[
-              [fix.lat, fix.lng],
-              [navTarget.lat, navTarget.lng],
-            ]}
-            pathOptions={{
-              color: "#00F0FF",
-              weight: 2.5,
-              opacity: 0.85,
-              dashArray: "1 10",
-              lineCap: "round",
-            }}
-          />
-        )}
-
-        {/* Live dispatch route: responding boat -> job, neon dashed course line */}
-        {layers.fleet &&
-          routes.map((r) => (
-            <Polyline
-              key={`route-${r.id}`}
-              positions={[
-                [r.from.lat, r.from.lng],
-                [r.to.lat, r.to.lng],
-              ]}
-              pathOptions={{
-                color: "#00F0FF",
-                weight: 2.5,
-                opacity: 0.85,
-                dashArray: "1 10",
-                lineCap: "round",
-              }}
-            />
-          ))}
-
-        {/* Fleet: service boats and mission pins */}
-        {layers.fleet &&
-          pins.map((p) => (
-            <Marker
-              key={p.id}
-              position={[p.lat, p.lng]}
-              icon={p.kind === "diver" ? diverIcon : mechIcon}
-            >
-              <Popup>
-                <span className="text-[12px] font-semibold">{p.name}</span>
-              </Popup>
-            </Marker>
-          ))}
-
-        {/* Moorings, anchorages, marinas, restaurants, fuel */}
-        {layers.moorings &&
-          moorings.map((z) => (
-            <Marker
-              key={z.id}
-              position={[z.lat, z.lng]}
-              icon={ZONE_ICONS[z.kind]}
-              eventHandlers={
-                enableDetailSheet
-                  ? { click: () => setSelectedPoint({ kind: "zone", zone: z }) }
-                  : undefined
-              }
-            >
-              {!enableDetailSheet && <Popup>{zonePopup(z)}</Popup>}
-            </Marker>
-          ))}
-        {layers.moorings &&
-          moorings
-            .filter((z) => z.kind === "anchorage")
-            .map((z) => (
-              <Circle
-                key={`c-${z.id}`}
-                center={[z.lat, z.lng]}
-                radius={450}
-                pathOptions={{
-                  color: "#39FF14",
-                  fillColor: "#39FF14",
-                  fillOpacity: 0.12,
-                  weight: 1.5,
-                }}
-              />
-            ))}
-
-        {/* Lighthouses ride with the seamark layer */}
-        {layers.seamarks &&
-          lights.map((z) => (
-            <Marker
-              key={z.id}
-              position={[z.lat, z.lng]}
-              icon={ZONE_ICONS.lighthouse}
-              eventHandlers={
-                enableDetailSheet
-                  ? { click: () => setSelectedPoint({ kind: "zone", zone: z }) }
-                  : undefined
-              }
-            >
-              {!enableDetailSheet && <Popup>{zonePopup(z)}</Popup>}
-            </Marker>
-          ))}
-
-        {/* Shoal / reef hazard rings */}
-        {layers.hazards &&
-          hazards.map((z) => (
-            <Circle
-              key={z.id}
-              center={[z.lat, z.lng]}
-              radius={300}
-                pathOptions={{
-                  color: "#FF2D55",
-                  fillColor: "#FF2D55",
-                  fillOpacity: 0.22,
-                  weight: 1.6,
-                  dashArray: "4 4",
-                }}
-              eventHandlers={
-                enableDetailSheet
-                  ? { click: () => setSelectedPoint({ kind: "zone", zone: z }) }
-                  : undefined
-              }
-            >
-              {!enableDetailSheet && <Popup>{zonePopup(z)}</Popup>}
-            </Circle>
-          ))}
-
-        {/* Dökükbaşı shoal — legacy surveyed polygon */}
-        {layers.hazards && (
-          <Polygon
-            positions={[
-              [36.7395, 28.9165],
-              [36.7415, 28.9215],
-              [36.7385, 28.926],
-              [36.7345, 28.9235],
-              [36.734, 28.9185],
-            ]}
-            pathOptions={{
-              color: "#FF2D55",
-              fillColor: "#FF2D55",
-              fillOpacity: 0.26,
-              weight: 1.6,
-              dashArray: "4 4",
-            }}
-          >
-            <Popup>
-              <div className="text-[12px] leading-snug">
-                <p className="font-semibold">Dökükbaşı Resifi</p>
-                <p className="opacity-70">{t("marine.category_hazard")}</p>
-                <p className="mt-1">{t("marine.dokukbasi_warning")}</p>
-              </div>
-            </Popup>
-          </Polygon>
-        )}
-
-        {/* Approved captain advice — "Kullanıcı Tavsiye Noktaları" layer */}
-        {layers.reports &&
-          reports.map((r) => (
-            <Marker
-              key={r.id}
-              position={[r.lat, r.lng]}
-              icon={reportIcon}
-              eventHandlers={
-                enableDetailSheet
-                  ? { click: () => setSelectedPoint({ kind: "report", report: r }) }
-                  : undefined
-              }
-            >
-              {!enableDetailSheet && (
-                <Popup>
-                  <div className="text-[12px] leading-snug">
-                    <p className="font-semibold">{t(REPORT_CATEGORY_LABEL_KEYS[r.category])}</p>
-                    <p className="opacity-70">{t("chart.report_from_captain")}</p>
-                    {r.depth_m != null && (
-                      <p className="mt-1">{t("marine.depth_m", { value: r.depth_m })}</p>
-                    )}
-                    {r.seabed && <p>{t(SEABED_LABEL_KEYS[r.seabed])}</p>}
-                    <p className="mt-1">{r.note}</p>
-                  </div>
-                </Popup>
-              )}
-            </Marker>
-          ))}
+        <ChartOverlays
+          fix={fix}
+          stale={stale}
+          navTarget={navTarget}
+          pins={pins}
+          routes={routes}
+          moorings={moorings}
+          hazards={hazards}
+          lights={lights}
+          reports={reports}
+          layers={layers}
+          poiFilters={poiFilters}
+          enableDetailSheet={enableDetailSheet}
+          onSelectZone={onSelectZone}
+          onSelectReport={onSelectReport}
+        />
       </MapContainer>
+      </div>
 
       {/*
-       * Everything below is the floating cockpit "chrome" (HUD, search bar,
-       * FAB stack, detail sheet, dialogs) rather than the map surface
-       * itself. In fullscreen mode it's portaled straight to `document.body`
-       * (see the IIFE below) — a descendant's z-index can never outrank an
-       * ancestor's stacking context, and the map tile wrapper above
-       * intentionally sits at a low z-index so the app shell's floating
-       * bottom dock nav still paints over the *map*. Without the portal,
-       * this chrome — including the bottom detail sheet — would be capped
-       * at that same low z-index and end up hidden under the dock instead
-       * of floating above it. Non-fullscreen (embedded) usage is untouched:
-       * the IIFE just returns the same JSX in place, no portal involved.
+       * HUD / search / FAB chrome stays inside the map wrapper so it cannot
+       * sit in a document-body stacking context above the SOS dock. The dock
+       * is a sibling of this wrapper (z-[90]); iOS WebView still hit-tests
+       * full-screen `pointer-events-none` body portals and swallows the SOS tap.
        */}
       {(() => {
         const overlayContent = (
-          <>
+          <div className="pointer-events-none absolute inset-0 z-[400]">
             {hud && (
               <>
                 <ChartHud
@@ -932,15 +1299,16 @@ export function LiveMap({
                     setPicking(false);
                     setDrawing((v) => !v);
                   }}
-                  // Reporting is open to anonymous captains too — no sign-in gate.
                   canContribute
                   onAddReport={() => {
                     setDrawing(false);
                     setReportPos(null);
                     setReportDialog(true);
                   }}
-                  mobileDrawerOpen={layersDrawerOpen}
-                  onMobileDrawerOpenChange={setLayersDrawerOpen}
+                  panelOpen={hudOpen}
+                  onPanelOpenChange={setHudOpen}
+                  basemap={basemap}
+                  onSelectBasemap={setBasemap}
                 />
                 <ChartSearchBar
                   zones={zones}
@@ -954,9 +1322,9 @@ export function LiveMap({
                   headerRight={headerRight}
                   banner={
                     hud && !fix && !requesting && failure && !failureDismissed ? (
-                      <div className="mt-1.5 flex w-full items-center gap-1.5 rounded-full border border-amber-300/40 bg-amber-400/15 px-2.5 py-1 text-[10px] font-semibold leading-tight text-amber-100 shadow-2xl backdrop-blur-md">
-                        <MapPinOff className="size-3 shrink-0" />
-                        <span className="min-w-0 flex-1 truncate">
+                      <div className="flex w-full min-w-0 items-start gap-1.5 rounded-xl border border-amber-300/40 bg-amber-400/15 px-2.5 py-1.5 text-[10px] font-semibold leading-snug text-amber-100 shadow-2xl backdrop-blur-md">
+                        <MapPinOff className="mt-0.5 size-3 shrink-0" />
+                        <span className="min-w-0 flex-1 whitespace-normal">
                           {t(failure.messageKey, { defaultValue: failure.defaultMessage })}
                         </span>
                         <button
@@ -985,55 +1353,26 @@ export function LiveMap({
                     <>
                       {drawing && <ChartDrawHint kind="admin" inline />}
                       {picking && <ChartDrawHint kind="report" inline />}
-                      {brand}
+                      {brand ? <div className="pointer-events-auto w-fit max-w-full">{brand}</div> : null}
                       <div
                         className={
-                          "transition-opacity duration-200 " +
-                          (hideMapChrome ? "pointer-events-none opacity-0" : "opacity-100")
+                          "pointer-events-auto w-fit max-w-full transition-opacity duration-200 " +
+                          (layersMenuOpen ? "pointer-events-none opacity-0" : "opacity-100")
                         }
                       >
                         <MetoceanHud />
                       </div>
-                      {fix && (
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={
-                              "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-bold shadow backdrop-blur-md " +
-                              (warn
-                                ? "border-amber-300/40 bg-amber-400/20 text-amber-200"
-                                : variant === "dark"
-                                  ? "border-white/15 bg-white/10 text-white"
-                                  : "border-border bg-white/90 text-foreground")
-                            }
-                          >
-                            {stale
-                              ? t("geo.stale")
-                              : lowAccuracy
-                                ? `${t("geo.low_accuracy")} · ${formatAccuracy(fix)}`
-                                : `${t("geo.accuracy")} ${formatAccuracy(fix)}`}
-                          </span>
-                          {warn && retryButton}
-                        </div>
-                      )}
-                      {!fix && (requesting || !hud) && (
-                        <div className="flex items-center gap-2">
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-300/40 bg-amber-400/20 px-2.5 py-1 text-[10px] font-bold text-amber-200 shadow backdrop-blur-md">
-                            {requesting ? (
-                              <>
-                                <Loader2 className="size-3 animate-spin" />
-                                {t("geo.locating")}
-                              </>
-                            ) : (
-                              <>
-                                <MapPinOff className="size-3" />
-                                {failure
-                                  ? t(failure.messageKey, { defaultValue: failure.defaultMessage })
-                                  : t("geo.locating")}
-                              </>
-                            )}
-                          </span>
-                          {!requesting && retryButton}
-                        </div>
+                      <ChartFilterChips
+                        filters={poiFilters}
+                        onToggle={(key) =>
+                          setPoiFilters((current) => ({ ...current, [key]: !current[key] }))
+                        }
+                      />
+                      {requesting && !fix && (
+                        <span className="pointer-events-auto inline-flex items-center gap-1.5 rounded-full border border-amber-300/40 bg-amber-400/20 px-2.5 py-1 text-[10px] font-bold text-amber-200 shadow backdrop-blur-md">
+                          <Loader2 className="size-3 animate-spin" />
+                          {t("geo.locating")}
+                        </span>
                       )}
                     </>
                   }
@@ -1042,16 +1381,36 @@ export function LiveMap({
                   coords={formatDegrees(telemetry.center.lat, telemetry.center.lng)}
                   scaleNm={telemetry.scaleNm}
                   viewportPinned={fullscreen}
-                  concealed={hideMapChrome}
+                  concealed={false}
                 />
                 <ChartFabStack
                   onResetNorth={onResetNorth}
-                  onOpenLayers={() => setLayersDrawerOpen(true)}
+                  onCycleBasemap={() => setBasemap((v) => nextBasemap(v))}
+                  layersOpen={layersMenuOpen}
+                  onLayersOpenChange={setLayersMenuOpen}
                   onLocateMe={() => void onLocateMe()}
                   locating={requesting}
-                  showAi={fullscreen}
-                  viewportPinned={fullscreen}
-                  concealed={hideMapChrome}
+                  concealed={false}
+                  headingDeg={telemetry.bearingDeg}
+                  basemap={basemap}
+                  onSelectBasemap={setBasemap}
+                  layers={layers}
+                  onToggleLayer={(key: ChartLayerKey) =>
+                    setLayers((v) => ({ ...v, [key]: !v[key] }))
+                  }
+                  onJump={onJump}
+                  isAdmin={isAdmin}
+                  drawing={drawing}
+                  onToggleDraw={() => {
+                    setPicking(false);
+                    setDrawing((v) => !v);
+                  }}
+                  canContribute
+                  onAddReport={() => {
+                    setDrawing(false);
+                    setReportPos(null);
+                    setReportDialog(true);
+                  }}
                 />
                 {/* drawing/picking hints now live in ChartSearchBar `below` */}
               </>
@@ -1103,8 +1462,7 @@ export function LiveMap({
                 )}
               </div>
             )}
-
-          </>
+          </div>
         );
         const detailSheet = enableDetailSheet ? (
           <ChartDetailSheet
@@ -1120,20 +1478,8 @@ export function LiveMap({
         ) : null;
         return (
           <>
-            {fullscreen
-              ? mounted &&
-                createPortal(
-                  <div className="pointer-events-none fixed inset-0 z-20">{overlayContent}</div>,
-                  document.body,
-                )
-              : overlayContent}
-            {fullscreen
-              ? mounted &&
-                createPortal(
-                  <div className="pointer-events-none fixed inset-0 z-50">{detailSheet}</div>,
-                  document.body,
-                )
-              : detailSheet}
+            {overlayContent}
+            {detailSheet}
           </>
         );
       })()}
