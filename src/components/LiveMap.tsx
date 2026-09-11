@@ -54,6 +54,7 @@ import {
   toNauticalMiles,
   chartPointCoords,
   zoneBottomLabel,
+  isValidChartPoint,
   REPORT_CATEGORY_LABEL_KEYS,
   SEABED_LABEL_KEYS,
   ZONE_KIND_LABEL_KEYS,
@@ -547,14 +548,16 @@ const ChartOverlays = memo(function ChartOverlays({
   const { t } = useTranslation();
   const zonePopup = (z: MarineZone) => (
     <div className="text-[12px] leading-snug">
-      <p className="font-semibold">{z.name}</p>
-      <p className="opacity-70">{t(ZONE_KIND_LABEL_KEYS[z.kind])}</p>
-      {z.vhf_channel && (
+      <p className="font-semibold">{z?.name ?? "—"}</p>
+      <p className="opacity-70">
+        {t(ZONE_KIND_LABEL_KEYS[z?.kind as MarineZoneKind] ?? "marine.kind_marina")}
+      </p>
+      {z?.vhf_channel && (
         <p className="mt-1">{t("marine.vhf_channel", { channel: z.vhf_channel })}</p>
       )}
-      {z.depth_m != null && <p>{t("marine.depth_m", { value: z.depth_m })}</p>}
+      {z?.depth_m != null && <p>{t("marine.depth_m", { value: z.depth_m })}</p>}
       {zoneBottomLabel(z) && <p>{zoneBottomLabel(z)}</p>}
-      {z.description && <p className="mt-1">{z.description}</p>}
+      {z?.description && <p className="mt-1">{z.description}</p>}
     </div>
   );
 
@@ -912,41 +915,47 @@ function LiveMapCanvas({
   // AI Captain context: selection/GPS always publish; chart-pan is throttled
   // so drag does not flood the main thread.
   useEffect(() => {
-    const position = fix
-      ? { lat: fix.lat, lng: fix.lng, source: "gps" as const }
-      : { lat: telemetry.center.lat, lng: telemetry.center.lng, source: "chart" as const };
+    try {
+      const position = fix
+        ? { lat: fix.lat, lng: fix.lng, source: "gps" as const }
+        : { lat: telemetry.center.lat, lng: telemetry.center.lng, source: "chart" as const };
 
-    if (selectedPoint?.kind === "zone") {
-      publishCockpitContext({
-        position,
-        selectedBay: {
-          name: selectedPoint.zone.name,
-          kind: selectedPoint.zone.kind,
-          depthM: selectedPoint.zone.depth_m,
-          seabed: zoneBottomLabel(selectedPoint.zone),
-          protection: selectedPoint.zone.metadata.protection ?? null,
-          lat: selectedPoint.zone.lat,
-          lng: selectedPoint.zone.lng,
-        },
-      });
-      return;
+      if (selectedPoint?.kind === "zone" && selectedPoint.zone) {
+        const z = selectedPoint.zone;
+        publishCockpitContext({
+          position,
+          selectedBay: {
+            name: z.name ?? "—",
+            kind: z.kind ?? "marina",
+            depthM: z.depth_m ?? null,
+            seabed: zoneBottomLabel(z),
+            protection: z.metadata?.protection ?? null,
+            lat: z.lat,
+            lng: z.lng,
+          },
+        });
+        return;
+      }
+      if (selectedPoint?.kind === "report" && selectedPoint.report) {
+        const r = selectedPoint.report;
+        publishCockpitContext({
+          position,
+          selectedBay: {
+            name: r.title ?? "—",
+            kind: r.category ?? "general",
+            depthM: r.depth_m ?? null,
+            seabed: r.seabed ?? null,
+            protection: null,
+            lat: r.lat,
+            lng: r.lng,
+          },
+        });
+        return;
+      }
+      publishCockpitContext({ position, selectedBay: null });
+    } catch (err) {
+      console.error("[LiveMap] cockpit context publish failed:", err);
     }
-    if (selectedPoint?.kind === "report") {
-      publishCockpitContext({
-        position,
-        selectedBay: {
-          name: selectedPoint.report.title,
-          kind: selectedPoint.report.category,
-          depthM: selectedPoint.report.depth_m,
-          seabed: selectedPoint.report.seabed,
-          protection: null,
-          lat: selectedPoint.report.lat,
-          lng: selectedPoint.report.lng,
-        },
-      });
-      return;
-    }
-    publishCockpitContext({ position, selectedBay: null });
   }, [fix, selectedPoint]);
 
   useEffect(() => {
@@ -1098,9 +1107,23 @@ function LiveMapCanvas({
   const hazards = useMemo(() => zones.filter((z) => z.kind === "hazard"), [zones]);
   const lights = useMemo(() => zones.filter((z) => z.kind === "lighthouse"), [zones]);
   const onSelectZone = useCallback((zone: MarineZone) => {
-    setSelectedPoint({ kind: "zone", zone });
+    console.log("[Point Clicked]:", { kind: "zone", zone });
+    if (!zone || !Number.isFinite(zone.lat) || !Number.isFinite(zone.lng)) {
+      console.error("[Point Clicked] invalid zone — ignored", zone);
+      return;
+    }
+    // Normalize metadata so sheet/AI never see null.
+    setSelectedPoint({
+      kind: "zone",
+      zone: { ...zone, metadata: zone.metadata ?? {} },
+    });
   }, []);
   const onSelectReport = useCallback((report: CommunityReport) => {
+    console.log("[Point Clicked]:", { kind: "report", report });
+    if (!report || !Number.isFinite(report.lat) || !Number.isFinite(report.lng)) {
+      console.error("[Point Clicked] invalid report — ignored", report);
+      return;
+    }
     setSelectedPoint({ kind: "report", report });
   }, []);
 
@@ -1397,9 +1420,23 @@ function LiveMapCanvas({
                   zones={zones}
                   reports={reports}
                   onSelect={(point) => {
+                    console.log("[Point Clicked]:", point);
+                    if (!isValidChartPoint(point)) {
+                      console.error("[Point Clicked] invalid chart point — ignored", point);
+                      return;
+                    }
                     const coords = chartPointCoords(point);
                     map?.flyTo([coords.lat, coords.lng], 15, { duration: 1 });
-                    if (enableDetailSheet) setSelectedPoint(point);
+                    if (enableDetailSheet) {
+                      if (point.kind === "zone") {
+                        setSelectedPoint({
+                          kind: "zone",
+                          zone: { ...point.zone, metadata: point.zone.metadata ?? {} },
+                        });
+                      } else {
+                        setSelectedPoint(point);
+                      }
+                    }
                   }}
                   headerLeft={headerLeft}
                   headerRight={headerRight}

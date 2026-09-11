@@ -122,14 +122,42 @@ export const REPORT_TO_ZONE_KIND: Record<ReportCategory, MarineZoneKind> = {
 export type ChartPoint =
   { kind: "zone"; zone: MarineZone } | { kind: "report"; report: CommunityReport };
 
+/** Human-readable bottom composition for a zone, straight from its metadata. */
+export function zoneBottomLabel(zone: MarineZone | null | undefined): string | null {
+  const bottom = zone?.metadata?.bottom;
+  return typeof bottom === "string" && bottom.length > 0 ? bottom : null;
+}
+
 export function chartPointCoords(point: ChartPoint): { lat: number; lng: number } {
-  return point.kind === "zone"
-    ? { lat: point.zone.lat, lng: point.zone.lng }
-    : { lat: point.report.lat, lng: point.report.lng };
+  if (point?.kind === "zone" && point.zone) {
+    return { lat: Number(point.zone.lat), lng: Number(point.zone.lng) };
+  }
+  if (point?.kind === "report" && point.report) {
+    return { lat: Number(point.report.lat), lng: Number(point.report.lng) };
+  }
+  return { lat: Number.NaN, lng: Number.NaN };
 }
 
 export function chartPointName(point: ChartPoint): string {
-  return point.kind === "zone" ? point.zone.name : point.report.title;
+  if (point?.kind === "zone") return point.zone?.name ?? "—";
+  if (point?.kind === "report") return point.report?.title ?? "—";
+  return "—";
+}
+
+/** True when a chart point has finite WGS84 coordinates. */
+export function isValidChartPoint(point: ChartPoint | null | undefined): point is ChartPoint {
+  if (!point) return false;
+  if (point.kind === "zone") {
+    return Boolean(point.zone) && Number.isFinite(point.zone.lat) && Number.isFinite(point.zone.lng);
+  }
+  if (point.kind === "report") {
+    return (
+      Boolean(point.report) &&
+      Number.isFinite(point.report.lat) &&
+      Number.isFinite(point.report.lng)
+    );
+  }
+  return false;
 }
 
 function num(v: unknown): number {
@@ -179,12 +207,6 @@ export async function fetchMarineZones(includeInactive = false): Promise<MarineZ
     created_at: r.created_at as string,
     metadata: (r.metadata as MarineZoneMetadata | null) ?? {},
   }));
-}
-
-/** Human-readable bottom composition for a zone, straight from its metadata. */
-export function zoneBottomLabel(zone: MarineZone): string | null {
-  const bottom = zone.metadata.bottom;
-  return typeof bottom === "string" && bottom.length > 0 ? bottom : null;
 }
 
 export async function fetchCommunityReports(status?: ReportStatus): Promise<CommunityReport[]> {
