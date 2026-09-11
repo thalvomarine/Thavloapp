@@ -12,7 +12,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit",
-    "test": "node --test --experimental-strip-types src/lib/geolocation.test.ts src/lib/nav.test.ts src/lib/payments.test.ts",
+    "test": "node --test --experimental-strip-types src/lib/geolocation.test.ts src/lib/nav.test.ts src/lib/payments.test.ts src/lib/sea-route.test.ts",
     "cap:prepare": "node scripts/prepare-web-spa.mjs",
     "cap:sync": "npm run build && npx cap sync",
     "build:mobile": "npm run cap:sync"

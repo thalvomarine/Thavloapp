@@ -1366,6 +1366,8 @@
     "sheet_emergency": "Acil Servis / Bot Çağır",
     "locate_me": "Mevcut konumuma git",
     "locate_locating": "Konum alınıyor…",
-    "ai_hint": "AI Kaptan Asistanı"
+    "ai_hint": "AI Kaptan Asistanı",
+    "sea_route_label": "Deniz rotası",
+    "sea_route_eta": "~{{min}} dk @ {{kts}} kts"
   }
 }

@@ -1366,6 +1366,8 @@
     "sheet_emergency": "Emergency / Call a Boat",
     "locate_me": "Go to my location",
     "locate_locating": "Locating…",
-    "ai_hint": "AI Captain Assistant"
+    "ai_hint": "AI Captain Assistant",
+    "sea_route_label": "Sea route",
+    "sea_route_eta": "~{{min}} min @ {{kts}} kts"
   }
 }

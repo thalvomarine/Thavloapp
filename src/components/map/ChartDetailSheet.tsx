@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AlertOctagon, Anchor, Navigation, Ruler, Waves, X } from "lucide-react";
 import {
@@ -12,6 +12,7 @@ import {
   type ChartPoint,
 } from "@/lib/marine-data";
 import { haversineNm } from "@/lib/geo-eta";
+import { computeSeaRoute, DEFAULT_YACHT_SPEED_KTS } from "@/lib/sea-route";
 import { openEmergencyService } from "@/lib/emergency-service-bus";
 import { fetchMetocean, nearestRegion, shelterStatus, type MetoceanSnapshot } from "@/lib/metocean";
 
@@ -92,7 +93,17 @@ export function ChartDetailSheet({ point, fix, onClose, onNavigate, onEmergency 
   const region = nearestRegion(coords.lat, coords.lng);
   const shelter = snapshot ? shelterStatus(region, snapshot.windDirectionDeg) : null;
 
-  const distanceNm = fix ? haversineNm(fix.lat, fix.lng, coords.lat, coords.lng) : null;
+  const sea = useMemo(() => {
+    if (!fix) return null;
+    return computeSeaRoute(
+      { lat: fix.lat, lng: fix.lng },
+      { lat: coords.lat, lng: coords.lng },
+      DEFAULT_YACHT_SPEED_KTS,
+    );
+  }, [fix, coords.lat, coords.lng]);
+  const displayNm = sea?.distanceNm ?? (fix ? haversineNm(fix.lat, fix.lng, coords.lat, coords.lng) : null);
+  const etaMin =
+    sea?.etaMinutes != null ? Math.max(1, Math.round(sea.etaMinutes)) : null;
 
   return (
     <div
@@ -156,10 +167,13 @@ export function ChartDetailSheet({ point, fix, onClose, onNavigate, onEmergency 
                 {t(shelter.labelKey)}
               </span>
             ) : null}
-            {distanceNm != null && (
+            {displayNm != null && (
               <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-1 font-mono text-white/60">
                 <Navigation className="size-3 text-cyan-300/70" />
-                {distanceNm.toFixed(1)} NM
+                {displayNm.toFixed(1)} NM
+                {etaMin != null
+                  ? ` · ${t("chart.sea_route_eta", { min: etaMin, kts: DEFAULT_YACHT_SPEED_KTS })}`
+                  : ""}
               </span>
             )}
           </div>

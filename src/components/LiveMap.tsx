@@ -91,6 +91,11 @@ import { AdminZoneDialog } from "@/components/map/AdminZoneDialog";
 import { MetoceanHud } from "@/components/map/MetoceanHud";
 import { MapPlaceholder } from "@/components/ClientOnly";
 import { createRealtimeBuffer, debounce, runWhenIdle } from "@/lib/schedule";
+import {
+  computeSeaRoute,
+  DEFAULT_YACHT_SPEED_KTS,
+  type SeaRouteResult,
+} from "@/lib/sea-route";
 
 export interface LivePin {
   id: string;
@@ -509,6 +514,7 @@ const ChartOverlays = memo(function ChartOverlays({
   fix,
   stale,
   navTarget,
+  navRoute,
   pins,
   routes,
   moorings,
@@ -524,6 +530,8 @@ const ChartOverlays = memo(function ChartOverlays({
   fix: GeoFix | null;
   stale: boolean;
   navTarget: { lat: number; lng: number } | null;
+  /** Coastal sea-route polyline (land-avoiding). Falls back to straight line. */
+  navRoute: Array<{ lat: number; lng: number }> | null;
   pins: LivePin[];
   routes: LiveRoute[];
   moorings: MarineZone[];
@@ -550,22 +558,27 @@ const ChartOverlays = memo(function ChartOverlays({
     </div>
   );
 
+  const seaLine =
+    navRoute && navRoute.length >= 2
+      ? navRoute.map((p) => [p.lat, p.lng] as [number, number])
+      : fix && navTarget
+        ? ([[fix.lat, fix.lng], [navTarget.lat, navTarget.lng]] as [number, number][])
+        : null;
+
   return (
     <>
       {fix && <Marker position={[fix.lat, fix.lng]} icon={meIcon} opacity={stale ? 0.5 : 1} />}
 
-      {fix && navTarget && (
+      {seaLine && (
         <Polyline
-          positions={[
-            [fix.lat, fix.lng],
-            [navTarget.lat, navTarget.lng],
-          ]}
+          positions={seaLine}
           pathOptions={{
             color: "#00F0FF",
-            weight: 2.5,
-            opacity: 0.85,
-            dashArray: "1 10",
+            weight: 3,
+            opacity: 0.9,
+            dashArray: "2 8",
             lineCap: "round",
+            lineJoin: "round",
           }}
         />
       )}
@@ -772,15 +785,33 @@ function LiveMapCanvas({
   // should still surface.
   const [failureDismissed, setFailureDismissed] = useState(false);
   const [map, setMap] = useState<L.Map | null>(null);
-  const mapInstanceRef = useRef<L.Map | null>(null);
   const started = useRef(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [selectedPoint, setSelectedPoint] = useState<ChartPoint | null>(null);
   const [navTarget, setNavTarget] = useState<{ lat: number; lng: number } | null>(null);
+  const [seaRoute, setSeaRoute] = useState<SeaRouteResult | null>(null);
 
   useEffect(() => {
-    mapInstanceRef.current = map;
-  }, [map]);
+    if (!fix || !navTarget) {
+      setSeaRoute(null);
+      return;
+    }
+    let cancelled = false;
+    // Defer heavy graph build off the tap handler so the sheet can close first.
+    const stop = runWhenIdle(() => {
+      if (cancelled) return;
+      const route = computeSeaRoute(
+        { lat: fix.lat, lng: fix.lng },
+        { lat: navTarget.lat, lng: navTarget.lng },
+        DEFAULT_YACHT_SPEED_KTS,
+      );
+      if (!cancelled) setSeaRoute(route);
+    }, 120);
+    return () => {
+      cancelled = true;
+      stop();
+    };
+  }, [fix, navTarget]);
 
   useEffect(() => {
     if (!map) return;
@@ -1260,6 +1291,7 @@ function LiveMapCanvas({
           fix={fix}
           stale={stale}
           navTarget={navTarget}
+          navRoute={seaRoute?.waypoints ?? null}
           pins={pins}
           routes={routes}
           moorings={moorings}
@@ -1274,6 +1306,23 @@ function LiveMapCanvas({
         />
       </MapContainer>
       </div>
+
+      {seaRoute && navTarget && (
+        <div className="pointer-events-none absolute bottom-[calc(env(safe-area-inset-bottom,0px)+7.5rem)] left-1/2 z-[450] -translate-x-1/2 px-3">
+          <div className="pointer-events-auto rounded-full border border-cyan-400/35 bg-[#0a192f]/92 px-3.5 py-1.5 font-mono text-[11px] text-cyan-100 shadow-2xl backdrop-blur-md">
+            <span className="text-cyan-300/80">{t("chart.sea_route_label")}</span>
+            {" · "}
+            {seaRoute.distanceNm.toFixed(1)} NM
+            {" · "}
+            {seaRoute.etaMinutes == null
+              ? "—"
+              : t("chart.sea_route_eta", {
+                  min: Math.max(1, Math.round(seaRoute.etaMinutes)),
+                  kts: Math.round(seaRoute.speedKts),
+                })}
+          </div>
+        </div>
+      )}
 
       {/*
        * HUD / search / FAB chrome stays inside the map wrapper so it cannot
