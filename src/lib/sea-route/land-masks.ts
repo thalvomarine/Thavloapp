@@ -6,7 +6,10 @@
  * Slightly oversized so A* prefers open-water corridors.
  */
 
-import type { LatLng } from "./geometry.ts";
+import { expandRing, type LatLng } from "./geometry.ts";
+
+/** Coastal safety buffer (~250 m ≈ 0.135 NM). */
+export const LAND_BUFFER_METERS = 250;
 
 /** Island / peninsula / coastal hinterland rings. */
 export const AEGEAN_LAND_MASKS: LatLng[][] = [
@@ -153,3 +156,8 @@ export const AEGEAN_LAND_MASKS: LatLng[][] = [
     { lat: 36.964, lng: 27.438 },
   ],
 ];
+
+/** Land masks inflated by LAND_BUFFER_METERS for routing / LOS checks. */
+export const AEGEAN_LAND_MASKS_BUFFERED: LatLng[][] = AEGEAN_LAND_MASKS.map((ring) =>
+  expandRing(ring, LAND_BUFFER_METERS),
+);

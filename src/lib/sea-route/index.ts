@@ -8,14 +8,17 @@
  */
 
 import {
+  compassCardinal,
   haversineNm,
+  initialBearingDeg,
   isFiniteLatLng,
+  minDistanceToLandM,
   pathLengthNm,
   segmentCrossesLand,
-  simplifyPath,
   type LatLng,
 } from "./geometry.ts";
-import { AEGEAN_LAND_MASKS } from "./land-masks.ts";
+import { AEGEAN_LAND_MASKS, AEGEAN_LAND_MASKS_BUFFERED } from "./land-masks.ts";
+import { simplifySeaRoute } from "./simplify-route.ts";
 import { getSeaWaypoints } from "./waypoints.ts";
 
 const MAX_EDGE_NM = 5.5;
@@ -24,6 +27,8 @@ const SNAP_NM = 7;
 const BUCKET = 0.08;
 const ASTAR_MAX_ITER = 8_000;
 const NEAREST_LIMIT = 3;
+/** Leg samples closer than this to land → narrow risk (~0.3 NM). */
+const NARROW_LAND_M = 0.3 * 1852;
 
 type Graph = {
   nodes: LatLng[];
@@ -62,7 +67,7 @@ function buildGraph(): Graph {
           const b = nodes[j]!;
           const cost = haversineNm(a.lat, a.lng, b.lat, b.lng);
           if (cost > MAX_EDGE_NM || cost < 0.05) continue;
-          if (segmentCrossesLand(a, b, AEGEAN_LAND_MASKS, 8)) continue;
+          if (segmentCrossesLand(a, b, AEGEAN_LAND_MASKS_BUFFERED, 8)) continue;
           adj[i]!.push({ to: j, cost });
           adj[j]!.push({ to: i, cost });
         }
@@ -90,7 +95,7 @@ function nearestNodes(
     if (!n) continue;
     const cost = haversineNm(p.lat, p.lng, n.lat, n.lng);
     if (!Number.isFinite(cost) || cost > maxNm) continue;
-    if (!segmentCrossesLand(p, n, AEGEAN_LAND_MASKS, 8)) clear.push({ idx: i, cost });
+    if (!segmentCrossesLand(p, n, AEGEAN_LAND_MASKS_BUFFERED, 8)) clear.push({ idx: i, cost });
     else if (cost <= 2.5) soft.push({ idx: i, cost });
   }
   clear.sort((a, b) => a.cost - b.cost);
@@ -210,26 +215,77 @@ function routeViaMesh(from: LatLng, to: LatLng): LatLng[] | null {
 
 export type SeaRouteMode = "sea" | "direct";
 
+export type SeaRouteLegRisk = "clear" | "narrow";
+
+export interface SeaRouteLeg {
+  from: LatLng;
+  to: LatLng;
+  bearingDeg: number;
+  bearingLabel: string;
+  distanceNm: number;
+  etaMinutes: number | null;
+  risk: SeaRouteLegRisk;
+}
+
 export interface SeaRouteResult {
   waypoints: LatLng[];
+  legs: SeaRouteLeg[];
   distanceNm: number;
   etaMinutes: number | null;
   speedKts: number;
   mode: SeaRouteMode;
+  viaPoints?: LatLng[];
 }
 
 export const DEFAULT_YACHT_SPEED_KTS = 7;
+
+export const ROUTE_SPEED_OPTIONS_KTS = [6, 8, 14, 22] as const;
 
 export function etaMinutesForNm(distanceNm: number, speedKts: number): number | null {
   if (!Number.isFinite(distanceNm) || !Number.isFinite(speedKts) || speedKts <= 0) return null;
   return (distanceNm / speedKts) * 60;
 }
 
+function legRisk(from: LatLng, to: LatLng): SeaRouteLegRisk {
+  const mid = {
+    lat: (from.lat + to.lat) / 2,
+    lng: (from.lng + to.lng) / 2,
+  };
+  const dMid = minDistanceToLandM(mid, AEGEAN_LAND_MASKS);
+  const dFrom = minDistanceToLandM(from, AEGEAN_LAND_MASKS);
+  const dTo = minDistanceToLandM(to, AEGEAN_LAND_MASKS);
+  if (Math.min(dMid, dFrom, dTo) < NARROW_LAND_M) return "narrow";
+  return "clear";
+}
+
+export function buildLegs(waypoints: LatLng[], speedKts: number): SeaRouteLeg[] {
+  const legs: SeaRouteLeg[] = [];
+  for (let i = 1; i < waypoints.length; i++) {
+    const from = waypoints[i - 1]!;
+    const to = waypoints[i]!;
+    if (!isFiniteLatLng(from) || !isFiniteLatLng(to)) continue;
+    const distanceNm = haversineNm(from.lat, from.lng, to.lat, to.lng);
+    const bearingDeg = initialBearingDeg(from, to);
+    legs.push({
+      from,
+      to,
+      bearingDeg,
+      bearingLabel: compassCardinal(bearingDeg),
+      distanceNm,
+      etaMinutes: etaMinutesForNm(distanceNm, speedKts),
+      risk: legRisk(from, to),
+    });
+  }
+  return legs;
+}
+
 function directResult(from: LatLng, to: LatLng, speedKts: number): SeaRouteResult {
   const distanceNm = haversineNm(from.lat, from.lng, to.lat, to.lng);
   const safeNm = Number.isFinite(distanceNm) ? distanceNm : 0;
+  const waypoints = [from, to];
   return {
-    waypoints: [from, to],
+    waypoints,
+    legs: buildLegs(waypoints, speedKts),
     distanceNm: safeNm,
     etaMinutes: etaMinutesForNm(safeNm, speedKts),
     speedKts,
@@ -237,15 +293,23 @@ function directResult(from: LatLng, to: LatLng, speedKts: number): SeaRouteResul
   };
 }
 
-function seaResult(waypoints: LatLng[], speedKts: number): SeaRouteResult {
+function seaResult(waypoints: LatLng[], speedKts: number, viaPoints?: LatLng[]): SeaRouteResult {
   const distanceNm = pathLengthNm(waypoints);
   return {
     waypoints,
+    legs: buildLegs(waypoints, speedKts),
     distanceNm,
     etaMinutes: etaMinutesForNm(distanceNm, speedKts),
     speedKts,
     mode: "sea",
+    viaPoints,
   };
+}
+
+function finalizePath(raw: LatLng[], speedKts: number, viaPoints?: LatLng[]): SeaRouteResult {
+  const simplified = simplifySeaRoute(raw, AEGEAN_LAND_MASKS_BUFFERED, 0.12);
+  const waypoints = simplified.length >= 2 ? simplified : raw.filter(isFiniteLatLng);
+  return seaResult(waypoints, speedKts, viaPoints);
 }
 
 /**
@@ -270,26 +334,26 @@ export function computeSeaRoute(
 
     if (directNm < 0.12) return directResult(from, to, kts);
 
-    const directClear = !segmentCrossesLand(from, to, AEGEAN_LAND_MASKS, 16);
+    const directClear = !segmentCrossesLand(from, to, AEGEAN_LAND_MASKS_BUFFERED, 16);
     if (directClear && directNm <= 3.5) return directResult(from, to, kts);
 
     const mesh = routeViaMesh(from, to);
     if (mesh && mesh.length > 0) {
       const raw = [from, ...mesh, to];
-      const waypoints = simplifyPath(raw, 0.06);
+      const result = finalizePath(raw, kts);
       let clean = true;
-      for (let i = 1; i < waypoints.length; i++) {
-        const a = waypoints[i - 1]!;
-        const b = waypoints[i]!;
-        const isHarborHop = i === 1 || i === waypoints.length - 1;
-        if (segmentCrossesLand(a, b, AEGEAN_LAND_MASKS, 8)) {
+      for (let i = 1; i < result.waypoints.length; i++) {
+        const a = result.waypoints[i - 1]!;
+        const b = result.waypoints[i]!;
+        const isHarborHop = i === 1 || i === result.waypoints.length - 1;
+        if (segmentCrossesLand(a, b, AEGEAN_LAND_MASKS_BUFFERED, 8)) {
           if (!(isHarborHop && haversineNm(a.lat, a.lng, b.lat, b.lng) <= 2.5)) {
             clean = false;
             break;
           }
         }
       }
-      if (clean && waypoints.length >= 2) return seaResult(waypoints, kts);
+      if (clean && result.waypoints.length >= 2) return result;
     }
 
     // Open-water southern gate chain (south of Datça / coastal land).
@@ -302,30 +366,69 @@ export function computeSeaRoute(
     const via = [from, ...gates, to];
     let viaOk = true;
     for (let i = 1; i < via.length; i++) {
-      if (segmentCrossesLand(via[i - 1]!, via[i]!, AEGEAN_LAND_MASKS, 10)) {
+      if (segmentCrossesLand(via[i - 1]!, via[i]!, AEGEAN_LAND_MASKS_BUFFERED, 10)) {
         viaOk = false;
         break;
       }
     }
-    if (viaOk) return seaResult(via, kts);
+    if (viaOk) return finalizePath(via, kts);
 
-    // Only accept a straight line when it is actually clear of land.
     if (directClear) return directResult(from, to, kts);
 
-    // Land-crossing absolute fallback: still prefer southern gates even if a
-    // gate leg clips a mask (better than cutting the peninsula mid-chart).
     console.warn("[SeaRoute] using soft southern detour — masks incomplete for this pair");
-    return seaResult(via, kts);
+    return finalizePath(via, kts);
   } catch (err) {
     console.error("[SeaRoute Error]:", err);
     if (isFiniteLatLng(from) && isFiniteLatLng(to)) return directResult(from, to, speedKts);
     return {
       waypoints: [],
+      legs: [],
       distanceNm: 0,
       etaMinutes: null,
       speedKts,
       mode: "direct",
     };
+  }
+}
+
+/**
+ * Multi-via coastal route: origin → via1 → … → destination.
+ * Each segment is land-avoiding; results are concatenated then simplified.
+ */
+export function computeSeaRouteVia(
+  origin: LatLng,
+  destination: LatLng,
+  vias: LatLng[] = [],
+  speedKts: number = DEFAULT_YACHT_SPEED_KTS,
+): SeaRouteResult {
+  try {
+    const kts = Number.isFinite(speedKts) && speedKts > 0 ? speedKts : DEFAULT_YACHT_SPEED_KTS;
+    const stops = [origin, ...vias.filter(isFiniteLatLng), destination].filter(isFiniteLatLng);
+    if (stops.length < 2) {
+      return {
+        waypoints: [],
+        legs: [],
+        distanceNm: 0,
+        etaMinutes: null,
+        speedKts: kts,
+        mode: "direct",
+      };
+    }
+    if (stops.length === 2) return computeSeaRoute(stops[0]!, stops[1]!, kts);
+
+    const merged: LatLng[] = [];
+    for (let i = 1; i < stops.length; i++) {
+      const seg = computeSeaRoute(stops[i - 1]!, stops[i]!, kts);
+      const pts = seg.waypoints.filter(isFiniteLatLng);
+      if (pts.length === 0) continue;
+      if (merged.length === 0) merged.push(...pts);
+      else merged.push(...pts.slice(1));
+    }
+    if (merged.length < 2) return computeSeaRoute(origin, destination, kts);
+    return finalizePath(merged, kts, vias.filter(isFiniteLatLng));
+  } catch (err) {
+    console.error("[SeaRoute Error]:", err);
+    return computeSeaRoute(origin, destination, speedKts);
   }
 }
 
@@ -347,12 +450,35 @@ export function computeSeaRouteAsync(
         resolve(
           isFiniteLatLng(from) && isFiniteLatLng(to)
             ? directResult(from, to, speedKts)
-            : { waypoints: [], distanceNm: 0, etaMinutes: null, speedKts, mode: "direct" },
+            : { waypoints: [], legs: [], distanceNm: 0, etaMinutes: null, speedKts, mode: "direct" },
         );
       }
     };
     if (typeof requestIdleCallback === "function") {
       requestIdleCallback(() => run(), { timeout: 400 });
+    } else {
+      setTimeout(run, 0);
+    }
+  });
+}
+
+export function computeSeaRouteViaAsync(
+  origin: LatLng,
+  destination: LatLng,
+  vias: LatLng[] = [],
+  speedKts: number = DEFAULT_YACHT_SPEED_KTS,
+): Promise<SeaRouteResult> {
+  return new Promise((resolve) => {
+    const run = () => {
+      try {
+        resolve(computeSeaRouteVia(origin, destination, vias, speedKts));
+      } catch (err) {
+        console.error("[SeaRoute Error]:", err);
+        resolve(computeSeaRoute(origin, destination, speedKts));
+      }
+    };
+    if (typeof requestIdleCallback === "function") {
+      requestIdleCallback(() => run(), { timeout: 500 });
     } else {
       setTimeout(run, 0);
     }

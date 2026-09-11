@@ -1368,6 +1368,20 @@
     "locate_locating": "Konum alınıyor…",
     "ai_hint": "AI Kaptan Asistanı",
     "sea_route_label": "Deniz rotası",
-    "sea_route_eta": "~{{min}} dk @ {{kts}} kts"
+    "sea_route_eta": "~{{min}} dk @ {{kts}} kts",
+    "route_deck_title": "Rota Konsolu",
+    "route_deck_speed": "Hız (kts)",
+    "route_deck_eta_min": "~{{min}} dk",
+    "route_deck_eta_hm": "~{{h}} sa {{m}} dk",
+    "route_deck_optimizing": "Rota optimizasyonu yapılıyor…",
+    "route_deck_legs": "{{count}} bacak",
+    "route_deck_no_legs": "Henüz bacak yok",
+    "route_deck_leg_row": "Bacak {{n}}: {{brg}}° {{card}} · {{nm}} NM · ~{{min}} dk",
+    "route_deck_narrow": "Dar",
+    "route_deck_reset": "Sıfırla",
+    "route_deck_add_via": "+ Ara Nokta",
+    "route_deck_lock": "Seyre Başla",
+    "route_deck_unlock": "Düzenle",
+    "route_deck_remove_point": "Bu noktayı sil"
   }
 }

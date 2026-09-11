@@ -92,11 +92,10 @@ import { AdminZoneDialog } from "@/components/map/AdminZoneDialog";
 import { MetoceanHud } from "@/components/map/MetoceanHud";
 import { MapPlaceholder } from "@/components/ClientOnly";
 import { createRealtimeBuffer, debounce, runWhenIdle } from "@/lib/schedule";
-import {
-  computeSeaRouteAsync,
-  DEFAULT_YACHT_SPEED_KTS,
-  type SeaRouteResult,
-} from "@/lib/sea-route";
+import { useRouteSession } from "@/hooks/useRouteSession";
+import { RouteInteractionLayer } from "@/components/navigation/RouteInteractionLayer";
+import { RouteDeck } from "@/components/navigation/RouteDeck";
+import { isFiniteLatLng } from "@/lib/sea-route/geometry";
 
 export interface LivePin {
   id: string;
@@ -514,8 +513,6 @@ const FleetPinMarker = memo(function FleetPinMarker({ pin }: { pin: LivePin }) {
 const ChartOverlays = memo(function ChartOverlays({
   fix,
   stale,
-  navTarget,
-  navRoute,
   pins,
   routes,
   moorings,
@@ -530,9 +527,6 @@ const ChartOverlays = memo(function ChartOverlays({
 }: {
   fix: GeoFix | null;
   stale: boolean;
-  navTarget: { lat: number; lng: number } | null;
-  /** Coastal sea-route polyline (land-avoiding). Falls back to straight line. */
-  navRoute: Array<{ lat: number; lng: number }> | null;
   pins: LivePin[];
   routes: LiveRoute[];
   moorings: MarineZone[];
@@ -561,39 +555,9 @@ const ChartOverlays = memo(function ChartOverlays({
     </div>
   );
 
-  const seaLine =
-    navRoute && navRoute.length >= 2
-      ? navRoute
-          .filter(
-            (p) =>
-              p &&
-              Number.isFinite(p.lat) &&
-              Number.isFinite(p.lng) &&
-              Math.abs(p.lat) <= 90 &&
-              Math.abs(p.lng) <= 180,
-          )
-          .map((p) => [p.lat, p.lng] as [number, number])
-      : fix && navTarget
-        ? ([[fix.lat, fix.lng], [navTarget.lat, navTarget.lng]] as [number, number][])
-        : null;
-
   return (
     <>
       {fix && <Marker position={[fix.lat, fix.lng]} icon={meIcon} opacity={stale ? 0.5 : 1} />}
-
-      {seaLine && seaLine.length >= 2 && (
-        <Polyline
-          positions={seaLine}
-          pathOptions={{
-            color: "#00F0FF",
-            weight: 3,
-            opacity: 0.9,
-            dashArray: "2 8",
-            lineCap: "round",
-            lineJoin: "round",
-          }}
-        />
-      )}
 
       {layers.fleet &&
         poiFilters.service &&
@@ -800,60 +764,23 @@ function LiveMapCanvas({
   const started = useRef(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [selectedPoint, setSelectedPoint] = useState<ChartPoint | null>(null);
-  const [navTarget, setNavTarget] = useState<{ lat: number; lng: number } | null>(null);
-  const [seaRoute, setSeaRoute] = useState<SeaRouteResult | null>(null);
-  const [seaRouteLoading, setSeaRouteLoading] = useState(false);
-
-  useEffect(() => {
-    if (!fix || !navTarget) {
-      setSeaRoute(null);
-      setSeaRouteLoading(false);
-      return;
-    }
-    let cancelled = false;
-    setSeaRouteLoading(true);
-    // Straight preview first so the captain sees something immediately;
-    // land-avoiding mesh fills in after idle (never blocks the tap path).
-    setSeaRoute({
-      waypoints: [
-        { lat: fix.lat, lng: fix.lng },
-        { lat: navTarget.lat, lng: navTarget.lng },
-      ],
-      distanceNm: Number.NaN,
-      etaMinutes: null,
-      speedKts: DEFAULT_YACHT_SPEED_KTS,
-      mode: "direct",
-    });
-    void computeSeaRouteAsync(
-      { lat: fix.lat, lng: fix.lng },
-      { lat: navTarget.lat, lng: navTarget.lng },
-      DEFAULT_YACHT_SPEED_KTS,
-    )
-      .then((route) => {
-        if (cancelled) return;
-        if (!route.waypoints?.length) {
-          console.error("[SeaRoute Error]: empty waypoints — keeping preview line");
-          return;
-        }
-        setSeaRoute(route);
-      })
-      .catch((err) => {
-        console.error("[SeaRoute Error]:", err);
-      })
-      .finally(() => {
-        if (!cancelled) setSeaRouteLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [fix, navTarget]);
+  const routeSession = useRouteSession();
+  const routeActive = routeSession.mode !== "idle";
+  const fixRef = useRef(fix);
+  fixRef.current = fix;
 
   useEffect(() => {
     if (!map) return;
     const apply = (target: MapFocusTarget) => {
       if (!isValidCoordinate(target.lat, target.lng)) return;
       map.flyTo([target.lat, target.lng], target.zoom ?? 15, { duration: 1.15 });
-      setNavTarget({ lat: target.lat, lng: target.lng });
+      const f = fixRef.current;
+      if (f && isFiniteLatLng(f)) {
+        routeSession.startRoute(
+          { lat: f.lat, lng: f.lng },
+          { lat: target.lat, lng: target.lng },
+        );
+      }
     };
     const pending = consumeMapFocus();
     if (pending) apply(pending);
@@ -863,7 +790,7 @@ function LiveMapCanvas({
     };
     window.addEventListener(THALVO_MAP_FOCUS_EVENT, onFocus);
     return () => window.removeEventListener(THALVO_MAP_FOCUS_EVENT, onFocus);
-  }, [map]);
+  }, [map, routeSession.startRoute]);
 
   const [layers, setLayers] = useState<ChartLayers>({
     // Seamark overlay + CSS filter doubles tile GPU cost — enable after idle.
@@ -1212,11 +1139,15 @@ function LiveMapCanvas({
   const onNavigate = useCallback(
     (point: ChartPoint) => {
       const coords = chartPointCoords(point);
+      if (!isFiniteLatLng(coords)) return;
       map?.flyTo([coords.lat, coords.lng], 15, { duration: 1 });
-      if (fix) setNavTarget(coords);
-      else void request();
+      if (fix && isFiniteLatLng(fix)) {
+        routeSession.startRoute({ lat: fix.lat, lng: fix.lng }, coords);
+      } else {
+        void request();
+      }
     },
-    [map, fix, request],
+    [map, fix, request, routeSession.startRoute],
   );
 
   // Leaflet's container doesn't auto-detect layout changes (sheet
@@ -1333,7 +1264,7 @@ function LiveMapCanvas({
         <MapSizeSync />
         <MapInteractionUnlock />
         {validCenter ? (
-          <Recenter center={validCenter} suspend={Boolean(navTarget)} />
+          <Recenter center={validCenter} suspend={routeActive} />
         ) : (
           <BootstrapGps fix={fix} />
         )}
@@ -1345,8 +1276,6 @@ function LiveMapCanvas({
         <ChartOverlays
           fix={fix}
           stale={stale}
-          navTarget={navTarget}
-          navRoute={seaRoute?.waypoints ?? null}
           pins={pins}
           routes={routes}
           moorings={moorings}
@@ -1359,25 +1288,44 @@ function LiveMapCanvas({
           onSelectZone={onSelectZone}
           onSelectReport={onSelectReport}
         />
+        {routeActive && (
+          <RouteInteractionLayer
+            waypoints={routeSession.waypoints}
+            pins={
+              [
+                routeSession.origin,
+                ...routeSession.vias,
+                routeSession.destination,
+              ].filter(isFiniteLatLng) as Array<{ lat: number; lng: number }>
+            }
+            locked={routeSession.mode === "active"}
+            active={routeSession.mode === "active"}
+            onWaypointDragEnd={routeSession.moveWaypoint}
+            onInsertVia={routeSession.insertVia}
+            onRemovePin={routeSession.removePin}
+          />
+        )}
       </MapContainer>
       </div>
 
-      {seaRoute && navTarget && (
+      {routeActive && (
         <div className="pointer-events-none absolute bottom-[calc(env(safe-area-inset-bottom,0px)+7.5rem)] left-1/2 z-[450] -translate-x-1/2 px-3">
-          <div className="pointer-events-auto rounded-full border border-cyan-400/35 bg-[#0a192f]/92 px-3.5 py-1.5 font-mono text-[11px] text-cyan-100 shadow-2xl backdrop-blur-md">
-            <span className="text-cyan-300/80">{t("chart.sea_route_label")}</span>
-            {" · "}
-            {seaRouteLoading || !Number.isFinite(seaRoute.distanceNm)
-              ? "…"
-              : `${seaRoute.distanceNm.toFixed(1)} NM`}
-            {" · "}
-            {seaRouteLoading || seaRoute.etaMinutes == null
-              ? "…"
-              : t("chart.sea_route_eta", {
-                  min: Math.max(1, Math.round(seaRoute.etaMinutes)),
-                  kts: Math.round(seaRoute.speedKts),
-                })}
-          </div>
+          <RouteDeck
+            distanceNm={routeSession.distanceNm}
+            etaMinutes={routeSession.etaMinutes}
+            speedKts={routeSession.speedKts}
+            legs={routeSession.legs}
+            optimizing={routeSession.optimizing}
+            locked={routeSession.mode === "active"}
+            onSpeed={routeSession.setSpeed}
+            onReset={routeSession.reset}
+            onAddVia={() => {
+              const c = telemetry.center;
+              if (isFiniteLatLng(c)) routeSession.addViaAt(c);
+            }}
+            onLock={routeSession.lockActive}
+            onUnlock={routeSession.unlockEdit}
+          />
         </div>
       )}
 

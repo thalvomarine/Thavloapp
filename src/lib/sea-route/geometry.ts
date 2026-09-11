@@ -158,3 +158,102 @@ export function simplifyPath(points: LatLng[], minNm = 0.08): LatLng[] {
   out.push(finite[finite.length - 1]!);
   return out;
 }
+
+function toDeg(rad: number): number {
+  return (rad * 180) / Math.PI;
+}
+
+/** Initial great-circle bearing from A→B, degrees [0, 360). */
+export function initialBearingDeg(a: LatLng, b: LatLng): number {
+  if (!isFiniteLatLng(a) || !isFiniteLatLng(b)) return 0;
+  const φ1 = toRad(a.lat);
+  const φ2 = toRad(b.lat);
+  const Δλ = toRad(b.lng - a.lng);
+  const y = Math.sin(Δλ) * Math.cos(φ2);
+  const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+  return ((toDeg(Math.atan2(y, x)) % 360) + 360) % 360;
+}
+
+/** Compact compass rose label for a bearing. */
+export function compassCardinal(bearingDeg: number): string {
+  const labels = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"] as const;
+  const idx = Math.round((((bearingDeg % 360) + 360) % 360) / 45) % 8;
+  return labels[idx]!;
+}
+
+/**
+ * Inflate a closed lat/lng ring outward by `meters` along each vertex normal.
+ * Used as a coastal safety buffer so routes do not graze shorelines.
+ */
+export function expandRing(ring: LatLng[], meters: number): LatLng[] {
+  if (ring.length < 3 || !(meters > 0)) return ring.map((p) => ({ ...p }));
+  const n = ring.length;
+  const midLat = ring.reduce((s, p) => s + p.lat, 0) / n;
+  const mPerDegLat = 111_320;
+  const mPerDegLng = 111_320 * Math.cos(toRad(midLat));
+  const out: LatLng[] = [];
+  for (let i = 0; i < n; i++) {
+    const prev = ring[(i - 1 + n) % n]!;
+    const cur = ring[i]!;
+    const next = ring[(i + 1) % n]!;
+    const e1x = (cur.lng - prev.lng) * mPerDegLng;
+    const e1y = (cur.lat - prev.lat) * mPerDegLat;
+    const e2x = (next.lng - cur.lng) * mPerDegLng;
+    const e2y = (next.lat - cur.lat) * mPerDegLat;
+    const len1 = Math.hypot(e1x, e1y) || 1;
+    const len2 = Math.hypot(e2x, e2y) || 1;
+    let nx = e1y / len1 + e2y / len2;
+    let ny = -(e1x / len1) - e2x / len2;
+    const nlen = Math.hypot(nx, ny) || 1;
+    nx /= nlen;
+    ny /= nlen;
+    out.push({
+      lat: cur.lat + (ny * meters) / mPerDegLat,
+      lng: cur.lng + (nx * meters) / mPerDegLng,
+    });
+  }
+  const cLat = ring.reduce((s, p) => s + p.lat, 0) / n;
+  const cLng = ring.reduce((s, p) => s + p.lng, 0) / n;
+  const sample = out[0]!;
+  const orig = ring[0]!;
+  const dOrig = Math.hypot(orig.lat - cLat, orig.lng - cLng);
+  const dOut = Math.hypot(sample.lat - cLat, sample.lng - cLng);
+  if (dOut < dOrig) {
+    return ring.map((p, i) => {
+      const q = out[i]!;
+      return {
+        lat: p.lat - (q.lat - p.lat),
+        lng: p.lng - (q.lng - p.lng),
+      };
+    });
+  }
+  return out;
+}
+
+/** Minimum distance from point to any land ring edge, in metres (approx). */
+export function minDistanceToLandM(point: LatLng, land: LatLng[][]): number {
+  if (!isFiniteLatLng(point)) return 0;
+  for (const ring of land) {
+    if (pointInPolygon(point, ring)) return 0;
+  }
+  let best = Infinity;
+  const mPerDegLat = 111_320;
+  const mPerDegLng = 111_320 * Math.cos(toRad(point.lat));
+  for (const ring of land) {
+    for (let i = 0; i < ring.length; i++) {
+      const a = ring[i]!;
+      const b = ring[(i + 1) % ring.length]!;
+      const ax = (a.lng - point.lng) * mPerDegLng;
+      const ay = (a.lat - point.lat) * mPerDegLat;
+      const bx = (b.lng - point.lng) * mPerDegLng;
+      const by = (b.lat - point.lat) * mPerDegLat;
+      const abx = bx - ax;
+      const aby = by - ay;
+      const t = Math.max(0, Math.min(1, (-ax * abx - ay * aby) / (abx * abx + aby * aby + 1e-12)));
+      const dx = ax + abx * t;
+      const dy = ay + aby * t;
+      best = Math.min(best, Math.hypot(dx, dy));
+    }
+  }
+  return best;
+}

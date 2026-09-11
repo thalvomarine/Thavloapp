@@ -1368,6 +1368,20 @@
     "locate_locating": "Locating…",
     "ai_hint": "AI Captain Assistant",
     "sea_route_label": "Sea route",
-    "sea_route_eta": "~{{min}} min @ {{kts}} kts"
+    "sea_route_eta": "~{{min}} min @ {{kts}} kts",
+    "route_deck_title": "Route Deck",
+    "route_deck_speed": "Speed (kts)",
+    "route_deck_eta_min": "~{{min}} min",
+    "route_deck_eta_hm": "~{{h}} h {{m}} min",
+    "route_deck_optimizing": "Optimizing route…",
+    "route_deck_legs": "{{count}} legs",
+    "route_deck_no_legs": "No legs yet",
+    "route_deck_leg_row": "Leg {{n}}: {{brg}}° {{card}} · {{nm}} NM · ~{{min}} min",
+    "route_deck_narrow": "Narrow",
+    "route_deck_reset": "Reset",
+    "route_deck_add_via": "+ Via",
+    "route_deck_lock": "Under way",
+    "route_deck_unlock": "Edit",
+    "route_deck_remove_point": "Remove point"
   }
 }
