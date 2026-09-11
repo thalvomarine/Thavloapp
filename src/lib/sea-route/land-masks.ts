@@ -1,18 +1,16 @@
 /**
  * Simplified land masks for Thalvo's operating theatre
- * (Bodrum → Datça → Bozburun → Marmaris → Göcek / Fethiye).
+ * (Bodrum → Datça → Bozburun → Marmaris → Göcek / Fethiye / Dalaman).
  *
- * Rings are WGS84 {lat,lng}, roughly clockwise. They are intentionally
- * conservative (slightly oversized) so A* edges prefer open-water corridors
- * over cutting cape tips or island massifs. Not a legal ECDIS chart.
+ * Rings are WGS84 { lat, lng } — Leaflet order, NOT GeoJSON [lng, lat].
+ * Slightly oversized so A* prefers open-water corridors.
  */
 
 import type { LatLng } from "./geometry.ts";
 
-/** Island / peninsula rings that straight-line yacht routes commonly violate. */
+/** Island / peninsula / coastal hinterland rings. */
 export const AEGEAN_LAND_MASKS: LatLng[][] = [
   // —— Göcek gulf islands ——
-  // Göcek Adası (south of the marina fairway — do NOT swallow D-Marin)
   [
     { lat: 36.743, lng: 28.928 },
     { lat: 36.747, lng: 28.93 },
@@ -21,7 +19,6 @@ export const AEGEAN_LAND_MASKS: LatLng[][] = [
     { lat: 36.742, lng: 28.939 },
     { lat: 36.741, lng: 28.932 },
   ],
-  // Tersane Adası
   [
     { lat: 36.678, lng: 28.905 },
     { lat: 36.686, lng: 28.908 },
@@ -30,7 +27,6 @@ export const AEGEAN_LAND_MASKS: LatLng[][] = [
     { lat: 36.678, lng: 28.926 },
     { lat: 36.674, lng: 28.914 },
   ],
-  // Domuz Adası
   [
     { lat: 36.638, lng: 28.868 },
     { lat: 36.648, lng: 28.872 },
@@ -39,7 +35,6 @@ export const AEGEAN_LAND_MASKS: LatLng[][] = [
     { lat: 36.636, lng: 28.888 },
     { lat: 36.634, lng: 28.876 },
   ],
-  // Yassıca Adaları cluster
   [
     { lat: 36.702, lng: 28.918 },
     { lat: 36.71, lng: 28.922 },
@@ -48,7 +43,6 @@ export const AEGEAN_LAND_MASKS: LatLng[][] = [
     { lat: 36.698, lng: 28.934 },
     { lat: 36.697, lng: 28.924 },
   ],
-  // Hamam / Cleopatra bath peninsula finger (east Göcek gulfs)
   [
     { lat: 36.682, lng: 28.952 },
     { lat: 36.688, lng: 28.956 },
@@ -56,7 +50,6 @@ export const AEGEAN_LAND_MASKS: LatLng[][] = [
     { lat: 36.684, lng: 28.97 },
     { lat: 36.678, lng: 28.962 },
   ],
-  // Şeytan Adaları / Boynuz Buku land tongue
   [
     { lat: 36.712, lng: 28.962 },
     { lat: 36.72, lng: 28.966 },
@@ -65,13 +58,34 @@ export const AEGEAN_LAND_MASKS: LatLng[][] = [
     { lat: 36.708, lng: 28.972 },
   ],
 
-  // —— Fethiye / Şövalye ——
+  // —— Şövalye (Fethiye) ——
   [
     { lat: 36.648, lng: 29.088 },
     { lat: 36.656, lng: 29.092 },
     { lat: 36.658, lng: 29.104 },
     { lat: 36.65, lng: 29.108 },
     { lat: 36.644, lng: 29.098 },
+  ],
+
+  // —— Fethiye – Dalaman – Köyceğiz coastal land ——
+  // Stays NORTH of Göcek gulf water so marina/fairway nodes remain navigable.
+  [
+    { lat: 36.78, lng: 28.78 },
+    { lat: 36.84, lng: 28.68 },
+    { lat: 36.92, lng: 28.78 },
+    { lat: 36.94, lng: 28.95 },
+    { lat: 36.9, lng: 29.15 },
+    { lat: 36.82, lng: 29.18 },
+    { lat: 36.78, lng: 29.02 },
+  ],
+  // Eastern Fethiye hinterland (bay → Dalaman road corridor)
+  [
+    { lat: 36.66, lng: 29.12 },
+    { lat: 36.72, lng: 29.08 },
+    { lat: 36.78, lng: 29.12 },
+    { lat: 36.78, lng: 29.25 },
+    { lat: 36.7, lng: 29.28 },
+    { lat: 36.64, lng: 29.2 },
   ],
 
   // —— Sedir (Cleopatra) island, Marmaris ——
@@ -83,7 +97,7 @@ export const AEGEAN_LAND_MASKS: LatLng[][] = [
     { lat: 36.768, lng: 28.202 },
   ],
 
-  // —— Datça peninsula mass (blocks Göcek↔Marmaris straight cuts) ——
+  // —— Datça peninsula ——
   [
     { lat: 36.72, lng: 27.55 },
     { lat: 36.8, lng: 27.65 },
@@ -95,7 +109,7 @@ export const AEGEAN_LAND_MASKS: LatLng[][] = [
     { lat: 36.68, lng: 27.65 },
   ],
 
-  // —— Bozburun / Hisarönü peninsula ——
+  // —— Bozburun / Hisarönü ——
   [
     { lat: 36.72, lng: 28.0 },
     { lat: 36.78, lng: 28.05 },
@@ -105,17 +119,16 @@ export const AEGEAN_LAND_MASKS: LatLng[][] = [
     { lat: 36.68, lng: 28.12 },
   ],
 
-  // —— Mainland hinterland (Anatolia inland of the charted coast) ——
-  // Keeps grid nodes off hills; sea corridors stay outside this ring.
+  // —— Mainland hinterland (north of the charted coast) ——
   [
-    { lat: 36.9, lng: 27.2 },
+    { lat: 36.88, lng: 27.2 },
     { lat: 37.2, lng: 27.3 },
     { lat: 37.25, lng: 28.0 },
     { lat: 37.15, lng: 28.6 },
     { lat: 37.05, lng: 29.2 },
     { lat: 36.95, lng: 29.4 },
-    { lat: 36.85, lng: 29.35 },
-    { lat: 36.88, lng: 28.9 },
+    { lat: 36.88, lng: 29.35 },
+    { lat: 36.9, lng: 28.9 },
     { lat: 36.92, lng: 28.5 },
     { lat: 36.95, lng: 28.0 },
     { lat: 36.92, lng: 27.5 },

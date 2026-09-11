@@ -92,7 +92,7 @@ import { MetoceanHud } from "@/components/map/MetoceanHud";
 import { MapPlaceholder } from "@/components/ClientOnly";
 import { createRealtimeBuffer, debounce, runWhenIdle } from "@/lib/schedule";
 import {
-  computeSeaRoute,
+  computeSeaRouteAsync,
   DEFAULT_YACHT_SPEED_KTS,
   type SeaRouteResult,
 } from "@/lib/sea-route";
@@ -560,7 +560,16 @@ const ChartOverlays = memo(function ChartOverlays({
 
   const seaLine =
     navRoute && navRoute.length >= 2
-      ? navRoute.map((p) => [p.lat, p.lng] as [number, number])
+      ? navRoute
+          .filter(
+            (p) =>
+              p &&
+              Number.isFinite(p.lat) &&
+              Number.isFinite(p.lng) &&
+              Math.abs(p.lat) <= 90 &&
+              Math.abs(p.lng) <= 180,
+          )
+          .map((p) => [p.lat, p.lng] as [number, number])
       : fix && navTarget
         ? ([[fix.lat, fix.lng], [navTarget.lat, navTarget.lng]] as [number, number][])
         : null;
@@ -569,7 +578,7 @@ const ChartOverlays = memo(function ChartOverlays({
     <>
       {fix && <Marker position={[fix.lat, fix.lng]} icon={meIcon} opacity={stale ? 0.5 : 1} />}
 
-      {seaLine && (
+      {seaLine && seaLine.length >= 2 && (
         <Polyline
           positions={seaLine}
           pathOptions={{
@@ -790,26 +799,49 @@ function LiveMapCanvas({
   const [selectedPoint, setSelectedPoint] = useState<ChartPoint | null>(null);
   const [navTarget, setNavTarget] = useState<{ lat: number; lng: number } | null>(null);
   const [seaRoute, setSeaRoute] = useState<SeaRouteResult | null>(null);
+  const [seaRouteLoading, setSeaRouteLoading] = useState(false);
 
   useEffect(() => {
     if (!fix || !navTarget) {
       setSeaRoute(null);
+      setSeaRouteLoading(false);
       return;
     }
     let cancelled = false;
-    // Defer heavy graph build off the tap handler so the sheet can close first.
-    const stop = runWhenIdle(() => {
-      if (cancelled) return;
-      const route = computeSeaRoute(
+    setSeaRouteLoading(true);
+    // Straight preview first so the captain sees something immediately;
+    // land-avoiding mesh fills in after idle (never blocks the tap path).
+    setSeaRoute({
+      waypoints: [
         { lat: fix.lat, lng: fix.lng },
         { lat: navTarget.lat, lng: navTarget.lng },
-        DEFAULT_YACHT_SPEED_KTS,
-      );
-      if (!cancelled) setSeaRoute(route);
-    }, 120);
+      ],
+      distanceNm: Number.NaN,
+      etaMinutes: null,
+      speedKts: DEFAULT_YACHT_SPEED_KTS,
+      mode: "direct",
+    });
+    void computeSeaRouteAsync(
+      { lat: fix.lat, lng: fix.lng },
+      { lat: navTarget.lat, lng: navTarget.lng },
+      DEFAULT_YACHT_SPEED_KTS,
+    )
+      .then((route) => {
+        if (cancelled) return;
+        if (!route.waypoints?.length) {
+          console.error("[SeaRoute Error]: empty waypoints — keeping preview line");
+          return;
+        }
+        setSeaRoute(route);
+      })
+      .catch((err) => {
+        console.error("[SeaRoute Error]:", err);
+      })
+      .finally(() => {
+        if (!cancelled) setSeaRouteLoading(false);
+      });
     return () => {
       cancelled = true;
-      stop();
     };
   }, [fix, navTarget]);
 
@@ -1312,10 +1344,12 @@ function LiveMapCanvas({
           <div className="pointer-events-auto rounded-full border border-cyan-400/35 bg-[#0a192f]/92 px-3.5 py-1.5 font-mono text-[11px] text-cyan-100 shadow-2xl backdrop-blur-md">
             <span className="text-cyan-300/80">{t("chart.sea_route_label")}</span>
             {" · "}
-            {seaRoute.distanceNm.toFixed(1)} NM
+            {seaRouteLoading || !Number.isFinite(seaRoute.distanceNm)
+              ? "…"
+              : `${seaRoute.distanceNm.toFixed(1)} NM`}
             {" · "}
-            {seaRoute.etaMinutes == null
-              ? "—"
+            {seaRouteLoading || seaRoute.etaMinutes == null
+              ? "…"
               : t("chart.sea_route_eta", {
                   min: Math.max(1, Math.round(seaRoute.etaMinutes)),
                   kts: Math.round(seaRoute.speedKts),

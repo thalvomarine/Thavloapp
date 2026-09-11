@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AlertOctagon, Anchor, Navigation, Ruler, Waves, X } from "lucide-react";
 import {
@@ -12,7 +12,7 @@ import {
   type ChartPoint,
 } from "@/lib/marine-data";
 import { haversineNm } from "@/lib/geo-eta";
-import { computeSeaRoute, DEFAULT_YACHT_SPEED_KTS } from "@/lib/sea-route";
+import { computeSeaRouteAsync, DEFAULT_YACHT_SPEED_KTS } from "@/lib/sea-route";
 import { openEmergencyService } from "@/lib/emergency-service-bus";
 import { fetchMetocean, nearestRegion, shelterStatus, type MetoceanSnapshot } from "@/lib/metocean";
 
@@ -28,6 +28,9 @@ interface Props {
 /**
  * Navily-style bottom detail card. Stays mounted (off-screen) between
  * selections so the slide-down close animation has something to show.
+ *
+ * Distance: show haversine immediately (never blocks the sheet). Refine to
+ * sea-route NM/ETA asynchronously — sync A* here crashed Capacitor WebViews.
  */
 export function ChartDetailSheet({ point, fix, onClose, onNavigate, onEmergency }: Props) {
   const { t } = useTranslation();
@@ -35,6 +38,9 @@ export function ChartDetailSheet({ point, fix, onClose, onNavigate, onEmergency 
   const [visible, setVisible] = useState(false);
   const [snapshot, setSnapshot] = useState<MetoceanSnapshot | null>(null);
   const [weatherLoading, setWeatherLoading] = useState(false);
+  const [seaNm, setSeaNm] = useState<number | null>(null);
+  const [seaEtaMin, setSeaEtaMin] = useState<number | null>(null);
+  const [seaLoading, setSeaLoading] = useState(false);
 
   useEffect(() => {
     if (point) {
@@ -68,6 +74,39 @@ export function ChartDetailSheet({ point, fix, onClose, onNavigate, onEmergency 
     };
   }, [displayPoint]);
 
+  useEffect(() => {
+    if (!displayPoint || !fix) {
+      setSeaNm(null);
+      setSeaEtaMin(null);
+      setSeaLoading(false);
+      return;
+    }
+    const coords = chartPointCoords(displayPoint);
+    let cancelled = false;
+    setSeaLoading(true);
+    setSeaNm(null);
+    setSeaEtaMin(null);
+    void computeSeaRouteAsync(
+      { lat: fix.lat, lng: fix.lng },
+      { lat: coords.lat, lng: coords.lng },
+      DEFAULT_YACHT_SPEED_KTS,
+    )
+      .then((route) => {
+        if (cancelled) return;
+        if (Number.isFinite(route.distanceNm)) setSeaNm(route.distanceNm);
+        if (route.etaMinutes != null) setSeaEtaMin(Math.max(1, Math.round(route.etaMinutes)));
+      })
+      .catch((err) => {
+        console.error("[SeaRoute Error]:", err);
+      })
+      .finally(() => {
+        if (!cancelled) setSeaLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [displayPoint, fix]);
+
   if (!displayPoint) return null;
 
   const coords = chartPointCoords(displayPoint);
@@ -78,9 +117,6 @@ export function ChartDetailSheet({ point, fix, onClose, onNavigate, onEmergency 
       : t(REPORT_CATEGORY_LABEL_KEYS[displayPoint.report.category]);
   const depthM =
     displayPoint.kind === "zone" ? displayPoint.zone.depth_m : displayPoint.report.depth_m;
-  // Reports carry a fixed seabed enum (needs an i18n lookup); zones carry
-  // free-text bottom composition straight from the chart survey — already
-  // human-readable, no translation table to maintain for open-ended values.
   const seabedLabel =
     displayPoint.kind === "report"
       ? displayPoint.report.seabed
@@ -93,17 +129,9 @@ export function ChartDetailSheet({ point, fix, onClose, onNavigate, onEmergency 
   const region = nearestRegion(coords.lat, coords.lng);
   const shelter = snapshot ? shelterStatus(region, snapshot.windDirectionDeg) : null;
 
-  const sea = useMemo(() => {
-    if (!fix) return null;
-    return computeSeaRoute(
-      { lat: fix.lat, lng: fix.lng },
-      { lat: coords.lat, lng: coords.lng },
-      DEFAULT_YACHT_SPEED_KTS,
-    );
-  }, [fix, coords.lat, coords.lng]);
-  const displayNm = sea?.distanceNm ?? (fix ? haversineNm(fix.lat, fix.lng, coords.lat, coords.lng) : null);
-  const etaMin =
-    sea?.etaMinutes != null ? Math.max(1, Math.round(sea.etaMinutes)) : null;
+  const straightNm = fix ? haversineNm(fix.lat, fix.lng, coords.lat, coords.lng) : null;
+  const displayNm = seaNm ?? straightNm;
+  const etaMin = seaEtaMin;
 
   return (
     <div
@@ -132,11 +160,12 @@ export function ChartDetailSheet({ point, fix, onClose, onNavigate, onEmergency 
             type="button"
             onClick={onClose}
             aria-label={t("common.close")}
-            className="grid size-8 shrink-0 place-items-center rounded-full border border-white/10 bg-white/[0.05] text-white/60 hover:bg-white/[0.12] hover:text-white/90"
+            className="grid size-8 shrink-0 place-items-center rounded-full border border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
           >
             <X className="size-4" />
           </button>
         </div>
+
         <div className="overflow-y-auto overscroll-contain px-4 pb-4">
           <div className="flex flex-wrap items-center gap-2 text-[11px]">
             {depthM != null && (
@@ -170,10 +199,12 @@ export function ChartDetailSheet({ point, fix, onClose, onNavigate, onEmergency 
             {displayNm != null && (
               <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-1 font-mono text-white/60">
                 <Navigation className="size-3 text-cyan-300/70" />
-                {displayNm.toFixed(1)} NM
+                {seaLoading && seaNm == null ? "…" : `${displayNm.toFixed(1)} NM`}
                 {etaMin != null
                   ? ` · ${t("chart.sea_route_eta", { min: etaMin, kts: DEFAULT_YACHT_SPEED_KTS })}`
-                  : ""}
+                  : seaLoading
+                    ? " · …"
+                    : ""}
               </span>
             )}
           </div>
@@ -208,9 +239,9 @@ export function ChartDetailSheet({ point, fix, onClose, onNavigate, onEmergency 
           <button
             type="button"
             onClick={() => {
-              const name = displayPoint ? chartPointName(displayPoint) : "";
+              const bay = displayPoint ? chartPointName(displayPoint) : "";
               onClose();
-              openEmergencyService({ bayName: name || undefined });
+              openEmergencyService({ bayName: bay || undefined });
             }}
             className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-cyan-400/35 bg-cyan-400/10 text-[12px] font-bold uppercase tracking-[0.06em] text-cyan-100"
           >
