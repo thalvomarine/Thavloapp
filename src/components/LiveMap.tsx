@@ -142,6 +142,16 @@ interface Props {
 const GOCEK = { lat: 36.7525, lng: 28.9428 };
 const DEFAULT_ZOOM = 13;
 
+/** Prefer GPS → map center → Göcek so route never silently no-ops without a fix. */
+function resolveRouteOrigin(
+  fix: { lat: number; lng: number } | null | undefined,
+  mapCenter: { lat: number; lng: number } | null | undefined,
+): { lat: number; lng: number } {
+  if (fix && isFiniteLatLng(fix)) return { lat: fix.lat, lng: fix.lng };
+  if (mapCenter && isFiniteLatLng(mapCenter)) return { lat: mapCenter.lat, lng: mapCenter.lng };
+  return { ...GOCEK };
+}
+
 const REGIONS: Record<ChartRegion, { lat: number; lng: number; zoom: number }> = {
   gocek: { lat: 36.7525, lng: 28.9428, zoom: 13 },
   marmaris: { lat: 36.8525, lng: 28.278, zoom: 13 },
@@ -765,7 +775,9 @@ function LiveMapCanvas({
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [selectedPoint, setSelectedPoint] = useState<ChartPoint | null>(null);
   const routeSession = useRouteSession();
-  const routeActive = routeSession.mode !== "idle";
+  const routeVisible = Boolean(
+    routeSession.destination && isFiniteLatLng(routeSession.destination),
+  );
   const fixRef = useRef(fix);
   fixRef.current = fix;
 
@@ -774,13 +786,13 @@ function LiveMapCanvas({
     const apply = (target: MapFocusTarget) => {
       if (!isValidCoordinate(target.lat, target.lng)) return;
       map.flyTo([target.lat, target.lng], target.zoom ?? 15, { duration: 1.15 });
-      const f = fixRef.current;
-      if (f && isFiniteLatLng(f)) {
-        routeSession.startRoute(
-          { lat: f.lat, lng: f.lng },
-          { lat: target.lat, lng: target.lng },
-        );
-      }
+      const center = map.getCenter();
+      const origin = resolveRouteOrigin(fixRef.current, {
+        lat: center.lat,
+        lng: center.lng,
+      });
+      console.log("[LiveMap onFocus→startRoute]", { origin, destination: target });
+      routeSession.startRoute(origin, { lat: target.lat, lng: target.lng });
     };
     const pending = consumeMapFocus();
     if (pending) apply(pending);
@@ -1139,15 +1151,28 @@ function LiveMapCanvas({
   const onNavigate = useCallback(
     (point: ChartPoint) => {
       const coords = chartPointCoords(point);
-      if (!isFiniteLatLng(coords)) return;
-      map?.flyTo([coords.lat, coords.lng], 15, { duration: 1 });
-      if (fix && isFiniteLatLng(fix)) {
-        routeSession.startRoute({ lat: fix.lat, lng: fix.lng }, coords);
-      } else {
-        void request();
+      if (!isFiniteLatLng(coords)) {
+        console.error("[LiveMap onNavigate] invalid destination", point);
+        return;
       }
+      // Close detail sheet so Route Deck is not buried under z-[500] sheet.
+      setSelectedPoint(null);
+      map?.flyTo([coords.lat, coords.lng], 15, { duration: 1 });
+      const mapCenter = map?.getCenter();
+      const origin = resolveRouteOrigin(
+        fix,
+        mapCenter ? { lat: mapCenter.lat, lng: mapCenter.lng } : telemetry.center,
+      );
+      console.log("[LiveMap onNavigate→startRoute]", {
+        origin,
+        destination: coords,
+        hasGps: Boolean(fix),
+      });
+      routeSession.startRoute(origin, coords);
+      // Still improve GPS in background when missing — route already started with fallback.
+      if (!fix) void request();
     },
-    [map, fix, request, routeSession.startRoute],
+    [map, fix, request, routeSession.startRoute, telemetry.center],
   );
 
   // Leaflet's container doesn't auto-detect layout changes (sheet
@@ -1264,7 +1289,7 @@ function LiveMapCanvas({
         <MapSizeSync />
         <MapInteractionUnlock />
         {validCenter ? (
-          <Recenter center={validCenter} suspend={routeActive} />
+          <Recenter center={validCenter} suspend={routeVisible} />
         ) : (
           <BootstrapGps fix={fix} />
         )}
@@ -1288,7 +1313,7 @@ function LiveMapCanvas({
           onSelectZone={onSelectZone}
           onSelectReport={onSelectReport}
         />
-        {routeActive && (
+        {routeVisible && (
           <RouteInteractionLayer
             waypoints={routeSession.waypoints}
             pins={
@@ -1308,8 +1333,8 @@ function LiveMapCanvas({
       </MapContainer>
       </div>
 
-      {routeActive && (
-        <div className="pointer-events-none absolute bottom-[calc(env(safe-area-inset-bottom,0px)+7.5rem)] left-1/2 z-[450] -translate-x-1/2 px-3">
+      {routeVisible && (
+        <div className="pointer-events-none absolute bottom-[calc(env(safe-area-inset-bottom,0px)+7.5rem)] left-1/2 z-[9999] -translate-x-1/2 px-3">
           <RouteDeck
             distanceNm={routeSession.distanceNm}
             etaMinutes={routeSession.etaMinutes}

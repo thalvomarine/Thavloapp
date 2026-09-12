@@ -97,6 +97,11 @@ export function useRouteSession() {
       try {
         const route = await computeSeaRouteViaAsync(origin, destination, vias, speedKts);
         if (gen !== genRef.current) return;
+        console.log("[RouteSession Waypoints]:", {
+          count: route.waypoints?.length ?? 0,
+          distanceNm: route.distanceNm,
+          mode: route.mode,
+        });
         setState((s) => applyRoute(s, route, mode));
       } catch (err) {
         console.error("[SeaRoute Error]:", err);
@@ -110,10 +115,16 @@ export function useRouteSession() {
   const startRoute = useCallback(
     (from: LatLng, to: LatLng) => {
       if (!isFiniteLatLng(from) || !isFiniteLatLng(to)) {
-        console.error("[SeaRoute Error]: startRoute rejected invalid coords");
+        console.error("[SeaRoute Error]: startRoute rejected invalid coords", { from, to });
         return;
       }
       const speed = stateRef.current.speedKts || ROUTE_SPEED_OPTIONS_KTS[1];
+      console.log("[RouteSession Start]:", {
+        origin: from,
+        destination: to,
+        mode: "editing",
+        speedKts: speed,
+      });
       void recompute(from, to, [], speed, "editing");
     },
     [recompute],
