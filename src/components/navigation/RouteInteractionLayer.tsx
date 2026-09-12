@@ -130,23 +130,24 @@ export const RouteInteractionLayer = memo(function RouteInteractionLayer({
     return out;
   }, [locked, safePins]);
 
-  if (line.length < 2) return null;
+  if (safePins.length < 2 && line.length < 2) return null;
 
   return (
     <>
-      <Polyline
-        positions={line}
-        pathOptions={{
-          color: "#00F2FE",
-          weight: active ? 4 : 3,
-          opacity: active ? 1 : 0.9,
-          dashArray: active ? undefined : "2 8",
-          lineCap: "round",
-          lineJoin: "round",
-          className: active ? "thalvo-route-active" : undefined,
-        }}
-      />
-
+      {line.length >= 2 && (
+        <Polyline
+          positions={line}
+          pathOptions={{
+            color: "#00F2FE",
+            weight: active ? 4 : 3,
+            opacity: active ? 1 : 0.9,
+            dashArray: active ? undefined : "2 8",
+            lineCap: "round",
+            lineJoin: "round",
+            className: active ? "thalvo-route-active" : undefined,
+          }}
+        />
+      )}
       {!locked &&
         mids.map((m) => (
           <Marker

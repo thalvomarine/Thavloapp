@@ -7,6 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { createPortal } from "react-dom";
 import {
   MapContainer,
   Marker,
@@ -778,6 +779,25 @@ function LiveMapCanvas({
   const routeVisible = Boolean(
     routeSession.destination && isFiniteLatLng(routeSession.destination),
   );
+
+  useEffect(() => {
+    if (!routeVisible) return;
+    console.log("[RouteDeck Render State]:", {
+      mode: routeSession.mode,
+      dest: routeSession.destination,
+      origin: routeSession.origin,
+      optimizing: routeSession.optimizing,
+      waypoints: routeSession.waypoints.length,
+    });
+  }, [
+    routeVisible,
+    routeSession.mode,
+    routeSession.destination,
+    routeSession.origin,
+    routeSession.optimizing,
+    routeSession.waypoints.length,
+  ]);
+
   const fixRef = useRef(fix);
   fixRef.current = fix;
 
@@ -1333,26 +1353,29 @@ function LiveMapCanvas({
       </MapContainer>
       </div>
 
-      {routeVisible && (
-        <div className="pointer-events-none absolute bottom-[calc(env(safe-area-inset-bottom,0px)+7.5rem)] left-1/2 z-[9999] -translate-x-1/2 px-3">
-          <RouteDeck
-            distanceNm={routeSession.distanceNm}
-            etaMinutes={routeSession.etaMinutes}
-            speedKts={routeSession.speedKts}
-            legs={routeSession.legs}
-            optimizing={routeSession.optimizing}
-            locked={routeSession.mode === "active"}
-            onSpeed={routeSession.setSpeed}
-            onReset={routeSession.reset}
-            onAddVia={() => {
-              const c = telemetry.center;
-              if (isFiniteLatLng(c)) routeSession.addViaAt(c);
-            }}
-            onLock={routeSession.lockActive}
-            onUnlock={routeSession.unlockEdit}
-          />
-        </div>
-      )}
+      {routeVisible &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[99999] flex justify-center px-3 pb-[calc(env(safe-area-inset-bottom,0px)+5.5rem)] pt-2">
+            <RouteDeck
+              distanceNm={routeSession.distanceNm}
+              etaMinutes={routeSession.etaMinutes}
+              speedKts={routeSession.speedKts}
+              legs={routeSession.legs}
+              optimizing={routeSession.optimizing}
+              locked={routeSession.mode === "active"}
+              onSpeed={routeSession.setSpeed}
+              onReset={routeSession.reset}
+              onAddVia={() => {
+                const c = telemetry.center;
+                if (isFiniteLatLng(c)) routeSession.addViaAt(c);
+              }}
+              onLock={routeSession.lockActive}
+              onUnlock={routeSession.unlockEdit}
+            />
+          </div>,
+          document.body,
+        )}
 
       {/*
        * HUD / search / FAB chrome stays inside the map wrapper so it cannot

@@ -55,14 +55,43 @@ export const KURDOGLU_OFFSHORE: LatLng[] = [
   { lat: 36.605, lng: 28.72 },
 ];
 
-/** Bozburun / Hisarönü approaches. */
+/** Bozburun / Hisarönü approaches — south-about fairway (never over the ridge). */
 export const BOZBURUN: LatLng[] = [
-  { lat: 36.69, lng: 28.05 },
-  { lat: 36.68, lng: 28.08 },
-  { lat: 36.67, lng: 28.12 },
-  { lat: 36.66, lng: 28.16 },
-  { lat: 36.65, lng: 28.2 },
-  { lat: 36.64, lng: 28.24 },
+  // Harbor mouth approaches (south / SW of Liman)
+  { lat: 36.684, lng: 28.04 },
+  { lat: 36.678, lng: 28.045 },
+  { lat: 36.67, lng: 28.05 },
+  { lat: 36.662, lng: 28.06 },
+  { lat: 36.655, lng: 28.08 },
+  { lat: 36.648, lng: 28.1 },
+  { lat: 36.642, lng: 28.13 },
+  { lat: 36.638, lng: 28.16 },
+  { lat: 36.635, lng: 28.2 },
+  { lat: 36.632, lng: 28.25 },
+  { lat: 36.63, lng: 28.3 },
+  { lat: 36.628, lng: 28.35 },
+  { lat: 36.625, lng: 28.42 },
+  { lat: 36.622, lng: 28.5 },
+  { lat: 36.62, lng: 28.58 },
+  { lat: 36.618, lng: 28.65 },
+  // Link toward Kurdoğlu / Göcek outer track
+  { lat: 36.62, lng: 28.72 },
+  { lat: 36.63, lng: 28.78 },
+  { lat: 36.64, lng: 28.82 },
+];
+
+/**
+ * Bozburun → Kızılada / Kurdoğlu open-water bridge (south of Datça spine).
+ * Forces A* off the peninsula mountains toward Göcek / Fethiye.
+ */
+export const BOZBURUN_TO_KURDOGLU: LatLng[] = [
+  { lat: 36.615, lng: 28.55 },
+  { lat: 36.61, lng: 28.62 },
+  { lat: 36.608, lng: 28.68 },
+  { lat: 36.61, lng: 28.74 },
+  { lat: 36.62, lng: 28.8 },
+  { lat: 36.63, lng: 28.84 },
+  { lat: 36.64, lng: 28.87 },
 ];
 
 /** Datça south coast — keep routes south of the peninsula spine. */
@@ -110,6 +139,7 @@ export const ALL_CORRIDOR_NODES: LatLng[] = [
   ...GOCEK_FAIRWAYS,
   ...KURDOGLU_OFFSHORE,
   ...BOZBURUN,
+  ...BOZBURUN_TO_KURDOGLU,
   ...DATCA_SOUTH,
   ...SIMI_RHODES_GATES,
   ...MARMARIS,

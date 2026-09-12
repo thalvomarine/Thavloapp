@@ -146,3 +146,23 @@ test("multi-via concatenate keeps finite waypoints", () => {
   assert.ok(route.waypoints.length >= 2);
   assert.ok(route.legs.length >= 1);
 });
+
+test("Göcek to Bozburun Limanı stays south-about (no ridge-cutting legs)", () => {
+  reset();
+  const from = { lat: 36.7525, lng: 28.9428 };
+  const to = { lat: 36.6903, lng: 28.043 };
+  const route = computeSeaRoute(from, to, 8);
+  assert.ok(route.waypoints.length >= 3, "expected multi-leg coastal path");
+  assert.ok(route.distanceNm > 35, `expected long detour, got ${route.distanceNm}`);
+  for (let i = 1; i < route.waypoints.length; i++) {
+    const a = route.waypoints[i - 1]!;
+    const b = route.waypoints[i]!;
+    const isHarbor = i === 1 || i === route.waypoints.length - 1;
+    const crosses = segmentCrossesLand(a, b, AEGEAN_LAND_MASKS);
+    if (isHarbor && haversineNm(a.lat, a.lng, b.lat, b.lng) <= 2.5) continue;
+    assert.equal(crosses, false, `leg ${i} crosses Bozburun land`);
+  }
+  // Path should stay on the southern coastal track (not climb the ridge)
+  const minLat = Math.min(...route.waypoints.map((p) => p.lat));
+  assert.ok(minLat <= 36.66, `expected southern gate, minLat=${minLat}`);
+});

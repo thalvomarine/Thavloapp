@@ -261,7 +261,18 @@ export function ChartDetailSheet({ point, fix, onClose, onNavigate, onEmergency 
             <div className="mt-4 flex gap-2">
               <button
                 type="button"
-                onClick={() => onNavigate(displayPoint)}
+                onClick={() => {
+                  const target = displayPoint;
+                  console.log("[ChartDetailSheet] navigate click", {
+                    name: chartPointName(target),
+                    coords: chartPointCoords(target),
+                  });
+                  // Close immediately so the sheet never sits on top of Route Deck.
+                  setVisible(false);
+                  setDisplayPoint(null);
+                  onClose();
+                  onNavigate(target);
+                }}
                 className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border border-cyan-300/40 bg-cyan-400/15 text-[12px] font-bold uppercase tracking-[0.06em] text-cyan-100 transition-colors hover:bg-cyan-400/25"
               >
                 <Anchor className="size-4 shrink-0" />

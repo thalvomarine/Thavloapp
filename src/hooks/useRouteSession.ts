@@ -79,20 +79,23 @@ export function useRouteSession() {
         return;
       }
       const gen = ++genRef.current;
-      const previewPts = [origin, ...vias.filter(isFiniteLatLng), destination];
-      setState((s) => ({
-        ...s,
-        optimizing: true,
-        origin,
-        destination,
-        vias,
-        speedKts,
-        mode,
-        waypoints: previewPts,
-        legs: [],
-        distanceNm: Number.NaN,
-        etaMinutes: null,
-      }));
+      setState((s) => {
+        const keepPath = s.waypoints.length >= 2;
+        return {
+          ...s,
+          optimizing: true,
+          origin,
+          destination,
+          vias,
+          speedKts,
+          mode,
+          // Never replace a real sea path with a straight land-cutting preview.
+          waypoints: keepPath ? s.waypoints : [],
+          legs: keepPath ? s.legs : [],
+          distanceNm: keepPath ? s.distanceNm : Number.NaN,
+          etaMinutes: keepPath ? s.etaMinutes : null,
+        };
+      });
 
       try {
         const route = await computeSeaRouteViaAsync(origin, destination, vias, speedKts);

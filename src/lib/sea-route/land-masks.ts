@@ -112,14 +112,34 @@ export const AEGEAN_LAND_MASKS: LatLng[][] = [
     { lat: 36.68, lng: 27.65 },
   ],
 
-  // —— Bozburun / Hisarönü ——
+  // —— Bozburun / Hisarönü peninsula mass (mountains + villages) ——
+  // Covers the land that a Göcek↔Bozburun straight line would cut through.
+  // Leaves a southern sea approach to Bozburun Limanı (~36.690 / 28.043) open.
   [
-    { lat: 36.72, lng: 28.0 },
+    { lat: 36.62, lng: 27.95 },
+    { lat: 36.68, lng: 27.92 },
+    { lat: 36.74, lng: 27.98 },
     { lat: 36.78, lng: 28.05 },
-    { lat: 36.8, lng: 28.2 },
-    { lat: 36.76, lng: 28.28 },
-    { lat: 36.7, lng: 28.25 },
-    { lat: 36.68, lng: 28.12 },
+    { lat: 36.8, lng: 28.18 },
+    { lat: 36.78, lng: 28.28 },
+    { lat: 36.74, lng: 28.3 },
+    { lat: 36.7, lng: 28.26 },
+    { lat: 36.695, lng: 28.18 },
+    { lat: 36.7, lng: 28.1 },
+    { lat: 36.71, lng: 28.05 },
+    { lat: 36.7, lng: 28.0 },
+    { lat: 36.68, lng: 27.98 },
+    { lat: 36.65, lng: 28.0 },
+    { lat: 36.63, lng: 28.05 },
+  ],
+  // Inner Hisarönü / Selimiye neck
+  [
+    { lat: 36.7, lng: 28.12 },
+    { lat: 36.74, lng: 28.14 },
+    { lat: 36.76, lng: 28.22 },
+    { lat: 36.73, lng: 28.28 },
+    { lat: 36.69, lng: 28.24 },
+    { lat: 36.68, lng: 28.16 },
   ],
 
   // —— Mainland hinterland (north of the charted coast) ——
