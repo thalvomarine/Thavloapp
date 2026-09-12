@@ -1,14 +1,18 @@
 /**
- * Interactive sea-route overlay: cyan polyline, draggable pins, mid-leg + handles.
+ * Interactive sea-route overlay: cyan polyline, large-hitbox pins, mid-leg + handles.
+ * Hitboxes are ≥44×44 for mobile; map.dragging locks while a pin/mid is dragged.
  */
 
 import { memo, useMemo } from "react";
-import { Marker, Popup, Polyline } from "react-leaflet";
+import { Marker, Popup, Polyline, useMap } from "react-leaflet";
 import L from "leaflet";
 import { useTranslation } from "react-i18next";
 import { isFiniteLatLng, type LatLng } from "@/lib/sea-route/geometry";
 
 export type RoutePinRole = "start" | "via" | "end";
+
+const HIT = 44;
+const HIT_ANCHOR = HIT / 2;
 
 type Props = {
   waypoints: LatLng[];
@@ -21,24 +25,45 @@ type Props = {
   onRemovePin: (index: number) => void;
 };
 
+/** Transparent 44×44 hitbox wrapping a centered visual core. */
+function hitboxHtml(inner: string, extraClass = ""): string {
+  return `<div class="thalvo-route-hit ${extraClass}" style="width:${HIT}px;height:${HIT}px;display:grid;place-items:center;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none">${inner}</div>`;
+}
+
 function pinIcon(role: RoutePinRole, locked: boolean): L.DivIcon {
-  const color = role === "end" ? "#FF3B56" : role === "start" ? "#34d399" : "#00F2FE";
-  const size = role === "via" ? 14 : 18;
-  const cursor = locked ? "default" : "grab";
+  const grab = locked ? "default" : "grab";
+  let core: string;
+  if (role === "start") {
+    core = `<span class="thalvo-route-pin-core thalvo-route-pin-start" style="cursor:${grab}" aria-hidden="true"></span>`;
+  } else if (role === "end") {
+    core = `<span class="thalvo-route-pin-core thalvo-route-pin-end" style="cursor:${grab}" aria-hidden="true">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#F5C542" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="5" r="2.5" fill="#00F2FE" stroke="#00F2FE"/>
+        <path d="M12 7.5v6"/>
+        <path d="M8 11h8"/>
+        <path d="M10 13.5c0 2.2 2 4.5 2 4.5s2-2.3 2-4.5"/>
+      </svg>
+    </span>`;
+  } else {
+    core = `<span class="thalvo-route-pin-core thalvo-route-pin-via" style="cursor:${grab}" aria-hidden="true"></span>`;
+  }
   return L.divIcon({
-    className: "thalvo-route-pin",
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size / 2],
-    html: `<div style="width:${size}px;height:${size}px;border-radius:999px;background:${color};border:2px solid #0B1528;box-shadow:0 0 10px ${color}88;cursor:${cursor}"></div>`,
+    className: `thalvo-route-pin thalvo-route-pin--${role}${locked ? " is-locked" : ""}`,
+    iconSize: [HIT, HIT],
+    iconAnchor: [HIT_ANCHOR, HIT_ANCHOR],
+    html: hitboxHtml(core, locked ? "is-locked" : ""),
   });
 }
 
-function midIcon(): L.DivIcon {
+function midIcon(dragging = false): L.DivIcon {
+  const core = dragging
+    ? `<span class="thalvo-route-pin-core thalvo-route-pin-via is-dragging" aria-hidden="true"></span>`
+    : `<span class="thalvo-route-mid-core" aria-hidden="true"><span class="thalvo-route-mid-plus">+</span></span>`;
   return L.divIcon({
-    className: "thalvo-route-mid",
-    iconSize: [22, 22],
-    iconAnchor: [11, 11],
-    html: `<div style="width:22px;height:22px;border-radius:999px;display:grid;place-items:center;background:rgba(11,21,40,0.75);border:1px solid rgba(0,242,254,0.45);color:#00F2FE;font-size:14px;font-weight:700;line-height:1;cursor:grab;opacity:0.85">+</div>`,
+    className: `thalvo-route-mid${dragging ? " is-dragging" : ""}`,
+    iconSize: [HIT, HIT],
+    iconAnchor: [HIT_ANCHOR, HIT_ANCHOR],
+    html: hitboxHtml(core, dragging ? "is-dragging" : ""),
   });
 }
 
@@ -46,6 +71,26 @@ function roleForIndex(i: number, n: number): RoutePinRole {
   if (i === 0) return "start";
   if (i === n - 1) return "end";
   return "via";
+}
+
+function useMapDragLock() {
+  const map = useMap();
+  return {
+    onDragStart: () => {
+      try {
+        map.dragging.disable();
+      } catch {
+        /* map may be tearing down */
+      }
+    },
+    onDragEnd: () => {
+      try {
+        map.dragging.enable();
+      } catch {
+        /* map may be tearing down */
+      }
+    },
+  };
 }
 
 export const RouteInteractionLayer = memo(function RouteInteractionLayer({
@@ -58,6 +103,7 @@ export const RouteInteractionLayer = memo(function RouteInteractionLayer({
   onRemovePin,
 }: Props) {
   const { t } = useTranslation();
+  const dragLock = useMapDragLock();
 
   const line = useMemo(
     () =>
@@ -106,11 +152,20 @@ export const RouteInteractionLayer = memo(function RouteInteractionLayer({
           <Marker
             key={`mid-${m.after}-${m.lat.toFixed(4)}-${m.lng.toFixed(4)}`}
             position={[m.lat, m.lng]}
-            icon={midIcon()}
+            icon={midIcon(false)}
             draggable
             zIndexOffset={400}
             eventHandlers={{
+              dragstart: (e) => {
+                dragLock.onDragStart();
+                try {
+                  e.target.setIcon(midIcon(true));
+                } catch {
+                  /* ignore icon swap failures */
+                }
+              },
               dragend: (e) => {
+                dragLock.onDragEnd();
                 const ll = e.target.getLatLng();
                 if (!Number.isFinite(ll.lat) || !Number.isFinite(ll.lng)) return;
                 onInsertVia(m.after, { lat: ll.lat, lng: ll.lng });
@@ -130,8 +185,20 @@ export const RouteInteractionLayer = memo(function RouteInteractionLayer({
             draggable={!locked}
             zIndexOffset={500}
             eventHandlers={{
+              dragstart: () => {
+                if (locked) return;
+                dragLock.onDragStart();
+              },
+              drag: (e) => {
+                if (locked || role !== "via") return;
+                const el = e.target.getElement() as HTMLElement | null;
+                el?.classList.add("is-dragging");
+              },
               dragend: (e) => {
                 if (locked) return;
+                dragLock.onDragEnd();
+                const el = e.target.getElement() as HTMLElement | null;
+                el?.classList.remove("is-dragging");
                 const ll = e.target.getLatLng();
                 if (!Number.isFinite(ll.lat) || !Number.isFinite(ll.lng)) return;
                 onWaypointDragEnd(i, { lat: ll.lat, lng: ll.lng });

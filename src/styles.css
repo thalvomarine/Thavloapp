@@ -155,6 +155,94 @@
   animation: thalvo-route-pulse 1.6s ease-in-out infinite;
 }
 
+/* Route Master pins / mid-handles — large hitbox, compact marine core */
+.leaflet-marker-icon.thalvo-route-pin,
+.leaflet-marker-icon.thalvo-route-mid {
+  background: transparent !important;
+  border: none !important;
+}
+.thalvo-route-hit {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.thalvo-route-hit:active,
+.leaflet-marker-dragging .thalvo-route-hit {
+  cursor: grabbing;
+}
+.thalvo-route-hit.is-locked {
+  cursor: default;
+}
+.thalvo-route-pin-core {
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  pointer-events: none;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+.thalvo-route-pin-start {
+  width: 18px;
+  height: 18px;
+  background: #0aefa0;
+  border: 2px solid #0b1528;
+  box-shadow: 0 0 0 0 rgba(10, 239, 160, 0.55);
+  animation: thalvo-route-pin-pulse 1.8s ease-out infinite;
+}
+.thalvo-route-pin-via {
+  width: 16px;
+  height: 16px;
+  background: #00f2fe;
+  border: 2px solid #0b1528;
+  filter: drop-shadow(0 2px 4px rgba(0, 242, 254, 0.45));
+}
+.thalvo-route-pin-end {
+  width: 20px;
+  height: 20px;
+  background: #0b1528;
+  border: 2px solid #00f2fe;
+  box-shadow: 0 0 10px rgba(0, 242, 254, 0.45), 0 0 0 1px rgba(245, 197, 66, 0.35);
+}
+.leaflet-marker-dragging .thalvo-route-pin-via,
+.thalvo-route-hit.is-dragging .thalvo-route-pin-via,
+.thalvo-route-pin-via.is-dragging,
+.leaflet-marker-icon.is-dragging .thalvo-route-pin-via {
+  transform: scale(1.25);
+  box-shadow: 0 0 14px rgba(0, 242, 254, 0.85);
+  filter: drop-shadow(0 0 8px rgba(0, 242, 254, 0.9));
+}
+.thalvo-route-mid-core {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(11, 21, 40, 0.8);
+  border: 1px solid rgba(34, 211, 238, 0.4);
+  color: #67e8f9;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+}
+.thalvo-route-mid-plus {
+  font-size: 16px;
+  font-weight: 300;
+  line-height: 1;
+  transform: translateY(-0.5px);
+}
+@keyframes thalvo-route-pin-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(10, 239, 160, 0.55);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(10, 239, 160, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(10, 239, 160, 0);
+  }
+}
+
 @keyframes mission-rise {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
