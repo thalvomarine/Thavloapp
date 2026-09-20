@@ -60,6 +60,10 @@ interface Props {
   onPanelOpenChange?: (open: boolean) => void;
   basemap?: BasemapId;
   onSelectBasemap?: (id: BasemapId) => void;
+  /** Prefetch Göcek–Fethiye–Bozburun chart tiles for offline use. */
+  onDownloadOfflineTiles?: () => void;
+  tileDownloadPercent?: number | null;
+  tileDownloadActive?: boolean;
 }
 
 const LAYER_ROWS: Array<{ key: ChartLayerKey; labelKey: string; dot: string }> = [
@@ -109,6 +113,9 @@ function ChartHudBody({
   onAddReport,
   basemap = "sat",
   onSelectBasemap,
+  onDownloadOfflineTiles,
+  tileDownloadPercent,
+  tileDownloadActive,
 }: Pick<
   Props,
   | "layers"
@@ -121,6 +128,9 @@ function ChartHudBody({
   | "onAddReport"
   | "basemap"
   | "onSelectBasemap"
+  | "onDownloadOfflineTiles"
+  | "tileDownloadPercent"
+  | "tileDownloadActive"
 >) {
   const { t } = useTranslation();
   return (
@@ -230,6 +240,41 @@ function ChartHudBody({
         ))}
       </ul>
 
+      {onDownloadOfflineTiles && (
+        <div className="mt-2.5 border-t border-white/[0.07] pt-2.5">
+          <button
+            type="button"
+            onPointerDown={stopMapEvent}
+            onClick={(e) => {
+              stopMapEvent(e);
+              onDownloadOfflineTiles();
+            }}
+            className={
+              "flex h-10 w-full items-center justify-center gap-1.5 rounded-full border text-[10px] font-bold uppercase tracking-[0.06em] transition-all " +
+              (tileDownloadActive
+                ? "border-amber-400/50 bg-amber-400/15 text-amber-100"
+                : "border-cyan-300/35 bg-cyan-400/10 text-cyan-100 hover:bg-cyan-400/20")
+            }
+          >
+            {tileDownloadActive ? (
+              <>
+                <Loader2 className="size-3.5 shrink-0 animate-spin" />
+                <span className="truncate">
+                  {t("chart.offline_download_progress", {
+                    percent: tileDownloadPercent ?? 0,
+                  })}
+                </span>
+              </>
+            ) : (
+              <>
+                <Ship className="size-3.5 shrink-0" />
+                <span className="truncate">{t("chart.offline_download")}</span>
+              </>
+            )}
+          </button>
+        </div>
+      )}
+
       {(canContribute || isAdmin) && (
         <div className="mt-2.5 space-y-1.5 border-t border-white/[0.07] pt-2.5">
           {canContribute && (
@@ -293,6 +338,9 @@ export function ChartHud({
   onPanelOpenChange,
   basemap = "sat",
   onSelectBasemap,
+  onDownloadOfflineTiles,
+  tileDownloadPercent,
+  tileDownloadActive,
 }: Props) {
   const { t } = useTranslation();
   const [uncontrolledOpen, setUncontrolledOpen] = useState(true);
@@ -381,6 +429,9 @@ export function ChartHud({
               onAddReport={onAddReport}
               basemap={basemap}
               onSelectBasemap={onSelectBasemap}
+              onDownloadOfflineTiles={onDownloadOfflineTiles}
+              tileDownloadPercent={tileDownloadPercent}
+              tileDownloadActive={tileDownloadActive}
             />
           </div>
         </div>
@@ -465,6 +516,9 @@ export function ChartFabStack({
   onToggleDraw,
   canContribute = false,
   onAddReport,
+  onDownloadOfflineTiles,
+  tileDownloadPercent,
+  tileDownloadActive,
 }: {
   onResetNorth: () => void;
   onCycleBasemap?: () => void;
@@ -484,6 +538,9 @@ export function ChartFabStack({
   onToggleDraw?: () => void;
   canContribute?: boolean;
   onAddReport?: () => void;
+  onDownloadOfflineTiles?: () => void;
+  tileDownloadPercent?: number | null;
+  tileDownloadActive?: boolean;
 }) {
   const { t } = useTranslation();
   const [needleSpin, setNeedleSpin] = useState(0);
@@ -533,6 +590,9 @@ export function ChartFabStack({
                 onAddReport={onAddReport}
                 basemap={basemap}
                 onSelectBasemap={onSelectBasemap}
+                onDownloadOfflineTiles={onDownloadOfflineTiles}
+                tileDownloadPercent={tileDownloadPercent}
+                tileDownloadActive={tileDownloadActive}
               />
             </div>
           </div>

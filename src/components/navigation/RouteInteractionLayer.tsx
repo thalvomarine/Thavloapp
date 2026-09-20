@@ -1,6 +1,8 @@
 /**
  * Interactive sea-route overlay: cyan polyline, large-hitbox pins, mid-leg + handles.
  * Hitboxes are ≥44×44 for mobile; map.dragging locks while a pin/mid is dragged.
+ *
+ * Never draws a pin-to-pin straight preview while the sea mesh is still computing.
  */
 
 import { memo, useMemo } from "react";
@@ -20,6 +22,8 @@ type Props = {
   pins: LatLng[];
   locked: boolean;
   active: boolean;
+  /** True while A* / mesh is running — suppress polyline & mid handles. */
+  optimizing?: boolean;
   onWaypointDragEnd: (index: number, latlng: LatLng) => void;
   onInsertVia: (afterLegIndex: number, latlng: LatLng) => void;
   onRemovePin: (index: number) => void;
@@ -98,6 +102,7 @@ export const RouteInteractionLayer = memo(function RouteInteractionLayer({
   pins,
   locked,
   active,
+  optimizing = false,
   onWaypointDragEnd,
   onInsertVia,
   onRemovePin,
@@ -105,18 +110,19 @@ export const RouteInteractionLayer = memo(function RouteInteractionLayer({
   const { t } = useTranslation();
   const dragLock = useMapDragLock();
 
-  const line = useMemo(
-    () =>
-      waypoints
-        .filter(isFiniteLatLng)
-        .map((p) => [p.lat, p.lng] as [number, number]),
-    [waypoints],
-  );
+  // Only the computed sea path — never fall back to [origin, dest] (land-cutting).
+  const line = useMemo(() => {
+    if (optimizing) return [] as Array<[number, number]>;
+    const pts = waypoints.filter(isFiniteLatLng);
+    if (pts.length < 2) return [] as Array<[number, number]>;
+    return pts.map((p) => [p.lat, p.lng] as [number, number]);
+  }, [waypoints, optimizing]);
 
   const safePins = useMemo(() => pins.filter(isFiniteLatLng), [pins]);
 
   const mids = useMemo(() => {
-    if (locked || safePins.length < 2) return [];
+    // Mid handles sit on pin chords — hide until a real sea path exists.
+    if (optimizing || locked || safePins.length < 2 || line.length < 2) return [];
     const out: Array<{ after: number; lat: number; lng: number }> = [];
     for (let i = 0; i < safePins.length - 1; i++) {
       const a = safePins[i]!;
@@ -128,7 +134,7 @@ export const RouteInteractionLayer = memo(function RouteInteractionLayer({
       });
     }
     return out;
-  }, [locked, safePins]);
+  }, [locked, safePins, optimizing, line.length]);
 
   if (safePins.length < 2 && line.length < 2) return null;
 

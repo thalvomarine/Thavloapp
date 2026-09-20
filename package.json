@@ -12,13 +12,14 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit",
-    "test": "node --test --experimental-strip-types src/lib/geolocation.test.ts src/lib/nav.test.ts src/lib/payments.test.ts src/lib/sea-route.test.ts",
+    "test": "node --test --experimental-strip-types src/lib/geolocation.test.ts src/lib/nav.test.ts src/lib/payments.test.ts src/lib/sea-route.test.ts src/lib/tile-cache.test.ts",
     "cap:prepare": "node scripts/prepare-web-spa.mjs",
     "cap:sync": "npm run build && npx cap sync",
     "build:mobile": "npm run cap:sync"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^3.0.2",
+    "@capacitor-community/keep-awake": "^8.0.1",
     "@capacitor/android": "^8.5.1",
     "@capacitor/cli": "^8.5.1",
     "@capacitor/core": "^8.5.1",

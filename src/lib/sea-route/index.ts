@@ -312,9 +312,20 @@ function finalizePath(raw: LatLng[], speedKts: number, viaPoints?: LatLng[]): Se
   return seaResult(waypoints, speedKts, viaPoints);
 }
 
+function softSouthernDetour(from: LatLng, to: LatLng, speedKts: number): SeaRouteResult {
+  const midLng = (from.lng + to.lng) / 2;
+  const gates: LatLng[] = [
+    { lat: 36.58, lng: from.lng },
+    { lat: 36.55, lng: midLng },
+    { lat: 36.58, lng: to.lng },
+  ];
+  return finalizePath([from, ...gates, to], speedKts);
+}
+
 /**
  * Coastal sea route between two chart positions.
- * Never throws — failures log and fall back to a great-circle line.
+ * Never throws — failures log and fall back to a southern sea detour
+ * (never a land-cutting great-circle when the chord crosses land).
  */
 export function computeSeaRoute(
   from: LatLng,
@@ -373,13 +384,18 @@ export function computeSeaRoute(
     }
     if (viaOk) return finalizePath(via, kts);
 
+    // Only use a direct chord when it is open water — never paint a ridge cut.
     if (directClear) return directResult(from, to, kts);
 
     console.warn("[SeaRoute] using soft southern detour — masks incomplete for this pair");
-    return finalizePath(via, kts);
+    return softSouthernDetour(from, to, kts);
   } catch (err) {
     console.error("[SeaRoute Error]:", err);
-    if (isFiniteLatLng(from) && isFiniteLatLng(to)) return directResult(from, to, speedKts);
+    if (isFiniteLatLng(from) && isFiniteLatLng(to)) {
+      const clear = !segmentCrossesLand(from, to, AEGEAN_LAND_MASKS_BUFFERED, 16);
+      if (clear) return directResult(from, to, speedKts);
+      return softSouthernDetour(from, to, speedKts);
+    }
     return {
       waypoints: [],
       legs: [],
@@ -447,11 +463,19 @@ export function computeSeaRouteAsync(
         resolve(computeSeaRoute(from, to, speedKts));
       } catch (err) {
         console.error("[SeaRoute Error]:", err);
-        resolve(
-          isFiniteLatLng(from) && isFiniteLatLng(to)
-            ? directResult(from, to, speedKts)
-            : { waypoints: [], legs: [], distanceNm: 0, etaMinutes: null, speedKts, mode: "direct" },
-        );
+        if (isFiniteLatLng(from) && isFiniteLatLng(to)) {
+          const clear = !segmentCrossesLand(from, to, AEGEAN_LAND_MASKS_BUFFERED, 16);
+          resolve(clear ? directResult(from, to, speedKts) : softSouthernDetour(from, to, speedKts));
+        } else {
+          resolve({
+            waypoints: [],
+            legs: [],
+            distanceNm: 0,
+            etaMinutes: null,
+            speedKts,
+            mode: "direct",
+          });
+        }
       }
     };
     if (typeof requestIdleCallback === "function") {

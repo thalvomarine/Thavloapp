@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { AlertOctagon, Anchor, Navigation, Ruler, Waves, X } from "lucide-react";
 import {
@@ -39,11 +40,12 @@ function kindLabelKey(point: ChartPoint): string {
 }
 
 /**
- * Navily-style bottom detail card. Stays mounted (off-screen) between
- * selections so the slide-down close animation has something to show.
+ * Navily-style bottom detail card. Portaled to document.body so map
+ * `overflow:hidden` / `isolate` never clips it or traps Route Deck underneath.
  *
  * Distance: show haversine immediately (never blocks the sheet). Refine to
  * sea-route NM/ETA asynchronously — sync A* here crashed Capacitor WebViews.
+ * Never draws a map polyline — LiveMap's RouteInteractionLayer owns the path.
  */
 export function ChartDetailSheet({ point, fix, onClose, onNavigate, onEmergency }: Props) {
   const { t } = useTranslation();
@@ -62,7 +64,9 @@ export function ChartDetailSheet({ point, fix, onClose, onNavigate, onEmergency 
       const raf = requestAnimationFrame(() => setVisible(true));
       return () => cancelAnimationFrame(raf);
     }
+    // Parent cleared selection — hard-unmount so Route Deck is never covered.
     setVisible(false);
+    setDisplayPoint(null);
   }, [point, fix]);
 
   useEffect(() => {
@@ -127,7 +131,7 @@ export function ChartDetailSheet({ point, fix, onClose, onNavigate, onEmergency 
     };
   }, [displayPoint, fix]);
 
-  if (!isValidChartPoint(displayPoint)) return null;
+  if (!isValidChartPoint(displayPoint) || typeof document === "undefined") return null;
 
   try {
     const coords = chartPointCoords(displayPoint);
@@ -168,23 +172,26 @@ export function ChartDetailSheet({ point, fix, onClose, onNavigate, onEmergency 
       Number.isFinite(coords.lng)
         ? haversineNm(fix.lat, fix.lng, coords.lat, coords.lng)
         : null;
+    // Sheet readout only — never paint a map line from this haversine.
     const displayNm =
       seaNm != null && Number.isFinite(seaNm)
         ? seaNm
-        : straightNm != null && Number.isFinite(straightNm)
-          ? straightNm
-          : null;
+        : seaLoading
+          ? null
+          : straightNm != null && Number.isFinite(straightNm)
+            ? straightNm
+            : null;
     const etaMin = seaEtaMin;
 
-    return (
+    const sheet = (
       <div
         className={
-          "pointer-events-none absolute inset-x-0 z-[500] flex justify-center px-2 transition-transform duration-300 ease-out sm:px-4 " +
+          "pointer-events-none fixed inset-x-0 flex justify-center px-2 transition-transform duration-300 ease-out sm:px-4 " +
           (visible ? "translate-y-0" : "translate-y-[calc(100%+2rem)]")
         }
-        style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 5rem)" }}
-        onTransitionEnd={() => {
-          if (!visible) setDisplayPoint(null);
+        style={{
+          bottom: "calc(env(safe-area-inset-bottom, 0px) + 5rem)",
+          zIndex: 999990,
         }}
       >
         <div className="pointer-events-auto flex max-h-[min(70dvh,calc(100dvh-env(safe-area-inset-bottom)-6.5rem))] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-cyan-500/30 bg-[#0a192f]/95 shadow-[0_-20px_60px_-20px_rgba(0,0,0,0.85)] backdrop-blur-xl">
@@ -241,10 +248,14 @@ export function ChartDetailSheet({ point, fix, onClose, onNavigate, onEmergency 
                   {t(shelter.labelKey)}
                 </span>
               ) : null}
-              {displayNm != null && (
+              {(displayNm != null || seaLoading) && (
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-1 font-mono text-white/60">
                   <Navigation className="size-3 text-cyan-300/70" />
-                  {seaLoading && seaNm == null ? "…" : `${displayNm.toFixed(1)} NM`}
+                  {seaLoading && seaNm == null
+                    ? "…"
+                    : displayNm != null
+                      ? `${displayNm.toFixed(1)} NM`
+                      : "—"}
                   {etaMin != null
                     ? ` · ${t("chart.sea_route_eta", { min: etaMin, kts: DEFAULT_YACHT_SPEED_KTS })}`
                     : seaLoading
@@ -267,7 +278,7 @@ export function ChartDetailSheet({ point, fix, onClose, onNavigate, onEmergency 
                     name: chartPointName(target),
                     coords: chartPointCoords(target),
                   });
-                  // Close immediately so the sheet never sits on top of Route Deck.
+                  // Hard close first, then hand off to LiveMap startRoute.
                   setVisible(false);
                   setDisplayPoint(null);
                   onClose();
@@ -308,12 +319,15 @@ export function ChartDetailSheet({ point, fix, onClose, onNavigate, onEmergency 
         </div>
       </div>
     );
+
+    return createPortal(sheet, document.body);
   } catch (err) {
     console.error("[ChartDetailSheet] render crash:", err);
-    return (
-      <div className="pointer-events-auto absolute inset-x-4 bottom-28 z-[500] rounded-xl border border-rose-400/40 bg-[#0a192f]/95 p-3 text-[11px] text-rose-200">
+    return createPortal(
+      <div className="pointer-events-auto fixed inset-x-4 bottom-28 z-[999990] rounded-xl border border-rose-400/40 bg-[#0a192f]/95 p-3 text-[11px] text-rose-200">
         Nokta detayı açılamadı. {err instanceof Error ? err.message : String(err)}
-      </div>
+      </div>,
+      document.body,
     );
   }
 }

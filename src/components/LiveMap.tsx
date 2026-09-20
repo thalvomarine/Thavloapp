@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { createPortal } from "react-dom";
+import { createPortal, flushSync } from "react-dom";
 import {
   MapContainer,
   Marker,
@@ -97,6 +97,14 @@ import { useRouteSession } from "@/hooks/useRouteSession";
 import { RouteInteractionLayer } from "@/components/navigation/RouteInteractionLayer";
 import { RouteDeck } from "@/components/navigation/RouteDeck";
 import { isFiniteLatLng } from "@/lib/sea-route/geometry";
+import { activateKeepAwake, releaseKeepAwake } from "@/lib/keep-awake";
+import {
+  AEGEAN_OFFLINE_BOUNDS,
+  createCachedTileLayer,
+  downloadAreaTiles,
+  type DownloadProgress,
+  type PrefetchController,
+} from "@/lib/map/tileCache";
 
 export interface LivePin {
   id: string;
@@ -421,23 +429,23 @@ function ChartRasterLayers({
       updateWhenZooming: false,
       updateWhenIdle: true,
     };
-    const satellite = L.tileLayer(SAT_TILE, {
+    const satellite = createCachedTileLayer(SAT_TILE, {
       ...raster,
       maxNativeZoom: 18,
       attribution: "Tiles © Esri",
     });
-    const sea = L.tileLayer(OSM_RASTER_TILE, {
+    const sea = createCachedTileLayer(OSM_RASTER_TILE, {
       ...raster,
       maxNativeZoom: 19,
       attribution: "© OpenStreetMap",
     });
-    const dark = L.tileLayer(OSM_RASTER_TILE, {
+    const dark = createCachedTileLayer(OSM_RASTER_TILE, {
       ...raster,
       maxNativeZoom: 19,
       className: "thalvo-dark-tiles",
       attribution: "© OpenStreetMap",
     });
-    const seamark = L.tileLayer(SEAMARK_TILE, {
+    const seamark = createCachedTileLayer(SEAMARK_TILE, {
       minZoom: CHART_MIN_ZOOM,
       maxZoom: CHART_MAX_ZOOM,
       maxNativeZoom: 18,
@@ -775,28 +783,83 @@ function LiveMapCanvas({
   const started = useRef(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [selectedPoint, setSelectedPoint] = useState<ChartPoint | null>(null);
-  const routeSession = useRouteSession();
-  const routeVisible = Boolean(
-    routeSession.destination && isFiniteLatLng(routeSession.destination),
-  );
+  const {
+    mode: routeMode,
+    origin: routeOrigin,
+    destination: routeDestination,
+    vias: routeVias,
+    waypoints: routeWaypoints,
+    legs: routeLegs,
+    distanceNm: routeDistanceNm,
+    etaMinutes: routeEtaMinutes,
+    speedKts: routeSpeedKts,
+    optimizing: routeOptimizing,
+    startRoute,
+    reset: resetRoute,
+    setSpeed: setRouteSpeed,
+    moveWaypoint,
+    insertVia,
+    removePin,
+    addViaAt,
+    lockActive,
+    unlockEdit,
+  } = useRouteSession();
+  const routeVisible = Boolean(routeDestination && isFiniteLatLng(routeDestination));
 
   useEffect(() => {
     if (!routeVisible) return;
     console.log("[RouteDeck Render State]:", {
-      mode: routeSession.mode,
-      dest: routeSession.destination,
-      origin: routeSession.origin,
-      optimizing: routeSession.optimizing,
-      waypoints: routeSession.waypoints.length,
+      mode: routeMode,
+      dest: routeDestination,
+      origin: routeOrigin,
+      optimizing: routeOptimizing,
+      waypoints: routeWaypoints.length,
     });
   }, [
     routeVisible,
-    routeSession.mode,
-    routeSession.destination,
-    routeSession.origin,
-    routeSession.optimizing,
-    routeSession.waypoints.length,
+    routeMode,
+    routeDestination,
+    routeOrigin,
+    routeOptimizing,
+    routeWaypoints.length,
   ]);
+
+  // Keep screen awake only while passage is locked ("Seyre Başla").
+  useEffect(() => {
+    if (routeMode === "active") {
+      void activateKeepAwake();
+    } else {
+      void releaseKeepAwake();
+    }
+    return () => {
+      void releaseKeepAwake();
+    };
+  }, [routeMode]);
+
+  const [tileProgress, setTileProgress] = useState<DownloadProgress | null>(null);
+  const prefetchRef = useRef<PrefetchController | null>(null);
+
+  const onDownloadOfflineTiles = useCallback(() => {
+    if (prefetchRef.current) {
+      prefetchRef.current.cancel();
+      prefetchRef.current = null;
+      setTileProgress(null);
+      return;
+    }
+    // Prefetch night/sea OSM basemap for the Göcek–Fethiye–Bozburun corridor.
+    const ctrl = downloadAreaTiles(
+      OSM_RASTER_TILE,
+      AEGEAN_OFFLINE_BOUNDS,
+      9,
+      15,
+      (p) => setTileProgress({ ...p }),
+    );
+    prefetchRef.current = ctrl;
+    void ctrl.promise.finally(() => {
+      prefetchRef.current = null;
+      setTimeout(() => setTileProgress(null), 2500);
+    });
+  }, []);
 
   const fixRef = useRef(fix);
   fixRef.current = fix;
@@ -812,7 +875,7 @@ function LiveMapCanvas({
         lng: center.lng,
       });
       console.log("[LiveMap onFocus→startRoute]", { origin, destination: target });
-      routeSession.startRoute(origin, { lat: target.lat, lng: target.lng });
+      startRoute(origin, { lat: target.lat, lng: target.lng });
     };
     const pending = consumeMapFocus();
     if (pending) apply(pending);
@@ -822,7 +885,7 @@ function LiveMapCanvas({
     };
     window.addEventListener(THALVO_MAP_FOCUS_EVENT, onFocus);
     return () => window.removeEventListener(THALVO_MAP_FOCUS_EVENT, onFocus);
-  }, [map, routeSession.startRoute]);
+  }, [map, startRoute]);
 
   const [layers, setLayers] = useState<ChartLayers>({
     // Seamark overlay + CSS filter doubles tile GPU cost — enable after idle.
@@ -1170,13 +1233,16 @@ function LiveMapCanvas({
 
   const onNavigate = useCallback(
     (point: ChartPoint) => {
+      console.log("[LiveMap] FORCE START ROUTE CALLED FOR:", point);
       const coords = chartPointCoords(point);
       if (!isFiniteLatLng(coords)) {
         console.error("[LiveMap onNavigate] invalid destination", point);
         return;
       }
-      // Close detail sheet so Route Deck is not buried under z-[500] sheet.
-      setSelectedPoint(null);
+      // Force-close detail sheet before route UI mounts (avoid z-fight / overflow clip).
+      flushSync(() => {
+        setSelectedPoint(null);
+      });
       map?.flyTo([coords.lat, coords.lng], 15, { duration: 1 });
       const mapCenter = map?.getCenter();
       const origin = resolveRouteOrigin(
@@ -1188,11 +1254,11 @@ function LiveMapCanvas({
         destination: coords,
         hasGps: Boolean(fix),
       });
-      routeSession.startRoute(origin, coords);
+      startRoute(origin, coords);
       // Still improve GPS in background when missing — route already started with fallback.
       if (!fix) void request();
     },
-    [map, fix, request, routeSession.startRoute, telemetry.center],
+    [map, fix, request, startRoute, telemetry.center],
   );
 
   // Leaflet's container doesn't auto-detect layout changes (sheet
@@ -1335,43 +1401,58 @@ function LiveMapCanvas({
         />
         {routeVisible && (
           <RouteInteractionLayer
-            waypoints={routeSession.waypoints}
+            waypoints={routeWaypoints}
             pins={
-              [
-                routeSession.origin,
-                ...routeSession.vias,
-                routeSession.destination,
-              ].filter(isFiniteLatLng) as Array<{ lat: number; lng: number }>
+              [routeOrigin, ...routeVias, routeDestination].filter(
+                isFiniteLatLng,
+              ) as Array<{ lat: number; lng: number }>
             }
-            locked={routeSession.mode === "active"}
-            active={routeSession.mode === "active"}
-            onWaypointDragEnd={routeSession.moveWaypoint}
-            onInsertVia={routeSession.insertVia}
-            onRemovePin={routeSession.removePin}
+            locked={routeMode === "active"}
+            active={routeMode === "active"}
+            optimizing={routeOptimizing}
+            onWaypointDragEnd={moveWaypoint}
+            onInsertVia={insertVia}
+            onRemovePin={removePin}
           />
         )}
       </MapContainer>
       </div>
 
-      {routeVisible &&
+      {/* Route Deck: body portal, destination-gated only (never mode === idle gate). */}
+      {routeDestination &&
         typeof document !== "undefined" &&
         createPortal(
-          <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[99999] flex justify-center px-3 pb-[calc(env(safe-area-inset-bottom,0px)+5.5rem)] pt-2">
+          <div
+            style={{
+              position: "fixed",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              zIndex: 999999,
+              display: "flex",
+              justifyContent: "center",
+              paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 5.5rem)",
+              paddingTop: "0.5rem",
+              paddingLeft: "0.75rem",
+              paddingRight: "0.75rem",
+              pointerEvents: "none",
+            }}
+          >
             <RouteDeck
-              distanceNm={routeSession.distanceNm}
-              etaMinutes={routeSession.etaMinutes}
-              speedKts={routeSession.speedKts}
-              legs={routeSession.legs}
-              optimizing={routeSession.optimizing}
-              locked={routeSession.mode === "active"}
-              onSpeed={routeSession.setSpeed}
-              onReset={routeSession.reset}
+              distanceNm={routeDistanceNm}
+              etaMinutes={routeEtaMinutes}
+              speedKts={routeSpeedKts}
+              legs={routeLegs}
+              optimizing={routeOptimizing}
+              locked={routeMode === "active"}
+              onSpeed={setRouteSpeed}
+              onReset={resetRoute}
               onAddVia={() => {
                 const c = telemetry.center;
-                if (isFiniteLatLng(c)) routeSession.addViaAt(c);
+                if (isFiniteLatLng(c)) addViaAt(c);
               }}
-              onLock={routeSession.lockActive}
-              onUnlock={routeSession.unlockEdit}
+              onLock={lockActive}
+              onUnlock={unlockEdit}
             />
           </div>,
           document.body,
@@ -1411,6 +1492,9 @@ function LiveMapCanvas({
                   onPanelOpenChange={setHudOpen}
                   basemap={basemap}
                   onSelectBasemap={setBasemap}
+                  onDownloadOfflineTiles={onDownloadOfflineTiles}
+                  tileDownloadPercent={tileProgress?.percent ?? null}
+                  tileDownloadActive={Boolean(tileProgress && tileProgress.percent < 100)}
                 />
                 <ChartSearchBar
                   zones={zones}
@@ -1527,9 +1611,30 @@ function LiveMapCanvas({
                     setReportPos(null);
                     setReportDialog(true);
                   }}
+                  onDownloadOfflineTiles={onDownloadOfflineTiles}
+                  tileDownloadPercent={tileProgress?.percent ?? null}
+                  tileDownloadActive={Boolean(tileProgress && tileProgress.percent < 100)}
                 />
                 {/* drawing/picking hints now live in ChartSearchBar `below` */}
               </>
+            )}
+
+            {tileProgress && (
+              <div className="pointer-events-none absolute top-[calc(env(safe-area-inset-top)+0.75rem)] left-1/2 z-[460] -translate-x-1/2 px-3">
+                <div className="pointer-events-auto rounded-full border border-cyan-400/35 bg-[#0B1528]/92 px-3.5 py-1.5 font-mono text-[11px] text-cyan-100 shadow-2xl backdrop-blur-md">
+                  {tileProgress.percent >= 100 && !tileProgress.cancelled
+                    ? t("chart.offline_download_done")
+                    : t("chart.offline_download_progress", {
+                        percent: tileProgress.percent,
+                      })}
+                  <span className="ml-2 inline-block h-1.5 w-16 overflow-hidden rounded-full bg-cyan-950 align-middle">
+                    <span
+                      className="block h-full rounded-full bg-cyan-400 transition-[width] duration-200"
+                      style={{ width: `${Math.min(100, tileProgress.percent)}%` }}
+                    />
+                  </span>
+                </div>
+              </div>
             )}
 
             {!hud && (
