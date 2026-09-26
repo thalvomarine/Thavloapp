@@ -1,7 +1,10 @@
+import { supabase } from "@/integrations/supabase/client";
+
 export type HullType = "sail" | "motor" | "catamaran" | "rib";
 export type ListingCurrency = "EUR" | "USD" | "TRY";
 export type FuelType = "diesel" | "petrol";
 export type BoatHue = "navy" | "teal" | "gold" | "slate" | "wine";
+export type ListingStatus = "live" | "paused";
 
 export const HULL_TYPES: HullType[] = ["motor", "sail", "catamaran", "rib"];
 export const CURRENCIES: ListingCurrency[] = ["EUR", "USD", "TRY"];
@@ -55,165 +58,17 @@ export interface BoatListing {
   seller: string;
   sellerPhone: string;
   hue: BoatHue;
+  /** Cover is the first URL. Empty when the seller has not added a photo yet. */
+  photos?: string[];
+  /** Set on captain-created listings. Catalogue boats have no owner. */
+  ownerId?: string;
+  /** Omitted listings stay live. Owners can pause without deleting. */
+  status?: ListingStatus;
 }
 
 const STORAGE_KEY = "thalvo.boat-listings.v1";
-
-export const BOAT_LISTINGS: BoatListing[] = [
-  {
-    id: "oceanis-40-1-2022",
-    title: "2022 Beneteau Oceanis 40.1",
-    year: 2022,
-    price: 285_000,
-    currency: "EUR",
-    marina: "Göcek D-Marin",
-    region: "Göcek",
-    hull: "sail",
-    loaM: 12.87,
-    beamM: 4.18,
-    draftM: 2.17,
-    engineBrand: "Yanmar",
-    engineHp: 45,
-    engineHours: 340,
-    fuel: "diesel",
-    flag: "Poland",
-    cabins: 3,
-    berths: 8,
-    cruiseKn: 7.5,
-    fuelTankL: 200,
-    waterTankL: 330,
-    lat: 36.7578,
-    lng: 28.9412,
-    equipment: ["Watermaker", "Solar", "Bow Thruster"],
-    description:
-      "Göcek D-Marin’de hazır, 2022 Oceanis 40.1. 340 saatlik Yanmar 45 HP, baş pervane, güneş ve su yapıcı ile Ege sezonuna çıkmaya hazır.",
-    seller: "Aegean Yacht Brokerage",
-    sellerPhone: "+90 252 645 12 40",
-    hue: "navy",
-  },
-  {
-    id: "northstar-ion-105-2023",
-    title: "2023 Northstar Ion 10.5 RIB Tender",
-    year: 2023,
-    price: 165_000,
-    currency: "EUR",
-    marina: "Marmaris Yacht Marina",
-    region: "Marmaris",
-    hull: "rib",
-    loaM: 10.5,
-    beamM: 3.2,
-    draftM: 0.65,
-    engineBrand: "Mercury",
-    engineHp: 600,
-    engineHours: 120,
-    fuel: "petrol",
-    flag: "Türkiye",
-    cabins: 0,
-    berths: 2,
-    cruiseKn: 38,
-    fuelTankL: 480,
-    waterTankL: 80,
-    lat: 36.851,
-    lng: 28.274,
-    equipment: ["Joystick", "Raymarine Axiom"],
-    description:
-      "2× Mercury 300 V8, 120 saat. Joystick sürüş ve Axiom plotter. Ana tekneye tender veya gün teknesi olarak teslim.",
-    seller: "Ion Tender Desk",
-    sellerPhone: "+90 252 412 88 10",
-    hue: "teal",
-  },
-  {
-    id: "lagoon-42-2019",
-    title: "2019 Lagoon 42 Katamaran",
-    year: 2019,
-    price: 490_000,
-    currency: "EUR",
-    marina: "Fethiye Ece Marina",
-    region: "Fethiye",
-    hull: "catamaran",
-    loaM: 12.8,
-    beamM: 7.7,
-    draftM: 1.25,
-    engineBrand: "Yanmar",
-    engineHp: 114,
-    engineHours: 680,
-    fuel: "diesel",
-    flag: "France",
-    cabins: 4,
-    berths: 8,
-    cruiseKn: 7,
-    fuelTankL: 300,
-    waterTankL: 300,
-    lat: 36.6275,
-    lng: 29.1028,
-    equipment: ["Generator", "Air Conditioning", "Watermaker"],
-    description:
-      "4 kabin owner versiyonu. Jeneratör, klima ve su yapıcı takılı. Ece Marina’da görülebilir.",
-    seller: "Ece Catamaran Desk",
-    sellerPhone: "+90 252 612 50 50",
-    hue: "gold",
-  },
-  {
-    id: "sun-odyssey-410-2020",
-    title: "2020 Jeanneau Sun Odyssey 410",
-    year: 2020,
-    price: 259_000,
-    currency: "EUR",
-    marina: "D-Marin Didim",
-    region: "Didim",
-    hull: "sail",
-    loaM: 12.35,
-    beamM: 3.99,
-    draftM: 2.25,
-    engineBrand: "Yanmar",
-    engineHp: 45,
-    engineHours: 410,
-    fuel: "diesel",
-    flag: "Türkiye",
-    cabins: 3,
-    berths: 6,
-    cruiseKn: 7.2,
-    fuelTankL: 200,
-    waterTankL: 330,
-    lat: 37.3522,
-    lng: 27.2594,
-    equipment: ["Bow Thruster", "Solar", "Bimini"],
-    description: "Didim’de Türk bayraklı, baş pervane ve güneş panelli cruiser.",
-    seller: "Didim Blue Water",
-    sellerPhone: "+90 256 813 90 00",
-    hue: "slate",
-  },
-  {
-    id: "axopar-28-2021",
-    title: "2021 Axopar 28 T-Top",
-    year: 2021,
-    price: 145_000,
-    currency: "EUR",
-    marina: "Bodrum Milta",
-    region: "Bodrum",
-    hull: "motor",
-    loaM: 8.74,
-    beamM: 2.96,
-    draftM: 0.8,
-    engineBrand: "Mercury",
-    engineHp: 400,
-    engineHours: 80,
-    fuel: "petrol",
-    flag: "Türkiye",
-    cabins: 1,
-    berths: 2,
-    cruiseKn: 32,
-    fuelTankL: 300,
-    waterTankL: 40,
-    lat: 37.0342,
-    lng: 27.4298,
-    equipment: ["T-Top", "Chartplotter", "Bow Thruster"],
-    description: "Bodrum Milta’da 80 saatlik 2× Mercury 200. Gün ve geçiş teknesi.",
-    seller: "Bodrum Powerboats",
-    sellerPhone: "+90 252 385 40 00",
-    hue: "wine",
-  },
-];
+const IMPORT_FLAG = "thalvo.boat-listings.imported.v1";
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export function formatListingPrice(price: number, currency: ListingCurrency, locale: string): string {
   const loc = locale.startsWith("tr") ? "tr-TR" : locale.startsWith("en") ? "en-US" : "de-DE";
@@ -242,13 +97,29 @@ export function telHref(phone: string): string {
   return `tel:${phone.replace(/\s/g, "")}`;
 }
 
-export function loadUserBoatListings(): BoatListing[] {
+export function isOwnListing(boat: BoatListing, ownerId: string | null | undefined): boolean {
+  return Boolean(ownerId && boat.ownerId && boat.ownerId === ownerId);
+}
+
+export function isLiveListing(boat: BoatListing): boolean {
+  return boat.status !== "paused";
+}
+
+export function loadUserBoatListings(ownerId?: string): BoatListing[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw) as BoatListing[];
-    return Array.isArray(parsed) ? parsed : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map((boat) => ({
+      ...boat,
+      status: boat.status === "paused" ? "paused" : "live",
+      ownerId: boat.ownerId ?? ownerId,
+      photos: Array.isArray(boat.photos)
+        ? boat.photos.filter((url) => typeof url === "string" && url.startsWith("https://")).slice(0, 6)
+        : [],
+    }));
   } catch {
     return [];
   }
@@ -266,4 +137,160 @@ export function persistUserBoatListings(listings: BoatListing[]) {
 export function nextHue(index: number): BoatHue {
   const hues: BoatHue[] = ["navy", "teal", "gold", "slate", "wine"];
   return hues[index % hues.length] ?? "navy";
+}
+
+interface BoatListingRow {
+  id: string;
+  owner_id: string;
+  title: string;
+  year: number;
+  price: number;
+  currency: ListingCurrency;
+  marina: string;
+  region: string;
+  hull: HullType;
+  loa_m: number;
+  beam_m: number;
+  draft_m: number;
+  engine_brand: string;
+  engine_hp: number;
+  engine_hours: number;
+  fuel: FuelType;
+  flag: string;
+  cabins: number;
+  berths: number;
+  cruise_kn: number;
+  fuel_tank_l: number | null;
+  water_tank_l: number | null;
+  lat: number;
+  lng: number;
+  equipment: string[] | null;
+  description: string;
+  seller_name: string;
+  seller_phone: string;
+  hue: BoatHue;
+  photos: string[] | null;
+  status: ListingStatus;
+}
+
+function rowToListing(row: BoatListingRow): BoatListing {
+  return {
+    id: row.id,
+    title: row.title,
+    year: row.year,
+    price: Number(row.price),
+    currency: row.currency,
+    marina: row.marina,
+    region: row.region,
+    hull: row.hull,
+    loaM: Number(row.loa_m),
+    beamM: Number(row.beam_m),
+    draftM: Number(row.draft_m),
+    engineBrand: row.engine_brand,
+    engineHp: row.engine_hp,
+    engineHours: row.engine_hours,
+    fuel: row.fuel,
+    flag: row.flag,
+    cabins: row.cabins,
+    berths: row.berths,
+    cruiseKn: Number(row.cruise_kn),
+    fuelTankL: row.fuel_tank_l == null ? null : Number(row.fuel_tank_l),
+    waterTankL: row.water_tank_l == null ? null : Number(row.water_tank_l),
+    lat: row.lat,
+    lng: row.lng,
+    equipment: row.equipment ?? [],
+    description: row.description,
+    seller: row.seller_name,
+    sellerPhone: row.seller_phone,
+    hue: row.hue,
+    photos: (row.photos ?? []).filter((url) => url.startsWith("https://")).slice(0, 6),
+    ownerId: row.owner_id,
+    status: row.status === "paused" ? "paused" : "live",
+  };
+}
+
+function listingToRow(listing: BoatListing, ownerId: string) {
+  return {
+    id: listing.id,
+    owner_id: ownerId,
+    title: listing.title,
+    year: listing.year,
+    price: listing.price,
+    currency: listing.currency,
+    marina: listing.marina,
+    region: listing.region,
+    hull: listing.hull,
+    loa_m: listing.loaM,
+    beam_m: listing.beamM,
+    draft_m: listing.draftM,
+    engine_brand: listing.engineBrand,
+    engine_hp: listing.engineHp,
+    engine_hours: listing.engineHours,
+    fuel: listing.fuel,
+    flag: listing.flag,
+    cabins: listing.cabins,
+    berths: listing.berths,
+    cruise_kn: listing.cruiseKn,
+    fuel_tank_l: listing.fuelTankL,
+    water_tank_l: listing.waterTankL,
+    lat: listing.lat,
+    lng: listing.lng,
+    equipment: listing.equipment,
+    description: listing.description,
+    seller_name: listing.seller,
+    seller_phone: listing.sellerPhone,
+    hue: listing.hue,
+    photos: (listing.photos ?? []).filter((url) => url.startsWith("https://")).slice(0, 6),
+    status: listing.status === "paused" ? "paused" : "live",
+  };
+}
+
+function readImportDone(): Set<string> {
+  try {
+    const raw = localStorage.getItem(IMPORT_FLAG);
+    const parsed = raw ? (JSON.parse(raw) as unknown) : [];
+    return new Set(Array.isArray(parsed) ? parsed.filter((id) => typeof id === "string") : []);
+  } catch {
+    return new Set();
+  }
+}
+
+async function importLocalBoatListings(ownerId: string) {
+  if (typeof window === "undefined") return;
+  const local = loadUserBoatListings(ownerId).filter((boat) => !boat.ownerId || boat.ownerId === ownerId);
+  if (local.length === 0) return;
+  const done = readImportDone();
+  const pending = local.filter((boat) => !done.has(boat.id));
+  for (const boat of pending) {
+    const id = UUID_RE.test(boat.id) ? boat.id : crypto.randomUUID();
+    const { error } = await supabase.from("boat_listings").upsert(listingToRow({ ...boat, id, ownerId }, ownerId));
+    if (error) throw error;
+    done.add(boat.id);
+    localStorage.setItem(IMPORT_FLAG, JSON.stringify([...done]));
+  }
+  localStorage.removeItem(STORAGE_KEY);
+}
+
+export async function loadSharedBoatListings(ownerId: string): Promise<BoatListing[]> {
+  await importLocalBoatListings(ownerId);
+  const { data, error } = await supabase
+    .from("boat_listings")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return ((data ?? []) as BoatListingRow[]).map(rowToListing);
+}
+
+export async function saveBoatListing(listing: BoatListing, ownerId: string): Promise<void> {
+  const { error } = await supabase.from("boat_listings").upsert(listingToRow({ ...listing, ownerId }, ownerId));
+  if (error) throw error;
+}
+
+export async function setBoatListingStatus(id: string, ownerId: string, status: ListingStatus): Promise<void> {
+  const { error } = await supabase
+    .from("boat_listings")
+    .update({ status })
+    .eq("id", id)
+    .eq("owner_id", ownerId);
+  if (error) throw error;
 }

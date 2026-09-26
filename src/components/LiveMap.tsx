@@ -48,6 +48,7 @@ import {
   type GeoFix,
 } from "@/lib/geolocation";
 import { supabase } from "@/integrations/supabase/client";
+import { MARINE_DARK_TILE_URL as SAT_TILE, MARINE_SEAMARK_TILE_URL as SEAMARK_TILE } from "@/lib/chart-tiles";
 import {
   fetchCommunityReports,
   fetchMarineZones,
@@ -105,6 +106,12 @@ import {
   type DownloadProgress,
   type PrefetchController,
 } from "@/lib/map/tileCache";
+
+export {
+  MARINE_DARK_TILE_MAX_NATIVE_ZOOM,
+  MARINE_DARK_TILE_URL,
+  MARINE_SEAMARK_TILE_URL,
+} from "@/lib/chart-tiles";
 
 export interface LivePin {
   id: string;
@@ -173,9 +180,6 @@ const REGIONS: Record<ChartRegion, { lat: number; lng: number; zoom: number }> =
  * OSM inverted (Carto's public Dark Matter URL watermarks without a key).
  */
 const OSM_RASTER_TILE = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
-const SAT_TILE =
-  "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
-const SEAMARK_TILE = "https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png";
 const CHART_VOID = "#0b132b";
 const CHART_MIN_ZOOM = 4;
 const CHART_MAX_ZOOM = 18;
@@ -188,10 +192,6 @@ const DARK_ERROR_TILE =
 const CLEAR_ERROR_TILE =
   "data:image/svg+xml;charset=UTF-8," +
   encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"/>`);
-
-/** Shared with small standalone map previews (e.g. admin report focus map). */
-export const MARINE_DARK_TILE_URL = SAT_TILE;
-export const MARINE_DARK_TILE_MAX_NATIVE_ZOOM = 18;
 
 const MARKER_SIZE = 36;
 const MARKER_ANCHOR = MARKER_SIZE / 2;

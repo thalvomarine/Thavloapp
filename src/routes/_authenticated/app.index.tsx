@@ -90,12 +90,11 @@ function CaptainCockpit({ profile }: { profile: Profile }) {
   useEffect(() => {
     return runWhenIdle(() => {
       supabase
-        .from("provider_details")
-        .select("id, service_type, lat, lng, live_status, profiles(full_name)")
-        .eq("live_status", "Available")
+        .from("provider_live_pins")
+        .select("id, service_type, lat, lng, full_name")
         .then(({ data, error }) => {
           if (error) {
-            console.warn("[cockpit] provider_details unavailable", error.message);
+            console.warn("[cockpit] provider_live_pins unavailable", error.message);
             return;
           }
           if (!data) return;
@@ -103,8 +102,7 @@ function CaptainCockpit({ profile }: { profile: Profile }) {
             pickValidCoordinates(data)
               .map((r) => ({
                 id: r.id,
-                name:
-                  (r as { profiles: { full_name: string } | null }).profiles?.full_name ?? "Provider",
+                name: r.full_name?.trim() || "Provider",
                 lat: r.lat,
                 lng: r.lng,
                 kind: r.service_type === "Underwater Diver" ? "diver" : "mechanic",

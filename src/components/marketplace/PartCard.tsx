@@ -31,22 +31,30 @@ interface Props {
   onNotify?: (p: PartCardData) => void;
   onAskAi?: (p: PartCardData) => void;
   actionSlot?: ReactNode;
+  /** Public catalogue: var / az / yok. Hides counts and same-day berth copy. */
+  publicStock?: boolean;
 }
 
-export function PartCard({ part, currencyFormat, onAdd, onNotify, onAskAi, actionSlot }: Props) {
+export function PartCard({ part, currencyFormat, onAdd, onNotify, onAskAi, actionSlot, publicStock = false }: Props) {
   const { t } = useTranslation();
   const outOfStock = part.stock <= 0;
   const lowStock = !outOfStock && part.stock <= 2;
 
-  const stockLabel = outOfStock
-    ? t("marketplace.product.out_of_stock")
-    : lowStock
-      ? t("marketplace.product.running_low")
-      : part.deliveryMode === "service_boat"
-        ? t("marketplace.product.stock_same_day", {
-            marina: part.marina ?? t("marketplace.vessel_fallback"),
-          })
-        : t("marketplace.product.stock_ready");
+  const stockLabel = publicStock
+    ? outOfStock
+      ? t("public.stock_out")
+      : lowStock
+        ? t("public.stock_low")
+        : t("public.stock_in")
+    : outOfStock
+      ? t("marketplace.product.out_of_stock")
+      : lowStock
+        ? t("marketplace.product.running_low")
+        : part.deliveryMode === "service_boat"
+          ? t("marketplace.product.stock_same_day", {
+              marina: part.marina ?? t("marketplace.vessel_fallback"),
+            })
+          : t("marketplace.product.stock_ready");
 
   const stockDot = outOfStock ? "bg-rose-400" : lowStock ? "bg-amber-400" : "bg-emerald-400";
   const stockTone = outOfStock

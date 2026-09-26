@@ -211,7 +211,7 @@ function Passport({ userId }: { userId: string }) {
         <VesselHealthTimeline events={events} />
       </div>
 
-      <DocumentVaultPanel />
+      <DocumentVaultPanel userId={userId} />
 
       <p className="text-[10px] text-white/30 text-center pt-2">
         {t("passport.footer_note")}

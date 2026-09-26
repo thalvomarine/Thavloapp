@@ -47,11 +47,18 @@ export function VesselAiPanel({ vessel, context }: Props) {
       `Captain question: ${prompt}`;
     try {
       const r = await ask({
-        data: { messages: [{ role: "user", content: primer }], lang: i18n.resolvedLanguage?.startsWith("tr") ? "tr" : "en" },
+        data: { messages: [{ role: "user", content: primer.slice(0, 4000) }], lang: i18n.resolvedLanguage?.startsWith("tr") ? "tr" : "en" },
       });
       setAnswer(r.text);
-    } catch {
-      setAnswer(t("passport.ai_unavailable"));
+    } catch (err: unknown) {
+      const raw = err instanceof Error ? err.message : String(err);
+      setAnswer(
+        raw.includes("ai_rate_limited")
+          ? t("common.ai_rate_limited")
+          : raw.includes("ai_too_long")
+            ? t("common.ai_too_long")
+            : t("passport.ai_unavailable"),
+      );
     } finally {
       setLoading(false);
     }

@@ -124,9 +124,13 @@ export function useProfile(userId: string | undefined) {
     // NOTE: no timeout fallback and no synthesized profile — we never invent a
     // role (previously defaulted to "Client"), which caused Provider users to
     // render as Captain when the fetch was slow.
-    void Promise.resolve(supabase.from("profiles").select("*").eq("id", userId).maybeSingle())
-      .then(({ data, error: err }) => {
+    void Promise.all([
+      supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
+      supabase.from("profile_contacts").select("phone").eq("id", userId).maybeSingle(),
+    ])
+      .then(([profileRes, contactRes]) => {
         if (!mounted) return;
+        const err = profileRes.error;
         if (err) {
           if (isMissingRelation(err)) {
             // Fresh Supabase project: profiles table is not in the schema cache
@@ -139,8 +143,10 @@ export function useProfile(userId: string | undefined) {
             setError(new Error(err.message));
           }
         } else {
-          const row = data as unknown as Profile | null;
-          const next = row ? asProfile(row) : null;
+          const row = profileRes.data as unknown as Profile | null;
+          const next = row
+            ? asProfile({ ...row, phone: contactRes.data?.phone ?? null })
+            : null;
           setProfile(next);
           if (next) rememberCockpitRole(next.id, next.role);
           setError(null);
@@ -157,7 +163,13 @@ export function useProfile(userId: string | undefined) {
     const ch = supabase
       .channel(`profile:${userId}:${channelId}`)
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "profiles", filter: `id=eq.${userId}` },
-        (payload) => setProfile(asProfile(payload.new as unknown as Profile)))
+        (payload) =>
+          setProfile((prev) =>
+            asProfile({
+              ...(payload.new as unknown as Profile),
+              phone: prev?.phone ?? null,
+            }),
+          ))
       .subscribe();
     return () => { mounted = false; supabase.removeChannel(ch); };
   }, [userId]);

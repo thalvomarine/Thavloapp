@@ -176,7 +176,7 @@ export function ThalvoAiFab({ hideLauncher = false }: { hideLauncher?: boolean }
       const context = await hydrateCockpit();
       const res = await ask({
         data: {
-          messages: next.map((m) => ({ role: m.role, content: m.content })),
+          messages: next.slice(-12).map((m) => ({ role: m.role, content: m.content.slice(0, 4000) })),
           lang,
           context,
         },
@@ -186,15 +186,21 @@ export function ThalvoAiFab({ hideLauncher = false }: { hideLauncher?: boolean }
         { role: "assistant", content: res.text, emergency: res.emergency },
       ]);
       runActions(res.actions ?? []);
-    } catch {
+    } catch (err: unknown) {
+      const raw = err instanceof Error ? err.message : String(err);
+      const limited = raw.includes("ai_rate_limited");
+      const tooLong = raw.includes("ai_too_long");
       setMsgs((prev) => [
         ...prev,
         {
           role: "assistant",
-          content:
-            lang === "en"
-              ? "Compass is momentarily out of range. Please try again."
-              : "Pusula geçici olarak menzil dışında. Lütfen tekrar deneyin.",
+          content: limited
+            ? t("common.ai_rate_limited")
+            : tooLong
+              ? t("common.ai_too_long")
+              : lang === "en"
+                ? "Compass is momentarily out of range. Please try again."
+                : "Pusula geçici olarak menzil dışında. Lütfen tekrar deneyin.",
         },
       ]);
     } finally {

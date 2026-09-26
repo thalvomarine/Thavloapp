@@ -16,7 +16,7 @@ export interface PartRow {
   sku: string | null;
   image_url: string | null;
   price: number;
-  stock: number;
+  stock_band: string | null;
   compatibility: string[] | null;
   marina: string | null;
 }
@@ -38,7 +38,7 @@ export async function fetchPublicParts(opts: {
   // and only active dealer-listed parts. Anonymous access to the raw table is revoked.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const client = supabase as any;
-  let q = client.from("public_parts_catalog").select("id, name, brand, category, sku, image_url, price, stock, compatibility, marina");
+  let q = client.from("public_parts_catalog").select("id, name, brand, category, sku, image_url, price, stock_band, compatibility, marina");
   void opts.dealerOnly; // the view only contains dealer-listed parts
   const { data, error } = await q.order("created_at", { ascending: false }).limit(opts.limit);
   if (error) {
@@ -62,6 +62,13 @@ export async function fetchPublicPackages(opts: { limit?: number } = {}): Promis
   return (data as PackageRow[] | null) ?? [];
 }
 
+/** Public cards only need a band. 0 / 1 / 3 match the existing out / low / in thresholds. */
+function stockFromBand(band: string | null | undefined): number {
+  if (band === "out") return 0;
+  if (band === "low") return 1;
+  return 3;
+}
+
 /** Maps a catalogue row to the presentation shape used by PartCard. */
 export function toPartCardData(r: PartRow, categoryLabel: (raw: string) => string): PartCardData {
   return {
@@ -73,7 +80,7 @@ export function toPartCardData(r: PartRow, categoryLabel: (raw: string) => strin
     sku: r.sku,
     imageUrl: r.image_url,
     price: r.price,
-    stock: r.stock,
+    stock: stockFromBand(r.stock_band),
     compatibility: r.compatibility,
     marina: r.marina,
   };

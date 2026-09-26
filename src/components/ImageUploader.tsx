@@ -13,9 +13,11 @@ type Props = {
   value: string;
   onChange: (url: string) => void;
   userId: string;
+  /** Smaller tile for a listing gallery. */
+  compact?: boolean;
 };
 
-export function ImageUploader({ value, onChange, userId }: Props) {
+export function ImageUploader({ value, onChange, userId, compact = false }: Props) {
   const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -83,7 +85,7 @@ export function ImageUploader({ value, onChange, userId }: Props) {
     <div className="space-y-2">
       {value ? (
         <div className="relative rounded-xl overflow-hidden border border-white/10 bg-white/5">
-          <img src={value} alt="" className="w-full h-40 object-cover" />
+          <img src={value} alt="" className={compact ? "h-24 w-full object-cover" : "h-40 w-full object-cover"} />
           <button
             type="button"
             onClick={remove}
@@ -98,17 +100,24 @@ export function ImageUploader({ value, onChange, userId }: Props) {
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={busy}
-          className="w-full h-32 rounded-xl border-2 border-dashed border-white/15 bg-white/5 hover:bg-white/10 flex flex-col items-center justify-center gap-2 text-white/60 text-xs font-medium disabled:opacity-50"
+          className={
+            (compact ? "h-24 " : "h-32 ") +
+            "flex w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-white/15 bg-white/5 text-xs font-medium text-white/60 hover:bg-white/10 disabled:opacity-50"
+          }
         >
           {busy ? <Loader2 className="size-5 animate-spin" /> : <Upload className="size-5" />}
-          <span>
-            {busy
-              ? t("uploader.uploading", "Uploading…")
-              : t("uploader.click_to_upload", "Click to upload image")}
-          </span>
-          <span className="text-[10px] text-white/40">
-            {t("uploader.hint", "JPG, PNG or WEBP · max 5 MB")}
-          </span>
+          {!compact && (
+            <>
+              <span>
+                {busy
+                  ? t("uploader.uploading", "Uploading…")
+                  : t("uploader.click_to_upload", "Click to upload image")}
+              </span>
+              <span className="text-[10px] text-white/40">
+                {t("uploader.hint", "JPG, PNG or WEBP · max 5 MB")}
+              </span>
+            </>
+          )}
         </button>
       )}
       <input

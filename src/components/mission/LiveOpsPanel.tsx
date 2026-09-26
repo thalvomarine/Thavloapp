@@ -201,9 +201,6 @@ function OpsMissionSheet({ mission, onClose }: { mission: OpsMission; onClose: (
             <p className="mt-1 font-semibold text-white">
               VHF Ch {mission.vhfChannel} · {mission.callsign}
             </p>
-            <a href={`tel:${mission.phone.replace(/\s/g, "")}`} className="mt-1 block text-[12px] text-amber-100/80">
-              {mission.phone}
-            </a>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-2 border-t border-white/10 p-3">
@@ -218,12 +215,9 @@ function OpsMissionSheet({ mission, onClose }: { mission: OpsMission; onClose: (
           >
             {t("ops.focus_map")}
           </button>
-          <a
-            href={`tel:${mission.phone.replace(/\s/g, "")}`}
-            className="grid h-11 place-items-center rounded-xl bg-amber-300 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-900"
-          >
-            {t("ops.call_ops")}
-          </a>
+          <div className="grid h-11 place-items-center rounded-xl bg-amber-300 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-900">
+            VHF {mission.vhfChannel}
+          </div>
         </div>
       </div>
     </div>

@@ -823,6 +823,165 @@ export type Database = {
           },
         ]
       }
+      boat_listings: {
+        Row: {
+          beam_m: number
+          berths: number
+          cabins: number
+          created_at: string
+          cruise_kn: number
+          currency: string
+          description: string
+          draft_m: number
+          engine_brand: string
+          engine_hours: number
+          engine_hp: number
+          equipment: string[]
+          flag: string
+          fuel: string
+          fuel_tank_l: number | null
+          hue: string
+          id: string
+          lat: number
+          lng: number
+          loa_m: number
+          marina: string
+          owner_id: string
+          photos: string[]
+          price: number
+          region: string
+          seller_name: string
+          seller_phone: string
+          status: string
+          title: string
+          updated_at: string
+          water_tank_l: number | null
+          year: number
+          hull: string
+        }
+        Insert: {
+          beam_m?: number
+          berths?: number
+          cabins?: number
+          created_at?: string
+          cruise_kn?: number
+          currency: string
+          description: string
+          draft_m?: number
+          engine_brand?: string
+          engine_hours?: number
+          engine_hp?: number
+          equipment?: string[]
+          flag?: string
+          fuel: string
+          fuel_tank_l?: number | null
+          hue?: string
+          id?: string
+          lat: number
+          lng: number
+          loa_m: number
+          marina: string
+          owner_id: string
+          photos?: string[]
+          price: number
+          region: string
+          seller_name: string
+          seller_phone: string
+          status?: string
+          title: string
+          updated_at?: string
+          water_tank_l?: number | null
+          year: number
+          hull: string
+        }
+        Update: {
+          beam_m?: number
+          berths?: number
+          cabins?: number
+          created_at?: string
+          cruise_kn?: number
+          currency?: string
+          description?: string
+          draft_m?: number
+          engine_brand?: string
+          engine_hours?: number
+          engine_hp?: number
+          equipment?: string[]
+          flag?: string
+          fuel?: string
+          fuel_tank_l?: number | null
+          hue?: string
+          id?: string
+          lat?: number
+          lng?: number
+          loa_m?: number
+          marina?: string
+          owner_id?: string
+          photos?: string[]
+          price?: number
+          region?: string
+          seller_name?: string
+          seller_phone?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          water_tank_l?: number | null
+          year?: number
+          hull?: string
+        }
+        Relationships: []
+      }
+      profile_contacts: {
+        Row: {
+          id: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      vessel_documents: {
+        Row: {
+          byte_size: number
+          created_at: string
+          file_name: string
+          id: string
+          mime: string
+          owner_id: string
+          slot: string
+          storage_path: string
+        }
+        Insert: {
+          byte_size: number
+          created_at?: string
+          file_name: string
+          id?: string
+          mime: string
+          owner_id: string
+          slot: string
+          storage_path: string
+        }
+        Update: {
+          byte_size?: number
+          created_at?: string
+          file_name?: string
+          id?: string
+          mime?: string
+          owner_id?: string
+          slot?: string
+          storage_path?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           account_type: string | null
@@ -839,7 +998,6 @@ export type Database = {
           home_marina: string | null
           id: string
           is_available: boolean
-          phone: string | null
           preferred_language: Database["public"]["Enums"]["language_code"]
           profile_picture_url: string | null
           requested_role: Database["public"]["Enums"]["user_role"] | null
@@ -862,7 +1020,6 @@ export type Database = {
           home_marina?: string | null
           id: string
           is_available?: boolean
-          phone?: string | null
           preferred_language?: Database["public"]["Enums"]["language_code"]
           profile_picture_url?: string | null
           requested_role?: Database["public"]["Enums"]["user_role"] | null
@@ -885,7 +1042,6 @@ export type Database = {
           home_marina?: string | null
           id?: string
           is_available?: boolean
-          phone?: string | null
           preferred_language?: Database["public"]["Enums"]["language_code"]
           profile_picture_url?: string | null
           requested_role?: Database["public"]["Enums"]["user_role"] | null
@@ -1202,7 +1358,7 @@ export type Database = {
           name: string | null
           price: number | null
           sku: string | null
-          stock: number | null
+          stock_band: string | null
         }
         Insert: {
           brand?: string | null
@@ -1215,7 +1371,7 @@ export type Database = {
           name?: string | null
           price?: number | null
           sku?: string | null
-          stock?: number | null
+          stock_band?: string | null
         }
         Update: {
           brand?: string | null
@@ -1228,7 +1384,18 @@ export type Database = {
           name?: string | null
           price?: number | null
           sku?: string | null
-          stock?: number | null
+          stock_band?: string | null
+        }
+        Relationships: []
+      }
+      provider_live_pins: {
+        Row: {
+          full_name: string | null
+          id: string
+          lat: number | null
+          live_status: Database["public"]["Enums"]["provider_status"] | null
+          lng: number | null
+          service_type: Database["public"]["Enums"]["service_type"] | null
         }
         Relationships: []
       }
@@ -1259,6 +1426,10 @@ export type Database = {
           phone: string
           role: Database["public"]["Enums"]["user_role"]
         }[]
+      }
+      consume_captain_ai_quota: {
+        Args: never
+        Returns: undefined
       }
       admin_set_user_available: {
         Args: { _available: boolean; _user_id: string }

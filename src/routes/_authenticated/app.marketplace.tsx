@@ -18,8 +18,9 @@ import { GEO_OPTIONS, getFix, type GeoFailure } from "@/lib/geolocation";
 import { askThalvoAi } from "@/lib/thalvo-ai.functions";
 import { CreateBoatListingSheet } from "@/components/marketplace/CreateBoatListingSheet";
 import {
-  loadUserBoatListings,
-  persistUserBoatListings,
+  loadSharedBoatListings,
+  saveBoatListing,
+  setBoatListingStatus,
   type BoatListing,
 } from "@/lib/boat-listings";
 import { Loader2, Plus, Search, Sparkles, X } from "lucide-react";
@@ -70,7 +71,23 @@ function Marketplace({ userId }: { userId: string }) {
   const [marketCategory, setMarketCategory] = useState<MarketCategory>("boats");
   const [cartOpen, setCartOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
-  const [userBoats, setUserBoats] = useState<BoatListing[]>(() => loadUserBoatListings());
+  const [editingBoat, setEditingBoat] = useState<BoatListing | null>(null);
+  const [userBoats, setUserBoats] = useState<BoatListing[]>([]);
+
+  const reloadBoats = () => {
+    void loadSharedBoatListings(userId)
+      .then((rows) => setUserBoats(rows))
+      .catch((error: unknown) => {
+        console.warn("[market] boat_listings unavailable", error);
+        toast.error(t("boats.load_failed"));
+      });
+  };
+
+  useEffect(() => {
+    reloadBoats();
+    // reload when the signed-in captain changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
   const cart = useCart();
 
   const loadParts = () => {
@@ -180,8 +197,11 @@ function Marketplace({ userId }: { userId: string }) {
         marketCategory === "boats" ? (
           <button
             type="button"
-            onClick={() => setCreateOpen(true)}
-            className="inline-flex h-10 min-w-0 w-full items-center justify-center gap-1.5 rounded-xl bg-cyan-400 px-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-900 shadow-[0_0_18px_rgba(0,240,255,0.25)] sm:w-auto"
+            onClick={() => {
+              setEditingBoat(null);
+              setCreateOpen(true);
+            }}
+            className="inline-flex h-11 min-w-0 w-full items-center justify-center gap-1.5 rounded-xl bg-amber-200 px-4 text-[13px] font-semibold text-slate-950 sm:w-auto"
           >
             <Plus className="size-4 shrink-0" />
             {t("boats.create_listing")}
@@ -204,7 +224,22 @@ function Marketplace({ userId }: { userId: string }) {
       <MarketCategoryBar active={marketCategory} onSelect={setMarketCategory} />
 
       {marketCategory === "boats" ? (
-        <BoatsTendersBoard extraListings={userBoats} />
+        <BoatsTendersBoard
+          extraListings={userBoats}
+          ownerId={userId}
+          onEdit={(boat) => {
+            setCreateOpen(false);
+            setEditingBoat(boat);
+          }}
+          onSetStatus={(id, status) => {
+            setUserBoats((prev) => prev.map((b) => (b.id === id ? { ...b, status } : b)));
+            void setBoatListingStatus(id, userId, status).catch((error: unknown) => {
+              console.warn("[market] boat status update failed", error);
+              toast.error(t("boats.save_failed"));
+              reloadBoats();
+            });
+          }}
+        />
       ) : (
         <>
           {activeSosCategories.length > 0 && (
@@ -277,16 +312,23 @@ function Marketplace({ userId }: { userId: string }) {
       )}
       {cartOpen && <CartSheet onClose={() => setCartOpen(false)} onCatalogReload={loadParts} />}
       <CreateBoatListingSheet
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
+        open={createOpen || editingBoat != null}
+        onClose={() => {
+          setCreateOpen(false);
+          setEditingBoat(null);
+        }}
         sellerName={profile?.full_name?.trim() || t("boats.private_seller")}
         listingCount={userBoats.length}
-        onCreated={(listing) => {
+        ownerId={userId}
+        editing={editingBoat}
+        onSaved={async (listing) => {
+          await saveBoatListing(listing, userId);
           setUserBoats((prev) => {
-            const next = [listing, ...prev];
-            persistUserBoatListings(next);
-            return next;
+            const exists = prev.some((b) => b.id === listing.id);
+            return exists ? prev.map((b) => (b.id === listing.id ? listing : b)) : [listing, ...prev];
           });
+          setEditingBoat(null);
+          setCreateOpen(false);
         }}
       />
     </MarketplaceShell>
@@ -358,10 +400,17 @@ Answer in three short bullets (max 2 sentences each):
 1) What this part does.
 2) Which marine problem it may solve.
 3) Whether it likely fits the captain's vessel (if data suggests otherwise, say so plainly).`;
-        const res = await ask({ data: { messages: [{ role: "user", content: prompt }], lang: i18n.resolvedLanguage?.startsWith("tr") ? "tr" : "en" } });
+        const res = await ask({ data: { messages: [{ role: "user", content: prompt.slice(0, 4000) }], lang: i18n.resolvedLanguage?.startsWith("tr") ? "tr" : "en" } });
         setText(res.text);
-      } catch {
-        setText(t("marketplace.ai_unavailable"));
+      } catch (err: unknown) {
+        const raw = err instanceof Error ? err.message : String(err);
+        setText(
+          raw.includes("ai_rate_limited")
+            ? t("common.ai_rate_limited")
+            : raw.includes("ai_too_long")
+              ? t("common.ai_too_long")
+              : t("marketplace.ai_unavailable"),
+        );
       } finally {
         setLoading(false);
       }

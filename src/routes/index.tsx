@@ -17,6 +17,7 @@ import {
   usePublicData,
 } from "@/lib/public-catalog";
 import { SeaBackdrop } from "@/components/brand/SeaBackdrop";
+import { PublicFooter } from "@/components/public/PublicFooter";
 import {
   ArrowRight,
   ChevronDown,
@@ -204,6 +205,7 @@ function Landing() {
           <PartCard
             key={r.id}
             part={toPartCardData(r, (c) => t(`marketplace.category.${c}`, { defaultValue: c }))}
+            publicStock
             currencyFormat={(n) => formatMoney(n)}
             actionSlot={
               <Link
@@ -266,6 +268,39 @@ function Landing() {
       <Hero />
 
       <main className="relative z-10 flex-1 w-full max-w-3xl mx-auto px-5 pt-2 pb-10 space-y-7">
+        <section aria-label={t("public.steps_label")} className="grid gap-2.5 sm:grid-cols-3">
+          {(
+            [
+              { key: "parts", icon: ShoppingBag },
+              { key: "services", icon: Wrench },
+              { key: "escrow", icon: ShieldCheck },
+            ] as const
+          ).map((step) => {
+            const Icon = step.icon;
+            return (
+              <div key={step.key} className="pm-panel rounded-2xl px-3.5 py-3">
+                <span className="grid size-8 place-items-center rounded-xl bg-[color:var(--pm-gold)]/15 text-[color:var(--pm-gold)]">
+                  <Icon className="size-4" />
+                </span>
+                <p className="mt-2 text-[13px] font-bold text-[color:var(--pm-text)]">
+                  {t(`public.step_${step.key}_title`)}
+                </p>
+                <p className="mt-0.5 text-[11.5px] leading-snug text-[color:var(--pm-platinum)]">
+                  {t(`public.step_${step.key}_desc`)}
+                </p>
+              </div>
+            );
+          })}
+        </section>
+
+        <Link
+          to="/coverage"
+          className="inline-flex items-center gap-1 text-xs font-semibold text-[color:var(--pm-gold)] hover:underline"
+        >
+          <MapPin className="size-3.5" />
+          {t("public.coverage_link")}
+        </Link>
+
         <section className="space-y-3">
           <SectionHead
             title={t("public.home_parts_heading")}
@@ -287,9 +322,7 @@ function Landing() {
         <p className="text-xs text-[color:var(--pm-platinum)]">{t("public.home_note")}</p>
       </main>
 
-      <footer className="relative z-10 text-center text-[11px] text-[color:var(--pm-platinum)]/70 py-6">
-        © THALVO · {t("brand.tagline")}
-      </footer>
+      <PublicFooter />
     </div>
   );
 }

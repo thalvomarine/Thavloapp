@@ -17,13 +17,16 @@ import {
   type ListingCurrency,
 } from "@/lib/boat-listings";
 import { sanitizeMultiline, sanitizePhone, sanitizePlainText } from "@/lib/sanitize";
+import { ImageUploader } from "@/components/ImageUploader";
 
 interface Props {
   open: boolean;
   onClose: () => void;
   sellerName: string;
   listingCount: number;
-  onCreated: (listing: BoatListing) => void;
+  ownerId: string;
+  editing?: BoatListing | null;
+  onSaved: (listing: BoatListing) => void | Promise<void>;
 }
 
 interface FormState {
@@ -49,6 +52,7 @@ interface FormState {
   equipment: string[];
   description: string;
   sellerPhone: string;
+  photos: string[];
 }
 
 const EMPTY: FormState = {
@@ -74,29 +78,59 @@ const EMPTY: FormState = {
   equipment: [],
   description: "",
   sellerPhone: "",
+  photos: [],
 };
 
 const fieldClass =
   "w-full min-h-11 rounded-lg border border-cyan-500/25 bg-[#0a192f]/70 px-2.5 text-[13px] text-white outline-none focus:border-cyan-400/70";
 const labelClass = "mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-cyan-300/80";
 
-export function CreateBoatListingSheet({ open, onClose, sellerName, listingCount, onCreated }: Props) {
+function formFromListing(boat: BoatListing): FormState {
+  return {
+    title: boat.title,
+    hull: boat.hull,
+    price: String(boat.price),
+    currency: boat.currency,
+    marina: boat.marina,
+    year: String(boat.year),
+    loaM: String(boat.loaM),
+    beamM: boat.beamM ? String(boat.beamM) : "",
+    draftM: boat.draftM ? String(boat.draftM) : "",
+    cabins: String(boat.cabins),
+    berths: String(boat.berths),
+    flag: boat.flag,
+    engineBrand: boat.engineBrand,
+    engineHp: boat.engineHp ? String(boat.engineHp) : "",
+    engineHours: String(boat.engineHours),
+    fuel: boat.fuel,
+    cruiseKn: boat.cruiseKn ? String(boat.cruiseKn) : "",
+    fuelTankL: boat.fuelTankL != null ? String(boat.fuelTankL) : "",
+    waterTankL: boat.waterTankL != null ? String(boat.waterTankL) : "",
+    equipment: [...boat.equipment],
+    description: boat.description,
+    sellerPhone: boat.sellerPhone,
+    photos: boat.photos ?? [],
+  };
+}
+
+export function CreateBoatListingSheet({ open, onClose, sellerName, listingCount, ownerId, editing, onSaved }: Props) {
   const { t } = useTranslation();
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormState>(EMPTY);
   const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     setStep(0);
-    setForm(EMPTY);
+    setForm(editing ? formFromListing(editing) : EMPTY);
     setError(null);
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = prev;
     };
-  }, [open]);
+  }, [open, editing]);
 
   if (!open || typeof document === "undefined") return null;
 
@@ -151,13 +185,13 @@ export function CreateBoatListingSheet({ open, onClose, sellerName, listingCount
     setStep((s) => Math.min(3, s + 1));
   };
 
-  const submit = () => {
+  const submit = async () => {
     setError(null);
-    if (!validateStep(3)) return;
+    if (!validateStep(3) || saving) return;
     const marina = marinaCoords(form.marina);
     const cabins = Math.max(0, Math.round(Number(form.cabins) || 0));
     const listing: BoatListing = {
-      id: `user-${Date.now()}`,
+      id: editing?.id ?? crypto.randomUUID(),
       title: sanitizePlainText(form.title, 80),
       year: Math.round(Number(form.year)),
       price: Math.round(Number(form.price)),
@@ -182,13 +216,23 @@ export function CreateBoatListingSheet({ open, onClose, sellerName, listingCount
       lng: marina.lng,
       equipment: form.equipment,
       description: sanitizeMultiline(form.description, 2000),
-      seller: sanitizePlainText(sellerName, 80),
+      seller: sanitizePlainText(editing?.seller || sellerName, 80),
       sellerPhone: sanitizePhone(form.sellerPhone, 20),
-      hue: nextHue(listingCount),
+      hue: editing?.hue ?? nextHue(listingCount),
+      ownerId: editing?.ownerId ?? ownerId,
+      status: editing?.status ?? "live",
+      photos: form.photos.slice(0, 6),
     };
-    onCreated(listing);
-    toast.success(t("boats.create_published"));
-    onClose();
+    setSaving(true);
+    try {
+      await onSaved(listing);
+      toast.success(t(editing ? "boats.updated" : "boats.create_published"));
+      onClose();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : t("boats.save_failed"));
+    } finally {
+      setSaving(false);
+    }
   };
 
   const steps = [
@@ -222,7 +266,7 @@ export function CreateBoatListingSheet({ open, onClose, sellerName, listingCount
               {t("boats.create_eyebrow")}
             </p>
             <h2 id="thalvo-create-listing-title" className="mt-1 text-base font-semibold text-white">
-              {t("boats.create_listing")}
+              {t(editing ? "boats.edit_listing" : "boats.create_listing")}
             </h2>
             <p className="mt-1 text-[11px] text-white/50">
               {t("boats.step_of", { current: step + 1, total: 4 })} · {steps[step]}
@@ -252,6 +296,43 @@ export function CreateBoatListingSheet({ open, onClose, sellerName, listingCount
         <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4">
           {step === 0 && (
             <>
+              <Field label={t("boats.form_photos")}>
+                <p className="mb-2 text-[11px] text-white/45">{t("boats.form_photos_hint")}</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {form.photos.map((url, index) => (
+                    <div key={url} className="relative">
+                      <ImageUploader
+                        compact
+                        userId={ownerId}
+                        value={url}
+                        onChange={(next) =>
+                          patch({
+                            photos: next
+                              ? form.photos.map((item, i) => (i === index ? next : item))
+                              : form.photos.filter((_, i) => i !== index),
+                          })
+                        }
+                      />
+                      {index === 0 && (
+                        <span className="pointer-events-none absolute bottom-1.5 left-1.5 rounded-full bg-black/60 px-1.5 py-0.5 text-[9px] font-medium text-amber-100">
+                          {t("boats.photo_cover")}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                  {form.photos.length < 6 && (
+                    <ImageUploader
+                      key={`add-${form.photos.length}`}
+                      compact
+                      userId={ownerId}
+                      value=""
+                      onChange={(url) => {
+                        if (url) patch({ photos: [...form.photos, url].slice(0, 6) });
+                      }}
+                    />
+                  )}
+                </div>
+              </Field>
               <Field label={t("boats.form_title")}>
                 <input
                   className={fieldClass}
@@ -473,11 +554,12 @@ export function CreateBoatListingSheet({ open, onClose, sellerName, listingCount
           ) : (
             <button
               type="button"
-              onClick={submit}
-              className="inline-flex h-11 items-center justify-center gap-1.5 rounded-xl bg-amber-300 text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-900"
+              onClick={() => void submit()}
+              disabled={saving}
+              className="inline-flex h-11 items-center justify-center gap-1.5 rounded-xl bg-amber-300 text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-900 disabled:opacity-60"
             >
               <Plus className="size-3.5" />
-              {t("boats.form_publish")}
+              {t(editing ? "boats.form_save" : "boats.form_publish")}
             </button>
           )}
         </div>

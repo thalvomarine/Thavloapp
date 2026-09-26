@@ -74,11 +74,12 @@ export function SuperadminDesk() {
 
   const load = useCallback(async () => {
     await supabase.rpc("ensure_superadmin");
-    const [dir, prof, jobRes, sosRes, details] = await Promise.all([
+    const [dir, prof, contacts, jobRes, sosRes, details] = await Promise.all([
       supabase.rpc("admin_list_users"),
       supabase
         .from("profiles")
-        .select("id, full_name, phone, role, boat_name, home_marina, is_available"),
+        .select("id, full_name, role, boat_name, home_marina, is_available"),
+      supabase.from("profile_contacts").select("id, phone"),
       supabase
         .from("jobs")
         .select(
@@ -94,6 +95,7 @@ export function SuperadminDesk() {
       supabase.from("provider_details").select("id, service_type"),
     ]);
 
+    const phoneById = new Map((contacts.data ?? []).map((c) => [c.id, c.phone]));
     const byId = new Map((prof.data ?? []).map((p) => [p.id, p]));
     const svcById = new Map(
       (details.data ?? []).map((d) => [d.id, d.service_type as DirectoryUser["service_type"]]),
@@ -110,7 +112,7 @@ export function SuperadminDesk() {
         id: row.id,
         email: row.email,
         full_name: p?.full_name || row.full_name,
-        phone: p?.phone ?? row.phone,
+        phone: phoneById.get(row.id) ?? row.phone,
         role: (p?.role as UserRole) ?? row.role,
         boat_name: p?.boat_name ?? null,
         home_marina: p?.home_marina ?? null,
@@ -124,7 +126,7 @@ export function SuperadminDesk() {
           id: p.id,
           email: "—",
           full_name: p.full_name,
-          phone: p.phone,
+          phone: phoneById.get(p.id) ?? null,
           role: p.role as UserRole,
           boat_name: p.boat_name,
           home_marina: p.home_marina,

@@ -14,7 +14,6 @@ export interface OpsMission {
   lng: number;
   vhfChannel: string;
   callsign: string;
-  phone: string;
   notesKey: string;
 }
 
@@ -34,7 +33,6 @@ export const SEED_MISSIONS: OpsMission[] = [
     lng: 28.9235,
     vhfChannel: "16",
     callsign: "THALVO-OPS",
-    phone: "+90 252 555 16 16",
     notesKey: "ops.mission_battery_notes",
   },
   {
@@ -51,7 +49,6 @@ export const SEED_MISSIONS: OpsMission[] = [
     lng: 28.9338,
     vhfChannel: "16",
     callsign: "THALVO-OPS",
-    phone: "+90 252 555 16 16",
     notesKey: "ops.mission_bilge_notes",
   },
 ];

@@ -36,6 +36,7 @@ export function ServicePackageCard({
             {t("common.min", { defaultValue: "min" })}
           </p>
         )}
+        <p className="mt-1 text-[11px] text-white/55">{t("public.price_on_request")}</p>
       </div>
       {actionSlot ? <div className="ml-auto shrink-0 self-center">{actionSlot}</div> : null}
     </div>

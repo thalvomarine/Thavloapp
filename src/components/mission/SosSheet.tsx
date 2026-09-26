@@ -127,10 +127,15 @@ export function SosSheet({ open, onClose, initialCategory = "mechanic", initialN
       (photo ? `\n(Photo attached by captain — not visible to you here.)` : "") +
       `\n\nReturn: (1) one-line likely cause, (2) one immediate safety step the captain can take now, (3) what a responder will most likely need on arrival. No panic language.`;
     try {
-      const res = await ask({ data: { messages: [{ role: "user", content: prompt }], lang: (i18n.language === "en" ? "en" : "tr") } });
+      const res = await ask({ data: { messages: [{ role: "user", content: prompt.slice(0, 4000) }], lang: (i18n.language === "en" ? "en" : "tr") } });
       setAiText(res.text || "Diagnosis unavailable. You can still publish now.");
-    } catch {
-      setAiText("Advisor is offline. You can still publish — nearby responders will see full details.");
+    } catch (err: unknown) {
+      const raw = err instanceof Error ? err.message : String(err);
+      setAiText(
+        raw.includes("ai_rate_limited")
+          ? t("common.ai_rate_limited")
+          : "Advisor is offline. You can still publish — nearby responders will see full details.",
+      );
     } finally {
       setAiBusy(false);
     }

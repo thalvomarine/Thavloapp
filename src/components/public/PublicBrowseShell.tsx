@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { Wordmark } from "@/components/Wordmark";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { PublicFooter } from "@/components/public/PublicFooter";
 
 /**
  * Shell for the signed-out browsing surfaces (catalogue, service packages).
@@ -17,13 +18,13 @@ export function PublicBrowseShell({
 }: {
   title: string;
   subtitle?: string;
-  active: "parts" | "services";
+  active: "parts" | "services" | "coverage";
   /** Protected destination to return to after sign-in. Relative path only. */
   next?: string;
   children: ReactNode;
 }) {
   const { t } = useTranslation();
-  const tab = (key: "parts" | "services", to: string, label: string) => (
+  const tab = (key: "parts" | "services" | "coverage", to: string, label: string) => (
     <Link
       to={to}
       className={
@@ -62,6 +63,7 @@ export function PublicBrowseShell({
         <div className="flex items-center gap-2">
           {tab("parts", "/marketplace", t("public.tab_parts", { defaultValue: "Spare parts" }))}
           {tab("services", "/services", t("public.tab_services", { defaultValue: "Services" }))}
+          {tab("coverage", "/coverage", t("public.tab_coverage"))}
         </div>
 
         {children}
@@ -86,9 +88,7 @@ export function PublicBrowseShell({
         </div>
       </main>
 
-      <footer className="text-center text-[11px] text-white/40 py-6">
-        © THALVO · {t("brand.tagline")}
-      </footer>
+      <PublicFooter />
     </div>
   );
 }

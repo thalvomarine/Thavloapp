@@ -11,7 +11,7 @@ import type { CaptainCockpitContext, NearbyChartPoint } from "@/lib/ai-captain-t
 
 const MessageSchema = z.object({
   role: z.enum(["user", "assistant"]),
-  content: z.string(),
+  content: z.string().trim().min(1).max(4000),
 });
 
 const ContextSchema = z.object({
@@ -54,10 +54,26 @@ const ContextSchema = z.object({
 });
 
 const InputSchema = z.object({
-  messages: z.array(MessageSchema).min(1),
+  messages: z.array(MessageSchema).min(1).max(16),
   lang: z.enum(["tr", "en"]).default("tr"),
   context: ContextSchema.optional(),
 });
+
+const AI_WINDOW_MS = 10 * 60 * 1000;
+const AI_MAX_IN_WINDOW = 8;
+const recentAiCalls = new Map<string, number[]>();
+
+function allowLocalAiQuota(userId: string): boolean {
+  const now = Date.now();
+  const stamps = (recentAiCalls.get(userId) ?? []).filter((t) => now - t < AI_WINDOW_MS);
+  if (stamps.length >= AI_MAX_IN_WINDOW) {
+    recentAiCalls.set(userId, stamps);
+    return false;
+  }
+  stamps.push(now);
+  recentAiCalls.set(userId, stamps);
+  return true;
+}
 
 function emptyContext(): CaptainCockpitContext {
   return { position: null, selectedBay: null, weather: null, vessel: null };
@@ -67,6 +83,15 @@ export const askThalvoAi = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => InputSchema.parse(d))
   .handler(async ({ data, context }) => {
+    const messages = data.messages.slice(-12);
+    const totalChars = messages.reduce((sum, message) => sum + message.content.length, 0);
+    if (totalChars > 12000) throw new Error("ai_too_long");
+    if (!allowLocalAiQuota(context.userId)) throw new Error("ai_rate_limited");
+    const quota = await context.supabase.rpc("consume_captain_ai_quota");
+    if (quota.error && /ai_rate_limited/i.test(quota.error.message)) {
+      throw new Error("ai_rate_limited");
+    }
+
     const key = process.env.THALVO_AI_API_KEY ?? process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("Missing THALVO_AI_API_KEY");
     const gateway = createThalvoAiProvider(key);
@@ -117,7 +142,7 @@ export const askThalvoAi = createServerFn({ method: "POST" })
 
     return runCaptainConsultation({
       model,
-      messages: data.messages,
+      messages,
       context: cockpit,
       nearby,
       lang: data.lang,

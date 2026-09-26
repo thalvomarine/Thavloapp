@@ -80,11 +80,15 @@ export function ReportModal({ open, onOpenChange, picked, onSubmitted }: Props) 
       setError(t("chart.report_need_note"));
       return;
     }
-    setPending(true);
     const { data: auth } = await supabase.auth.getUser();
+    if (!auth.user) {
+      setError(t("chart.report_need_account"));
+      return;
+    }
+    setPending(true);
     const titleText = t(REPORT_CATEGORY_LABEL_KEYS[category]);
     const { error: insertError } = await supabase.from("community_reports").insert({
-      reporter_id: auth.user?.id ?? null,
+      reporter_id: auth.user.id,
       title: titleText.slice(0, 120),
       category,
       lat: effective.lat,

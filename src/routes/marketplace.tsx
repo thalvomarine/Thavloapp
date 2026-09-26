@@ -81,6 +81,7 @@ function PublicMarketplace() {
             <PartCard
               key={r.id}
               part={toPartCardData(r, (c) => t(`marketplace.category.${c}`, { defaultValue: c }))}
+              publicStock
               currencyFormat={(n) => formatMoney(n)}
               actionSlot={
                 <Link
