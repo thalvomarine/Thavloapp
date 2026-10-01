@@ -63,7 +63,7 @@ export function PublicBrowseShell({
         <div className="flex items-center gap-2">
           {tab("parts", "/marketplace", t("public.tab_parts", { defaultValue: "Spare parts" }))}
           {tab("services", "/services", t("public.tab_services", { defaultValue: "Services" }))}
-          {tab("coverage", "/coverage", t("public.tab_coverage"))}
+          {tab("coverage", "/", t("nav.map", { defaultValue: "Map" }))}
         </div>
 
         {children}

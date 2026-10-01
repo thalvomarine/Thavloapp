@@ -57,7 +57,11 @@ const config: CapacitorConfig = {
       // `notifyAppReady()` fires from `src/client.tsx` before React mounts.
       // Longer timeout so a cold WebView parse of LiveMap/i18n does not
       // falsely trigger a rollback loop (symptom: app "won't open").
-      autoUpdate: true,
+      // Off so a previously downloaded Capgo bundle cannot replace the
+      // chart-first shell. resetWhenUpdate drops that bundle when the
+      // native build number changes.
+      autoUpdate: false,
+      resetWhenUpdate: true,
       appReadyTimeout: 20000,
     },
   },

@@ -30,22 +30,52 @@ export interface PackageRow {
   base_duration_min: number | null;
 }
 
+function bandFromStock(stock: number | null | undefined): string {
+  if (stock == null || stock <= 0) return "out";
+  if (stock <= 2) return "low";
+  return "in";
+}
+
 export async function fetchPublicParts(opts: {
   limit: number;
   dealerOnly?: boolean;
 }): Promise<PartRow[]> {
   // Reads the public-safe view: exposes only non-sensitive columns (no supplier_id)
   // and only active dealer-listed parts. Anonymous access to the raw table is revoked.
+  // The live database still exposes numeric `stock`. Newer databases expose `stock_band`.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const client = supabase as any;
-  let q = client.from("public_parts_catalog").select("id, name, brand, category, sku, image_url, price, stock_band, compatibility, marina");
   void opts.dealerOnly; // the view only contains dealer-listed parts
-  const { data, error } = await q.order("created_at", { ascending: false }).limit(opts.limit);
-  if (error) {
-    console.warn("[catalog] public_parts_catalog unavailable", error.message);
+  const banded = await client
+    .from("public_parts_catalog")
+    .select("id, name, brand, category, sku, image_url, price, stock_band, compatibility, marina")
+    .order("created_at", { ascending: false })
+    .limit(opts.limit);
+  if (!banded.error) return (banded.data as PartRow[] | null) ?? [];
+
+  const legacy = await client
+    .from("public_parts_catalog")
+    .select("id, name, brand, category, sku, image_url, price, stock, compatibility, marina")
+    .order("created_at", { ascending: false })
+    .limit(opts.limit);
+  if (legacy.error) {
+    console.warn("[catalog] public_parts_catalog unavailable", legacy.error.message);
     return [];
   }
-  return (data as PartRow[] | null) ?? [];
+  return ((legacy.data ?? []) as Array<Omit<PartRow, "stock_band"> & { stock: number | null }>).map(
+    (row) => ({
+      id: row.id,
+      name: row.name,
+      brand: row.brand,
+      category: row.category,
+      sku: row.sku,
+      image_url: row.image_url,
+      price: row.price,
+      stock_band: bandFromStock(row.stock),
+      compatibility: row.compatibility,
+      marina: row.marina,
+    }),
+  );
 }
 
 export async function fetchPublicPackages(opts: { limit?: number } = {}): Promise<PackageRow[]> {

@@ -52,7 +52,7 @@ function FlyTo({ lat, lng, zoom }: { lat: number; lng: number; zoom: number }) {
   return null;
 }
 
-export function CoverageChart({ bay }: { bay: CoverageBayId }) {
+export function CoverageChart({ bay, fill = false }: { bay: CoverageBayId; fill?: boolean }) {
   const { t } = useTranslation();
   const [mounted, setMounted] = useState(false);
   const [zones, setZones] = useState<MarineZone[] | null>(null);
@@ -88,18 +88,26 @@ export function CoverageChart({ bay }: { bay: CoverageBayId }) {
   );
 
   if (!mounted || zones === null) {
-    return <MapPlaceholder className="min-h-0 rounded-2xl" style={{ height: 420, minHeight: 420 }} />;
+    return (
+      <MapPlaceholder
+        className={fill ? "min-h-0" : "min-h-0 rounded-2xl"}
+        style={fill ? { height: "100%", minHeight: "100%" } : { height: 420, minHeight: 420 }}
+      />
+    );
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-cyan-500/25" style={{ height: 420 }}>
+    <div
+      className={fill ? "h-full w-full" : "overflow-hidden rounded-2xl border border-cyan-500/25"}
+      style={fill ? undefined : { height: 420 }}
+    >
       <MapContainer
         center={[center.lat, center.lng]}
         zoom={center.zoom}
         minZoom={4}
         maxZoom={18}
-        zoomControl
-        scrollWheelZoom={false}
+        zoomControl={!fill}
+        scrollWheelZoom={fill}
         className="thalvo-ecdis"
         style={{ width: "100%", height: "100%", background: "#0b132b" }}
       >

@@ -1,5 +1,5 @@
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -50,6 +50,7 @@ function AuthPage() {
   const goNext = () => (next ? navigate({ href: next }) : navigate({ to: "/app" }));
   const [mode, setMode] = useState<"signin" | "signup">("signup");
   const [role, setRole] = useState<"Client" | "Provider" | "Supplier">("Client");
+  const [roleReady, setRoleReady] = useState(false);
   const [serviceType, setServiceType] = useState<"Marine Mechanic" | "Underwater Diver">(
     "Marine Mechanic",
   );
@@ -152,83 +153,67 @@ function AuthPage() {
 
       <main className="relative z-10 flex-1 flex items-center justify-center px-5 py-8">
         <div className="w-full max-w-md">
-          <div className="text-center mb-6">
-            <Wordmark size="lg" />
-            <p className="mt-2 text-sm text-[color:var(--pm-platinum)]">{t("auth.welcome")}</p>
+          <div className="mb-6 text-center">
+            <p className="thalvo-display text-4xl tracking-[0.18em] text-white">THALVO</p>
+            <p className="mt-2 text-sm text-white/60">{t("auth.welcome")}</p>
           </div>
 
-          <div className="pm-panel text-foreground rounded-3xl shadow-2xl overflow-hidden">
-            <div className="grid grid-cols-2 text-sm font-semibold">
-              <button
-                onClick={() => setMode("signup")}
-                className={
-                  "py-3 " +
-                  (mode === "signup"
-                    ? "pm-gold-cta"
-                    : "bg-white/[0.04] text-[color:var(--pm-platinum)]")
-                }
-              >
-                {t("auth.sign_up")}
-              </button>
-              <button
-                onClick={() => setMode("signin")}
-                className={
-                  "py-3 " +
-                  (mode === "signin"
-                    ? "pm-gold-cta"
-                    : "bg-white/[0.04] text-[color:var(--pm-platinum)]")
-                }
-              >
-                {t("auth.sign_in")}
-              </button>
-            </div>
-
-            <form onSubmit={submit} className="p-5 space-y-3">
+          <div className="overflow-hidden rounded-[28px] border border-white/10 bg-[#071422]/90 text-white shadow-2xl backdrop-blur-xl">
+            {mode === "signup" && !roleReady ? (
+              <div className="space-y-2 p-4">
+                <p className="thalvo-display px-1 text-2xl">{t("auth.pick_role")}</p>
+                <RoleDoor
+                  title={t("auth.role_client")}
+                  line={t("auth.role_client_line")}
+                  icon={<Ship className="size-4" />}
+                  onPick={() => {
+                    setRole("Client");
+                    setRoleReady(true);
+                  }}
+                />
+                <RoleDoor
+                  title={t("auth.role_provider")}
+                  line={t("auth.role_provider_line")}
+                  icon={<Wrench className="size-4" />}
+                  onPick={() => {
+                    setRole("Provider");
+                    setRoleReady(true);
+                  }}
+                />
+                <RoleDoor
+                  title={t("auth.role_supplier")}
+                  line={t("auth.role_supplier_line")}
+                  icon={<Store className="size-4" />}
+                  onPick={() => {
+                    setRole("Supplier");
+                    setRoleReady(true);
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setMode("signin")}
+                  className="w-full pt-2 text-xs text-white/50 hover:text-white"
+                >
+                  {t("auth.have_account")}
+                </button>
+              </div>
+            ) : (
+            <form onSubmit={submit} className="space-y-3 p-5">
               {mode === "signup" && (
                 <>
-                  <div>
-                    <label className="text-xs font-bold text-muted-foreground">
-                      {t("auth.role")}
-                    </label>
-                    <div className="mt-1 grid grid-cols-3 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setRole("Client")}
-                        className={
-                          "rounded-xl border p-2.5 text-xs font-black uppercase inline-flex flex-col items-center gap-1 " +
-                          (role === "Client"
-                            ? "border-[color:var(--pm-gold)] bg-[color:var(--pm-gold)]/20 text-[color:var(--pm-text)]"
-                            : "border-border")
-                        }
-                      >
-                        <Ship className="size-4" /> {t("auth.role_client")}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setRole("Provider")}
-                        className={
-                          "rounded-xl border p-2.5 text-xs font-black uppercase inline-flex flex-col items-center gap-1 " +
-                          (role === "Provider"
-                            ? "border-[color:var(--pm-gold)] bg-[color:var(--pm-gold)]/20 text-[color:var(--pm-text)]"
-                            : "border-border")
-                        }
-                      >
-                        <Wrench className="size-4" /> {t("auth.role_provider")}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setRole("Supplier")}
-                        className={
-                          "rounded-xl border p-2.5 text-xs font-black uppercase inline-flex flex-col items-center gap-1 " +
-                          (role === "Supplier"
-                            ? "border-[color:var(--pm-gold)] bg-[color:var(--pm-gold)]/20 text-[color:var(--pm-text)]"
-                            : "border-border")
-                        }
-                      >
-                        <Store className="size-4" /> {t("auth.role_supplier")}
-                      </button>
-                    </div>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setRoleReady(false)}
+                    className="text-left text-[12px] text-cyan-100/80"
+                  >
+                    {role === "Client"
+                      ? t("auth.role_client")
+                      : role === "Provider"
+                        ? t("auth.role_provider")
+                        : t("auth.role_supplier")}
+                    {" · "}
+                    {t("auth.change_role")}
+                  </button>
 
                   <Field
                     label={t("auth.full_name")}
@@ -441,10 +426,39 @@ function AuthPage() {
                 {mode === "signup" ? t("auth.have_account") : t("auth.no_account")}
               </button>
             </form>
+            )}
           </div>
         </div>
       </main>
     </div>
+  );
+}
+
+function RoleDoor({
+  title,
+  line,
+  icon,
+  onPick,
+}: {
+  title: string;
+  line: string;
+  icon: ReactNode;
+  onPick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onPick}
+      className="flex w-full items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-3.5 py-3 text-left hover:border-cyan-300/40 hover:bg-white/[0.06]"
+    >
+      <span className="grid size-9 shrink-0 place-items-center rounded-full border border-cyan-300/30 text-cyan-100">
+        {icon}
+      </span>
+      <span>
+        <span className="thalvo-display block text-[20px] leading-none text-white">{title}</span>
+        <span className="mt-1 block text-[12px] text-white/55">{line}</span>
+      </span>
+    </button>
   );
 }
 
