@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useServerFn } from "@tanstack/react-start";
 import { useNavigate } from "@tanstack/react-router";
@@ -10,6 +10,8 @@ import { PROBLEM_KEYS } from "@/i18n";
 import { useOnlineStatus } from "@/lib/pwa";
 import { getFix, fixToJobFields, formatAccuracy, isStale, isLowAccuracy, readLastFix, type GeoFix } from "@/lib/geolocation";
 import { sanitizeMultiline } from "@/lib/sanitize";
+import { formatDm } from "@/lib/formatters";
+import { publishLocatedCall } from "@/lib/emergency-service";
 import { openEmergencyService } from "@/lib/emergency-service-bus";
 import {
   Anchor, ArrowLeft, Camera, Check, Loader2, MapPin, Radio,
@@ -19,8 +21,29 @@ import {
 
 type Category = "mechanic" | "diver";
 type Step = 0 | 1 | 2;
+type Situation = "marina" | "anchor" | "underway";
+type EngineState = "running" | "stopped" | "no_start";
+type DiveTarget = "rope" | "anchor" | "hull" | "object";
+type SafetyFlag = "smoke" | "water" | "fuel" | "person";
+
+const PHOTO_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const PHOTO_MAX = 5 * 1024 * 1024;
 
 const MARINAS = ["Göcek D-Marin", "Bodrum Milta", "Marmaris Netsel", "Fethiye Ece", "Kaş Setur"];
+
+function composeBrief(parts: {
+  situation: string;
+  machine: string;
+  safety: string;
+  note: string;
+  advice: string;
+  health: string;
+}): string {
+  return [parts.situation, parts.machine, parts.safety, parts.note, parts.advice, parts.health]
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .join("\n");
+}
 
 interface Props {
   open: boolean;
@@ -32,7 +55,7 @@ interface Props {
 /**
  * SOS Emergency Cockpit — simplified 3-step flow: Problem → Location → Send.
  * Publish, GPS, category, media validation, and event logging are preserved verbatim.
- * Description, photo, and AI pre-diagnosis are surfaced behind an "Add details" disclosure.
+ * The send step carries a structured brief the technician reads before leaving.
  */
 export function SosSheet({ open, onClose, initialCategory = "mechanic", initialNote }: Props) {
   const { t, i18n } = useTranslation();
@@ -49,18 +72,26 @@ export function SosSheet({ open, onClose, initialCategory = "mechanic", initialN
   const [marina, setMarina] = useState(MARINAS[0]);
   const [note, setNote] = useState("");
   const [photo, setPhoto] = useState<string | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [briefOpen, setBriefOpen] = useState(false);
+  const [situation, setSituation] = useState<Situation | null>(null);
+  const [engineState, setEngineState] = useState<EngineState | null>(null);
+  const [diveTarget, setDiveTarget] = useState<DiveTarget | null>(null);
+  const [safety, setSafety] = useState<SafetyFlag[]>([]);
   const [coords, setCoords] = useState<GeoFix | null>(null);
   const [locating, setLocating] = useState(false);
   const [locErr, setLocErr] = useState<string | null>(null);
   const [aiText, setAiText] = useState<string | null>(null);
+  const [aiOk, setAiOk] = useState(false);
   const [aiBusy, setAiBusy] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const reset = useCallback(() => {
     setStep(0); setCategory(initialCategory); setProblem(problems[0]);
-    setMarina(MARINAS[0]); setNote(""); setPhoto(null);
-    setCoords(null); setLocErr(null); setAiText(null);
+    setMarina(MARINAS[0]); setNote(""); setPhoto(null); setPhotoFile(null);
+    setBriefOpen(false); setSituation(null); setEngineState(null); setDiveTarget(null); setSafety([]);
+    setCoords(null); setLocErr(null); setAiText(null); setAiOk(false);
     setLocating(false); setAiBusy(false); setPublishing(false);
   }, [initialCategory, problems]);
 
@@ -71,7 +102,10 @@ export function SosSheet({ open, onClose, initialCategory = "mechanic", initialN
   useEffect(() => {
     if (!open) return;
     setCategory(initialCategory);
-    if (initialNote?.trim()) setNote(initialNote.trim());
+    if (initialNote?.trim()) {
+      setNote(initialNote.trim());
+      setBriefOpen(true);
+    }
   }, [open, initialCategory, initialNote]);
 
   // Single shared positioning path — no fallback marina, no invented coordinates.
@@ -116,6 +150,7 @@ export function SosSheet({ open, onClose, initialCategory = "mechanic", initialN
     if (aiBusy) return;
     setAiBusy(true);
     setAiText(null);
+    setAiOk(false);
     const problemLabel = t(`problems.${problem}`, { defaultValue: problem });
     const catLabel = category === "diver" ? "Underwater diver" : "Marine mechanic";
     const prompt =
@@ -123,18 +158,24 @@ export function SosSheet({ open, onClose, initialCategory = "mechanic", initialN
       `Be calm and specific.\n\n` +
       `Category: ${catLabel}\nProblem: ${problemLabel}\nLocation: ${marina}` +
       (coords ? ` (${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)})` : "") +
+      (situation ? `\nBoat: ${t(`sos_sheet.sit_${situation}`)}` : "") +
+      (category === "mechanic" && engineState ? `\nEngine: ${t(`sos_sheet.eng_${engineState}`)}` : "") +
+      (category === "diver" && diveTarget ? `\nIn the water: ${t(`sos_sheet.dive_${diveTarget}`)}` : "") +
+      (safety.length ? `\nSafety: ${safety.map((flag) => t(`sos_sheet.safe_${flag}`)).join(", ")}` : "") +
       (note ? `\nCaptain note: ${note}` : "") +
       (photo ? `\n(Photo attached by captain — not visible to you here.)` : "") +
       `\n\nReturn: (1) one-line likely cause, (2) one immediate safety step the captain can take now, (3) what a responder will most likely need on arrival. No panic language.`;
     try {
       const res = await ask({ data: { messages: [{ role: "user", content: prompt.slice(0, 4000) }], lang: (i18n.language === "en" ? "en" : "tr") } });
-      setAiText(res.text || "Diagnosis unavailable. You can still publish now.");
+      setAiText(res.text || t("sos_sheet.advice_offline"));
+      setAiOk(Boolean(res.text));
     } catch (err: unknown) {
       const raw = err instanceof Error ? err.message : String(err);
+      setAiOk(false);
       setAiText(
         raw.includes("ai_rate_limited")
           ? t("common.ai_rate_limited")
-          : "Advisor is offline. You can still publish — nearby responders will see full details.",
+          : t("sos_sheet.advice_offline"),
       );
     } finally {
       setAiBusy(false);
@@ -189,15 +230,39 @@ export function SosSheet({ open, onClose, initialCategory = "mechanic", initialN
         acknowledgeFallback(userErr ?? "no-user");
         return;
       }
-      const { data: p } = await supabase.from("profiles").select("emergency_health_note").eq("id", user.id).maybeSingle();
-      const healthNote = (p as { emergency_health_note: string | null } | null)?.emergency_health_note;
-      const parts = [
-        sanitizeMultiline(note, 1500),
-        aiText ? `\n🧭 AI pre-diagnosis:\n${sanitizeMultiline(aiText, 1500)}` : "",
-        healthNote ? `\n🩺 ${t("profile.health_note")}: ${sanitizeMultiline(healthNote, 500)}` : "",
-        liveFix ? "" : `\n📍 ${isTr ? "Konum alınamadı — marina:" : "Position unavailable — marina:"} ${marina}`,
-      ].filter(Boolean);
-      const finalDescription = parts.join("\n").trim().slice(0, 4000);
+      const { data: p } = await supabase.from("profiles").select("emergency_health_note, boat_name").eq("id", user.id).maybeSingle();
+      const profileRow = p as { emergency_health_note: string | null; boat_name: string | null } | null;
+      const healthNote = profileRow?.emergency_health_note;
+      const brief = composeBrief({
+        situation: situation ? `${t("sos_sheet.situation")}: ${t(`sos_sheet.sit_${situation}`)}` : "",
+        machine:
+          category === "diver"
+            ? diveTarget
+              ? `${t("sos_sheet.dive_target")}: ${t(`sos_sheet.dive_${diveTarget}`)}`
+              : ""
+            : engineState
+              ? `${t("sos_sheet.engine_state")}: ${t(`sos_sheet.eng_${engineState}`)}`
+              : "",
+        safety:
+          safety.length > 0
+            ? `${t("sos_sheet.safety")}: ${safety.map((flag) => t(`sos_sheet.safe_${flag}`)).join(", ")}`
+            : "",
+        note: sanitizeMultiline(note, 1500),
+        advice: aiOk && aiText ? `${t("sos_sheet.advice")}: ${sanitizeMultiline(aiText, 1500)}` : "",
+        health: healthNote ? `${t("profile.health_note")}: ${sanitizeMultiline(healthNote, 500)}` : "",
+      });
+      let photoPath: string | null = null;
+      if (photoFile) {
+        const ext = photoFile.type === "image/png" ? "png" : photoFile.type === "image/webp" ? "webp" : "jpg";
+        const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
+        const uploaded = await supabase.storage.from("job-photos").upload(path, photoFile, {
+          contentType: photoFile.type,
+          upsert: false,
+        });
+        if (uploaded.error) toast.warning(t("sos_sheet.photo_skipped"));
+        else photoPath = path;
+      }
+      const finalDescription = (brief || t(`problems.${problem}`, { defaultValue: problem })).slice(0, 4000);
       const { data, error } = await (async () => {
         try {
           return await supabase.from("jobs").insert({
@@ -205,6 +270,7 @@ export function SosSheet({ open, onClose, initialCategory = "mechanic", initialN
             service_type: category === "diver" ? "Underwater Diver" : "Marine Mechanic",
             problem_category: problem,
             description: finalDescription,
+            photo_url: photoPath,
             marina,
             ...(liveFix ? fixToJobFields(liveFix) : {}),
           }).select("id").single();
@@ -215,6 +281,26 @@ export function SosSheet({ open, onClose, initialCategory = "mechanic", initialN
       if (error || !data) {
         acknowledgeFallback(error ?? "insert-empty");
         return;
+      }
+      if (liveFix) {
+        const placed = await publishLocatedCall({
+          userId: user.id,
+          category,
+          lat: liveFix.lat,
+          lng: liveFix.lng,
+          vesselName: profileRow?.boat_name?.trim() || "",
+          bayName: marina,
+          description: finalDescription,
+          urgency: "urgent",
+        });
+        if (placed.error) {
+          console.error("[sos] located call", placed.error);
+          toast.warning(
+            isTr
+              ? "Çağrı kaydedildi ama usta haritasına konum düşmedi. Konumu yenileyip tekrar gönderin."
+              : "The call was saved, but the position did not reach the provider chart. Refresh the fix and send again.",
+          );
+        }
       }
       emitEvent({
         type: "sos.created",
@@ -331,7 +417,26 @@ export function SosSheet({ open, onClose, initialCategory = "mechanic", initialN
               marina={marina} coords={coords}
               stateLabel={locationState.label}
               note={note} onNote={setNote}
-              photo={photo} onPickPhoto={() => fileRef.current?.click()} onClearPhoto={() => setPhoto(null)}
+              photo={photo}
+              onPickPhoto={() => fileRef.current?.click()}
+              onClearPhoto={() => {
+                setPhoto(null);
+                setPhotoFile(null);
+              }}
+              briefOpen={briefOpen}
+              onBriefOpen={setBriefOpen}
+              situation={situation}
+              onSituation={setSituation}
+              engineState={engineState}
+              onEngineState={setEngineState}
+              diveTarget={diveTarget}
+              onDiveTarget={setDiveTarget}
+              safety={safety}
+              onSafety={(flag) =>
+                setSafety((current) =>
+                  current.includes(flag) ? current.filter((item) => item !== flag) : [...current, flag],
+                )
+              }
               aiBusy={aiBusy} aiText={aiText} onRunAi={runDiagnosis}
               isTr={isTr}
             />
@@ -339,7 +444,7 @@ export function SosSheet({ open, onClose, initialCategory = "mechanic", initialN
           <input
             ref={fileRef}
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp"
             capture="environment"
             className="hidden"
             onChange={(e) => {
@@ -347,18 +452,21 @@ export function SosSheet({ open, onClose, initialCategory = "mechanic", initialN
               e.target.value = "";
               if (!f) return;
               // File validation — image only, ≤ 8 MB.
-              if (!f.type.startsWith("image/")) {
-                toast.error("Please pick an image file (jpg, png, heic).");
+              if (!PHOTO_TYPES.has(f.type)) {
+                toast.error(t("sos_sheet.photo_bad_type"));
                 return;
               }
-              const MAX_BYTES = 8 * 1024 * 1024;
-              if (f.size > MAX_BYTES) {
-                toast.error("Photo is larger than 8 MB. Please pick a smaller image.");
+              if (f.size > PHOTO_MAX) {
+                toast.error(t("sos_sheet.photo_big"));
                 return;
               }
               const reader = new FileReader();
-              reader.onload = () => setPhoto(String(reader.result));
-              reader.onerror = () => toast.error("We could not read that photo. Please try another.");
+              reader.onload = () => {
+                setPhotoFile(f);
+                setPhoto(String(reader.result));
+                setBriefOpen(true);
+              };
+              reader.onerror = () => toast.error(t("sos_sheet.photo_read"));
               reader.readAsDataURL(f);
             }}
           />
@@ -369,7 +477,7 @@ export function SosSheet({ open, onClose, initialCategory = "mechanic", initialN
           {!online && (
             <div role="alert" className="rounded-xl border border-amber-400/40 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-100 inline-flex items-start gap-2 w-full">
               <WifiOff className="size-3.5 mt-0.5 shrink-0" />
-              You are offline. THALVO will publish your SOS the moment you reconnect.
+              {t("sos_sheet.offline")}
             </div>
           )}
           <div className="flex gap-2">
@@ -517,7 +625,7 @@ function StepLocation({
             <p className="text-sm font-semibold">{stateLabel}</p>
             {coords && (
               <p className="text-[11px] font-mono opacity-80 mt-0.5">
-                {coords.lat.toFixed(4)}° · {coords.lng.toFixed(4)}° · {formatAccuracy(coords)}
+                {formatDm(coords.lat, coords.lng)} · {formatAccuracy(coords)}
               </p>
             )}
             {!coords && !locating && (
@@ -571,120 +679,212 @@ function StepLocation({
 function StepSend({
   category, problem, marina, coords, stateLabel,
   note, onNote, photo, onPickPhoto, onClearPhoto,
+  briefOpen, onBriefOpen, situation, onSituation, engineState, onEngineState,
+  diveTarget, onDiveTarget, safety, onSafety,
   aiBusy, aiText, onRunAi, isTr,
 }: {
   category: Category; problem: string; marina: string;
   coords: { lat: number; lng: number } | null; stateLabel: string;
   note: string; onNote: (v: string) => void;
   photo: string | null; onPickPhoto: () => void; onClearPhoto: () => void;
+  briefOpen: boolean; onBriefOpen: (open: boolean) => void;
+  situation: Situation | null; onSituation: (value: Situation | null) => void;
+  engineState: EngineState | null; onEngineState: (value: EngineState | null) => void;
+  diveTarget: DiveTarget | null; onDiveTarget: (value: DiveTarget | null) => void;
+  safety: SafetyFlag[]; onSafety: (flag: SafetyFlag) => void;
   aiBusy: boolean; aiText: string | null; onRunAi: () => void;
   isTr: boolean;
 }) {
+  const { t } = useTranslation();
+  const ready = Boolean(note.trim() || photo || situation || engineState || diveTarget || safety.length);
+  const role = category === "diver" ? (isTr ? "Sualtı dalgıç" : "Underwater diver") : (isTr ? "Deniz mekaniği" : "Marine mechanic");
   return (
     <div className="space-y-4">
-      {/* Summary hero */}
       <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 space-y-2">
         <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-rose-300/90">
-          {isTr ? "SOS yayınlanacak" : "Ready to broadcast"}
+          {isTr ? "Çağrı kartı" : "Call card"}
         </p>
         <p className="text-lg font-semibold text-white leading-snug">{problem}</p>
-        <p className="text-xs text-white/60">
-          {(category === "diver" ? (isTr ? "Sualtı dalgıç" : "Underwater diver") : (isTr ? "Deniz mekaniği" : "Marine mechanic"))}
-          {" · "}
-          {marina}
-        </p>
+        <p className="text-xs text-white/60">{role} · {marina}</p>
         <p className="text-[11px] text-white/50 inline-flex items-center gap-1.5">
           <MapPin className="size-3" /> {stateLabel}
-          {coords && <span className="font-mono opacity-70">· {coords.lat.toFixed(3)}°, {coords.lng.toFixed(3)}°</span>}
+          {coords && <span className="font-mono opacity-70">· {formatDm(coords.lat, coords.lng)}</span>}
         </p>
       </div>
 
-      {/* Privacy note */}
+      <p className="rounded-2xl border border-amber-400/25 bg-amber-500/10 px-3 py-2.5 text-[12px] leading-relaxed text-amber-50">
+        {t("sos_sheet.not_coastguard")}
+      </p>
+
       <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 text-[11px] text-white/60 inline-flex items-start gap-2">
         <Check className="size-3.5 text-emerald-300 mt-0.5 shrink-0" />
         {isTr
-          ? "Yayınlamak maskeli bir çağrı gönderir. İletişim bilgileriniz siz bir cevap verene kadar gizli kalır."
-          : "Publishing broadcasts a masked request. Your contact info stays private until you accept a responder."}
+          ? "İletişim bilginiz, bir teklifi kabul edene kadar gizli kalır."
+          : "Your contact stays private until you accept an offer."}
       </div>
 
-      {/* Optional details — collapsed by default */}
-      <details className="group rounded-2xl border border-white/10 bg-white/[0.02]">
-        <summary className="list-none cursor-pointer px-4 py-3 flex items-center justify-between text-sm font-semibold text-white/80 hover:text-white">
-          <span className="inline-flex items-center gap-2">
-            <Sparkle className="size-4 text-sky-300/80" />
-            {isTr ? "Detay ekle (isteğe bağlı)" : "Add details (optional)"}
-          </span>
-          <span className="text-[10px] uppercase tracking-[0.14em] text-white/40 group-open:hidden">
-            {isTr ? "Aç" : "Open"}
-          </span>
-          <span className="text-[10px] uppercase tracking-[0.14em] text-white/40 hidden group-open:inline">
-            {isTr ? "Kapat" : "Close"}
-          </span>
-        </summary>
-        <div className="px-4 pb-4 pt-1 space-y-4">
+      <section className="rounded-2xl border border-white/10 bg-[#071422]">
+        <div className="flex items-start justify-between gap-3 px-4 py-3">
           <div>
-            <label className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/50">
-              {isTr ? "Ne görüyor ya da duyuyorsunuz?" : "Describe what you see or hear"}
-            </label>
-            <textarea
-              value={note} onChange={(e) => onNote(e.target.value)} rows={3}
-              placeholder={isTr ? "Kısa. Sakin. Net." : "Short. Calm. Specific."}
-              className="mt-2 w-full rounded-2xl border border-white/15 bg-white/5 text-white placeholder:text-white/30 p-3 text-sm outline-none focus:border-sky-400/60 resize-none"
-            />
+            <p className="text-sm font-semibold text-white">{t("sos_sheet.brief_title")}</p>
+            <p className="mt-0.5 text-[12px] leading-snug text-white/50">{t("sos_sheet.brief_sub")}</p>
+            <p className={"mt-2 text-[11px] font-semibold " + (ready ? "text-cyan-200" : "text-white/40")}>
+              {ready ? t("sos_sheet.brief_ready") : t("sos_sheet.brief_empty")}
+            </p>
           </div>
-
-          <div>
-            <label className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/50">
-              {isTr ? "Fotoğraf (isteğe bağlı)" : "Photo (optional)"}
-            </label>
-            {photo ? (
-              <div className="mt-2 relative rounded-2xl overflow-hidden border border-white/10">
-                <img src={photo} alt="" className="w-full h-32 object-cover" />
-                <button
-                  onClick={onClearPhoto}
-                  className="absolute top-2 right-2 size-8 grid place-items-center rounded-full bg-black/60 text-white/90"
-                  aria-label="Remove photo"
-                ><X className="size-4" /></button>
-              </div>
-            ) : (
-              <button
-                onClick={onPickPhoto}
-                className="mt-2 w-full h-14 rounded-2xl border border-dashed border-white/15 bg-white/[0.02] inline-flex items-center justify-center gap-2 text-white/70 hover:bg-white/[0.04]"
-              >
-                <Camera className="size-4" />
-                <span className="text-xs font-semibold">{isTr ? "Fotoğraf ekle" : "Add photo"}</span>
-              </button>
-            )}
-          </div>
-
-          <div>
-            <label className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/50">
-              {isTr ? "AI ön tanı" : "AI pre-diagnosis"}
-            </label>
-            {aiText ? (
-              <div className="mt-2 rounded-2xl border border-sky-400/20 bg-sky-500/[0.06] p-3">
-                <p className="text-[12px] text-white/85 leading-relaxed whitespace-pre-wrap">{aiText}</p>
-                <button
-                  onClick={onRunAi}
-                  className="mt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/60 hover:text-white"
-                >
-                  {isTr ? "Yeniden üret" : "Regenerate"}
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={onRunAi}
-                disabled={aiBusy}
-                className="mt-2 w-full h-12 rounded-2xl border border-sky-400/25 bg-sky-500/[0.06] text-sky-200 text-xs font-semibold inline-flex items-center justify-center gap-2 disabled:opacity-60"
-              >
-                {aiBusy ? <Loader2 className="size-4 animate-spin" /> : <Sparkle className="size-4" />}
-                {aiBusy ? (isTr ? "Analiz ediliyor…" : "Analyzing…") : (isTr ? "Ön tanı çalıştır" : "Run pre-diagnosis")}
-              </button>
-            )}
-          </div>
+          <button
+            type="button"
+            onClick={() => onBriefOpen(!briefOpen)}
+            className="shrink-0 rounded-full border border-white/15 px-3 py-1.5 text-[11px] font-semibold text-white/80"
+          >
+            {briefOpen ? t("sos_sheet.close_brief") : ready ? t("sos_sheet.brief_edit") : t("sos_sheet.brief_write")}
+          </button>
         </div>
-      </details>
+        {briefOpen && (
+          <div className="space-y-4 border-t border-white/10 px-4 py-4">
+            <ChipRow label={t("sos_sheet.situation")}>
+              {(["marina", "anchor", "underway"] as const).map((value) => (
+                <Choice
+                  key={value}
+                  active={situation === value}
+                  onClick={() => onSituation(situation === value ? null : value)}
+                  label={t(`sos_sheet.sit_${value}`)}
+                />
+              ))}
+            </ChipRow>
+            {category === "mechanic" ? (
+              <ChipRow label={t("sos_sheet.engine_state")}>
+                {(["running", "stopped", "no_start"] as const).map((value) => (
+                  <Choice
+                    key={value}
+                    active={engineState === value}
+                    onClick={() => onEngineState(engineState === value ? null : value)}
+                    label={t(`sos_sheet.eng_${value}`)}
+                  />
+                ))}
+              </ChipRow>
+            ) : (
+              <ChipRow label={t("sos_sheet.dive_target")}>
+                {(["rope", "anchor", "hull", "object"] as const).map((value) => (
+                  <Choice
+                    key={value}
+                    active={diveTarget === value}
+                    onClick={() => onDiveTarget(diveTarget === value ? null : value)}
+                    label={t(`sos_sheet.dive_${value}`)}
+                  />
+                ))}
+              </ChipRow>
+            )}
+            <ChipRow label={t("sos_sheet.safety")}>
+              {(["smoke", "water", "fuel", "person"] as const).map((flag) => (
+                <Choice
+                  key={flag}
+                  active={safety.includes(flag)}
+                  danger
+                  onClick={() => onSafety(flag)}
+                  label={t(`sos_sheet.safe_${flag}`)}
+                />
+              ))}
+            </ChipRow>
+            <div>
+              <label className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/50">
+                {t("sos_sheet.note_label")}
+              </label>
+              <textarea
+                value={note}
+                onChange={(e) => onNote(e.target.value)}
+                rows={3}
+                placeholder={t("sos_sheet.note_ph")}
+                className="mt-2 w-full resize-none rounded-2xl border border-white/15 bg-white/5 p-3 text-sm text-white outline-none placeholder:text-white/30 focus:border-cyan-300/60"
+              />
+            </div>
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/50">{t("sos_sheet.photo")}</p>
+              {photo ? (
+                <div className="relative mt-2 overflow-hidden rounded-2xl border border-white/10">
+                  <img src={photo} alt="" className="h-36 w-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={onClearPhoto}
+                    className="absolute right-2 top-2 grid size-8 place-items-center rounded-full bg-black/60 text-white/90"
+                    aria-label={t("common.remove")}
+                  >
+                    <X className="size-4" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={onPickPhoto}
+                  className="mt-2 flex h-14 w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-white/15 bg-white/[0.02] text-white/70"
+                >
+                  <Camera className="size-4" />
+                  <span className="text-xs font-semibold">{t("sos_sheet.photo_add")}</span>
+                </button>
+              )}
+            </div>
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/50">{t("sos_sheet.advice")}</p>
+              {aiText ? (
+                <div className="mt-2 rounded-2xl border border-cyan-300/20 bg-cyan-400/[0.06] p-3">
+                  <p className="whitespace-pre-wrap text-[12px] leading-relaxed text-white/85">{aiText}</p>
+                  <button type="button" onClick={onRunAi} className="mt-2 text-[11px] font-semibold text-cyan-100">
+                    {t("sos_sheet.advice_again")}
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={onRunAi}
+                  disabled={aiBusy}
+                  className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-cyan-300/25 bg-cyan-400/[0.06] text-xs font-semibold text-cyan-100 disabled:opacity-60"
+                >
+                  {aiBusy ? <Loader2 className="size-4 animate-spin" /> : <Sparkle className="size-4" />}
+                  {aiBusy ? t("sos_sheet.advice_busy") : t("sos_sheet.advice_run")}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+      </section>
     </div>
+  );
+}
+
+function ChipRow({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div>
+      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/50">{label}</p>
+      <div className="mt-2 flex flex-wrap gap-2">{children}</div>
+    </div>
+  );
+}
+
+function Choice({
+  active,
+  danger = false,
+  onClick,
+  label,
+}: {
+  active: boolean;
+  danger?: boolean;
+  onClick: () => void;
+  label: string;
+}) {
+  const on = danger
+    ? "border-rose-300/70 bg-rose-500/20 text-rose-50"
+    : "border-cyan-200/70 bg-white text-slate-900";
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={
+        "h-9 rounded-full border px-3 text-[12px] font-semibold " +
+        (active ? on : "border-white/15 bg-white/[0.03] text-white/75")
+      }
+    >
+      {label}
+    </button>
   );
 }
 

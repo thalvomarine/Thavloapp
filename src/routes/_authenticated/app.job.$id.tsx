@@ -56,6 +56,7 @@ interface Job {
   service_type: "Marine Mechanic" | "Underwater Diver";
   problem_category: string;
   description: string;
+  photo_url: string | null;
   marina: string;
   lat: number;
   lng: number;
@@ -135,6 +136,54 @@ function JobPage() {
 }
 
 /* ---------------- CLIENT ---------------- */
+function JobBrief({
+  description,
+  photoPath,
+  problem,
+}: {
+  description: string;
+  photoPath: string | null;
+  problem: string;
+}) {
+  const { t } = useTranslation();
+  const [url, setUrl] = useState<string | null>(null);
+  const problemLabel = t(`problems.${problem}`, { defaultValue: problem });
+  const text = description.trim();
+  const showText = text.length > 0 && text !== problemLabel;
+
+  useEffect(() => {
+    if (!photoPath) {
+      setUrl(null);
+      return;
+    }
+    if (photoPath.startsWith("http")) {
+      setUrl(photoPath);
+      return;
+    }
+    let cancel = false;
+    void supabase.storage
+      .from("job-photos")
+      .createSignedUrl(photoPath, 60 * 30)
+      .then(({ data }) => {
+        if (!cancel && data?.signedUrl) setUrl(data.signedUrl);
+      });
+    return () => {
+      cancel = true;
+    };
+  }, [photoPath]);
+
+  if (!showText && !url) return null;
+  return (
+    <GlassPanel className="space-y-2">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">
+        {t("sos_sheet.brief_title")}
+      </p>
+      {showText && <p className="whitespace-pre-wrap text-sm leading-relaxed text-white/80">{text}</p>}
+      {url && <img src={url} alt="" className="h-40 w-full rounded-xl object-cover" />}
+    </GlassPanel>
+  );
+}
+
 function ClientJob({ job, meId }: { job: Job; meId: string }) {
   const { t } = useTranslation();
   const [offers, setOffers] = useState<Offer[]>([]);
@@ -482,6 +531,7 @@ function ClientJob({ job, meId }: { job: Job; meId: string }) {
           <MissionStatusTrack stage={stageFromJob(job.status, offers.length)} />
         </div>
       </GlassPanel>
+      <JobBrief description={job.description} photoPath={job.photo_url} problem={job.problem_category} />
 
       {providerPos && (
         <div className="rounded-2xl overflow-hidden border border-white/10">
@@ -868,6 +918,7 @@ function ProviderJob({ job, meId }: { job: Job; meId: string }) {
           </div>
         </div>
       </GlassPanel>
+      <JobBrief description={job.description} photoPath={job.photo_url} problem={job.problem_category} />
 
       <details className="group rounded-2xl border border-white/10 bg-white/[0.02]">
         <summary className="list-none cursor-pointer select-none px-4 py-3 flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.16em] text-white/60 hover:text-white/80">

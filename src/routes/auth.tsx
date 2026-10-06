@@ -11,6 +11,7 @@ import { sanitizeNext } from "@/lib/nav";
 import { markSignupWelcome } from "@/lib/signup-welcome";
 import { normalizeAppLng } from "@/i18n";
 import { SeaBackdrop } from "@/components/brand/SeaBackdrop";
+import { ENGINE_BRANDS } from "@/lib/marine-catalog";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
@@ -28,7 +29,6 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
-const ENGINE_BRANDS = ["Yamaha", "Volvo Penta", "Yanmar", "Mercury", "Suzuki"];
 const ACCOUNT_TYPES = ["Private Owner", "Commercial Captain", "Sea Enthusiast"];
 
 /**
@@ -287,7 +287,7 @@ function AuthPage() {
                           <label className="text-xs font-bold text-muted-foreground">
                             {t("auth.specialties")}
                           </label>
-                          <div className="mt-1 flex flex-wrap gap-1.5">
+                          <div className="mt-1 flex max-h-36 flex-wrap gap-1.5 overflow-y-auto">
                             {ENGINE_BRANDS.map((b) => (
                               <button
                                 type="button"

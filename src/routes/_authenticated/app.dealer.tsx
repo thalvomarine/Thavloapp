@@ -15,13 +15,21 @@ import { Loader2, Plus, Store, X, Package } from "lucide-react";
 import { toast } from "sonner";
 import type { OrderStatus } from "@/lib/orders";
 import { ImageUploader } from "@/components/ImageUploader";
+import { MARINA_PRESETS } from "@/lib/boat-listings";
+import {
+  PART_BRANDS,
+  PART_CONDITIONS,
+  publicCompatibility,
+  readPartCondition,
+  withPartCondition,
+  type PartCondition,
+} from "@/lib/marine-catalog";
 
 export const Route = createFileRoute("/_authenticated/app/dealer")({
   ssr: false,
   component: DealerPage,
 });
 
-const BRANDS = ["Yamaha", "Volvo Penta", "Yanmar", "Mercury", "Suzuki", "Cummins", "MAN"];
 // Stable enum values persisted in parts_catalog.category (text column).
 // Labels are resolved via i18n at render time (dealer.categories.<value>).
 const CATEGORY_VALUES = [
@@ -260,7 +268,7 @@ function PartForm({
 }) {
   const { t } = useTranslation();
   const [name, setName] = useState(existing?.name ?? "");
-  const [brand, setBrand] = useState(existing?.brand ?? BRANDS[0]);
+  const [brand, setBrand] = useState(existing?.brand ?? PART_BRANDS[0]);
   const existingCategory = existing?.category ?? "";
   const isKnownCategory = (CATEGORY_VALUES as readonly string[]).includes(existingCategory);
   const [categoryChoice, setCategoryChoice] = useState<string>(
@@ -271,7 +279,8 @@ function PartForm({
   );
   const [sku, setSku] = useState(existing?.sku ?? "");
   const [altSku, setAltSku] = useState("");
-  const [compat, setCompat] = useState((existing?.compatibility ?? []).join(", "));
+  const [condition, setCondition] = useState<PartCondition | "">(readPartCondition(existing?.compatibility));
+  const [compat, setCompat] = useState(publicCompatibility(existing?.compatibility).join(", "));
   const [price, setPrice] = useState(existing ? String(existing.price) : "");
   const [stock, setStock] = useState(existing ? String(existing.stock) : "1");
   const [marina, setMarina] = useState(existing?.marina ?? defaultMarina ?? "");
@@ -287,7 +296,11 @@ function PartForm({
     setBusy(true);
     const payload = {
       name, brand, category: resolvedCategory, sku: sku || null,
-      compatibility: compat ? compat.split(",").map((s) => s.trim()).filter(Boolean) : null,
+      compatibility: (() => {
+        const tags = compat.split(",").map((s) => s.trim()).filter(Boolean);
+        const withCondition = withPartCondition(tags, condition);
+        return withCondition.length ? withCondition : null;
+      })(),
       price: Number(price), stock: Number(stock) || 0,
       marina: marina || null, image_url: image || null,
       supplier_id: userId, active: true,
@@ -307,9 +320,12 @@ function PartForm({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={onClose}>
-      <div className="thalvo-dark w-full max-w-md rounded-3xl bg-[oklch(0.18_0.02_250)] border border-white/10 shadow-2xl overflow-hidden max-h-[90dvh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-        <div className="p-4 flex items-center justify-between border-b border-white/10">
-          <p className="text-sm font-semibold text-white">{existing ? t("dealer.edit_part") : t("dealer.add_part")}</p>
+      <div className="thalvo-dark w-full max-w-lg rounded-3xl bg-[#071422] border border-cyan-400/25 shadow-2xl overflow-hidden max-h-[90dvh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div className="p-4 flex items-center justify-between border-b border-cyan-400/15">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-300">THALVO</p>
+            <p className="text-sm font-semibold text-white">{existing ? t("dealer.edit_part") : t("dealer.add_part")}</p>
+          </div>
           <button onClick={onClose} className="size-8 grid place-items-center rounded-lg text-white/60 hover:bg-white/10">
             <X className="size-4" />
           </button>
@@ -321,7 +337,10 @@ function PartForm({
           <div className="grid grid-cols-2 gap-2">
             <Field label={t("dealer.field_brand")}>
               <select value={brand} onChange={(e) => setBrand(e.target.value)} className={inputCls}>
-                {BRANDS.map((b) => <option key={b} value={b} className="bg-slate-900">{b}</option>)}
+                {(PART_BRANDS as readonly string[]).includes(brand) ? null : (
+                  <option value={brand} className="bg-slate-900">{brand}</option>
+                )}
+                {PART_BRANDS.map((b) => <option key={b} value={b} className="bg-slate-900">{b}</option>)}
               </select>
             </Field>
             <Field label={t("dealer.field_category")}>
@@ -357,6 +376,25 @@ function PartForm({
               <input value={altSku} onChange={(e) => setAltSku(e.target.value)} className={inputCls} />
             </Field>
           </div>
+          <Field label={t("dealer.field_condition")}>
+            <div className="grid grid-cols-3 gap-1.5">
+              {PART_CONDITIONS.map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => setCondition(item)}
+                  className={
+                    "h-10 rounded-xl border text-[12px] font-semibold " +
+                    (condition === item
+                      ? "border-cyan-300 bg-cyan-400/15 text-cyan-100"
+                      : "border-white/10 bg-white/5 text-white/70")
+                  }
+                >
+                  {t(`dealer.condition_${item}`)}
+                </button>
+              ))}
+            </div>
+          </Field>
           <Field label={t("dealer.field_compat")}>
             <input value={compat} onChange={(e) => setCompat(e.target.value)} placeholder="Yamaha F250, Volvo D2-75" className={inputCls} />
             <p className="text-[10px] text-white/40 mt-1">{t("dealer.field_compat_hint")}</p>
@@ -382,7 +420,10 @@ function PartForm({
             </Field>
           </div>
           <Field label={t("dealer.field_marina")}>
-            <input value={marina} onChange={(e) => setMarina(e.target.value)} className={inputCls} />
+            <input value={marina} onChange={(e) => setMarina(e.target.value)} list="thalvo-marina-presets" className={inputCls} />
+            <datalist id="thalvo-marina-presets">
+              {MARINA_PRESETS.map((item) => <option key={item.name} value={item.name} />)}
+            </datalist>
           </Field>
           <Field label={t("dealer.field_delivery")}>
             <select value={deliveryMode} onChange={(e) => setDeliveryMode(e.target.value)} className={inputCls}>
@@ -407,7 +448,7 @@ function PartForm({
         </div>
         <div className="p-4 border-t border-white/10 flex gap-2">
           <button onClick={onClose} className="flex-1 h-11 rounded-xl border border-white/10 text-white/70 text-sm font-semibold">{t("common.cancel")}</button>
-          <button onClick={save} disabled={busy} className="flex-1 h-11 rounded-xl bg-sky-500 hover:bg-sky-400 disabled:opacity-50 text-slate-900 text-sm font-semibold inline-flex items-center justify-center gap-2">
+          <button onClick={save} disabled={busy} className="flex-1 h-11 rounded-xl bg-cyan-400 hover:bg-cyan-300 disabled:opacity-50 text-slate-950 text-sm font-semibold inline-flex items-center justify-center gap-2">
             {busy && <Loader2 className="size-4 animate-spin" />}
             {existing ? t("dealer.save") : t("dealer.add_sku")}
           </button>
@@ -417,7 +458,7 @@ function PartForm({
   );
 }
 
-const inputCls = "w-full h-10 rounded-xl border border-white/10 bg-white/5 text-white placeholder:text-white/40 px-3 text-sm outline-none focus:border-sky-400/60";
+const inputCls = "w-full h-11 rounded-xl border border-cyan-400/25 bg-[#0A192F] text-white placeholder:text-white/35 px-3 text-sm outline-none focus:border-cyan-300";
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (

@@ -18,6 +18,8 @@ import { restartOnboarding } from "@/components/onboarding/useFirstRun";
 import { InstallAppButton } from "@/components/pwa/InstallAppButton";
 import { AboutThalvo } from "@/components/AboutThalvo";
 import { sanitizeMultiline, sanitizePlainText } from "@/lib/sanitize";
+import { ENGINE_BRANDS, FUEL_IDS, VESSEL_TYPES, joinEngine } from "@/lib/marine-catalog";
+import { VesselSpecForm, fuelLabel, vesselCategoryLabel, vesselTypeLabel, type VesselSpec } from "@/components/passport/VesselSpecForm";
 
 
 export const Route = createFileRoute("/_authenticated/app/profile")({
@@ -25,11 +27,20 @@ export const Route = createFileRoute("/_authenticated/app/profile")({
   component: ProfilePage,
 });
 
-const ENGINE_BRANDS = ["Yamaha", "Volvo Penta", "Yanmar", "Mercury", "Suzuki"];
 const EQUIPMENT_KEYS = ["eq_diag", "eq_welding", "eq_boat", "eq_crane", "eq_night"] as const;
 const ACCOUNT_TYPES = ["Private Owner", "Commercial Captain", "Sea Enthusiast"];
-const VESSEL_TYPES = ["Sailing", "Motor Yacht", "Catamaran", "Inflatable Bot"];
-const FUELS = ["Diesel", "Petrol", "Electric", "Hybrid"];
+
+function blankVessel(): VesselSpec {
+  return {
+    name: "",
+    category: "yacht",
+    vesselType: VESSEL_TYPES[0].id,
+    lengthM: "",
+    fuel: FUEL_IDS[0],
+    engineBrand: ENGINE_BRANDS[0],
+    engineModel: "",
+  };
+}
 
 function ProfilePage() {
   const { user, loading: sessionLoading } = useSessionUser();
@@ -135,7 +146,7 @@ function ProviderProfile({ profile }: { profile: Profile }) {
 
       <GlassPanel>
         <SectionHeader label={t("profile.brand_badges")} />
-        <div className="mt-2 flex flex-wrap gap-2">
+        <div className="mt-2 flex max-h-40 flex-wrap gap-2 overflow-y-auto">
           {ENGINE_BRANDS.map((b) => (
             <button key={b} onClick={() => toggleBrand(b)}
               className={"px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-[0.12em] border transition-colors " +
@@ -230,7 +241,7 @@ function ClientProfile({ profile }: { profile: Profile }) {
   const [saving, setSaving] = useState(false);
   const [savedTick, setSavedTick] = useState(false);
   const [addingVessel, setAddingVessel] = useState(false);
-  const [newVessel, setNewVessel] = useState({ name: "", category: "Boat", vessel_type: VESSEL_TYPES[0], length_m: "", engine_model: "", fuel_type: FUELS[0] });
+  const [newVessel, setNewVessel] = useState<VesselSpec>(blankVessel);
 
   const loadVessels = () => {
     supabase.from("vessels").select("*").eq("owner_id", profile.id).order("created_at", { ascending: false })
@@ -257,13 +268,13 @@ function ClientProfile({ profile }: { profile: Profile }) {
       owner_id: profile.id,
       name: vesselName,
       category: newVessel.category,
-      vessel_type: newVessel.vessel_type,
-      length_m: newVessel.length_m ? Number(newVessel.length_m) : null,
-      engine_model: sanitizePlainText(newVessel.engine_model, 80) || null,
-      fuel_type: newVessel.fuel_type,
+      vessel_type: newVessel.vesselType,
+      length_m: newVessel.lengthM ? Number(newVessel.lengthM) : null,
+      engine_model: joinEngine(newVessel.engineBrand, sanitizePlainText(newVessel.engineModel, 80) ?? ""),
+      fuel_type: newVessel.fuel,
     });
     setAddingVessel(false);
-    setNewVessel({ name: "", category: "Boat", vessel_type: VESSEL_TYPES[0], length_m: "", engine_model: "", fuel_type: FUELS[0] });
+    setNewVessel(blankVessel());
     loadVessels();
   };
   const removeVessel = async (id: string) => {
@@ -308,9 +319,9 @@ function ClientProfile({ profile }: { profile: Profile }) {
             <li key={v.id} className="flex items-start gap-2 rounded-xl bg-white/[0.03] border border-white/10 p-3">
               <Ship className="size-4 mt-0.5 text-sky-300" />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-white">{v.name} <span className="text-[10px] font-normal text-white/40 uppercase ml-1">{v.category}</span></p>
-                <p className="text-[11px] text-white/50">{v.vessel_type} · {v.length_m ?? "?"}m · {v.fuel_type}</p>
-                {v.engine_model && <p className="text-[11px] text-white/50">🔧 {v.engine_model}</p>}
+                <p className="text-sm font-semibold text-white">{v.name} <span className="text-[10px] font-normal text-white/40 uppercase ml-1">{vesselCategoryLabel(v.category, t)}</span></p>
+                <p className="text-[11px] text-white/50">{vesselTypeLabel(v.vessel_type, t)} · {v.length_m ?? "?"} m · {fuelLabel(v.fuel_type, t)}</p>
+                {v.engine_model && <p className="text-[11px] text-white/50">{v.engine_model}</p>}
               </div>
               <button onClick={() => removeVessel(v.id)} className="text-white/40 hover:text-rose-300">
                 <Trash2 className="size-4" />
@@ -319,21 +330,13 @@ function ClientProfile({ profile }: { profile: Profile }) {
           ))}
         </ul>
         {addingVessel && (
-          <div className="mt-3 space-y-2 rounded-xl border border-dashed border-white/15 p-3">
-            <Field label={t("profile.vessel_name")} value={newVessel.name} onChange={(v) => setNewVessel({ ...newVessel, name: v })} />
-            <div className="grid grid-cols-2 gap-2">
-              <Select label={t("profile.vessel_category")} value={newVessel.category} options={["Boat", "RIB"]} onChange={(v) => setNewVessel({ ...newVessel, category: v })} />
-              <Select label={t("profile.vessel_type")} value={newVessel.vessel_type} options={VESSEL_TYPES} onChange={(v) => setNewVessel({ ...newVessel, vessel_type: v })} />
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <Field label={t("profile.vessel_length")} value={newVessel.length_m} onChange={(v) => setNewVessel({ ...newVessel, length_m: v })} type="number" />
-              <Select label={t("profile.vessel_fuel")} value={newVessel.fuel_type} options={FUELS} onChange={(v) => setNewVessel({ ...newVessel, fuel_type: v })} />
-            </div>
-            <Field label={t("profile.vessel_engine")} value={newVessel.engine_model} onChange={(v) => setNewVessel({ ...newVessel, engine_model: v })} />
-            <div className="flex gap-2">
-              <button onClick={() => setAddingVessel(false)} className="flex-1 h-10 rounded-xl bg-white/5 border border-white/10 text-white/80 text-xs">{t("common.cancel")}</button>
-              <button onClick={addVessel} className="flex-1 h-10 rounded-xl amber-gradient text-warning-foreground text-xs font-bold">{t("common.save")}</button>
-            </div>
+          <div className="mt-3">
+            <VesselSpecForm
+              value={newVessel}
+              onChange={setNewVessel}
+              onCancel={() => setAddingVessel(false)}
+              onSave={() => void addVessel()}
+            />
           </div>
         )}
       </GlassPanel>
@@ -393,17 +396,6 @@ function Field({ label, value, onChange, type = "text", placeholder }: {
       <label className="text-xs font-bold text-muted-foreground">{label}</label>
       <input type={type} value={value} placeholder={placeholder} onChange={(e) => onChange(e.target.value)}
         className="mt-1 w-full h-11 rounded-xl border border-input bg-background px-3.5 text-sm" />
-    </div>
-  );
-}
-function Select({ label, value, options, onChange }: { label: string; value: string; options: string[]; onChange: (v: string) => void }) {
-  return (
-    <div>
-      <label className="text-xs font-bold text-muted-foreground">{label}</label>
-      <select value={value} onChange={(e) => onChange(e.target.value)}
-        className="mt-1 w-full h-11 rounded-xl border border-input bg-background px-3 text-sm">
-        {options.map((o) => <option key={o} value={o}>{o}</option>)}
-      </select>
     </div>
   );
 }

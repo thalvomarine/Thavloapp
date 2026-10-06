@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Bell, Cpu, Plus, Ship, Siren, Sparkles } from "lucide-react";
+import { publicCompatibility, readPartCondition } from "@/lib/marine-catalog";
 
 export interface PartCardData {
   id: string;
@@ -63,7 +64,8 @@ export function PartCard({ part, currencyFormat, onAdd, onNotify, onAskAi, actio
       ? "border-amber-400/25 bg-amber-400/10 text-amber-200"
       : "border-emerald-400/25 bg-emerald-400/10 text-emerald-200";
 
-  const compat = part.compatibility ?? [];
+  const compat = publicCompatibility(part.compatibility);
+  const condition = readPartCondition(part.compatibility);
   const compatVisible = compat.slice(0, 2);
   const compatMore = Math.max(0, compat.length - compatVisible.length);
   const dealerText = part.dealerName
@@ -133,6 +135,11 @@ export function PartCard({ part, currencyFormat, onAdd, onNotify, onAskAi, actio
               <span className={"size-1.5 shrink-0 rounded-full " + stockDot} />
               <span className="truncate">{stockLabel}</span>
             </span>
+            {condition && (
+              <span className="inline-flex items-center rounded-full border border-cyan-400/30 bg-cyan-400/10 px-2 py-0.5 text-[10px] font-semibold text-cyan-100">
+                {t(`dealer.condition_${condition}`)}
+              </span>
+            )}
             {part.emergencyCompatible && (
               <span className="inline-flex items-center gap-1 rounded-full border border-rose-500/30 bg-rose-500/10 px-2 py-0.5 text-[10px] font-semibold text-rose-300">
                 <Siren className="size-2.5" /> SOS

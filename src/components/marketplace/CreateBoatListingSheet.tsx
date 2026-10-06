@@ -7,15 +7,22 @@ import {
   CURRENCIES,
   FEATURED_EQUIPMENT,
   FUEL_TYPES,
-  HULL_TYPES,
   MARINA_PRESETS,
   marinaCoords,
   nextHue,
   type BoatListing,
   type FuelType,
-  type HullType,
   type ListingCurrency,
 } from "@/lib/boat-listings";
+import {
+  ENGINE_BRANDS,
+  VESSEL_TYPES,
+  hullForType,
+  publicEquipment,
+  readListingType,
+  splitEngine,
+  withListingType,
+} from "@/lib/marine-catalog";
 import { sanitizeMultiline, sanitizePhone, sanitizePlainText } from "@/lib/sanitize";
 import { ImageUploader } from "@/components/ImageUploader";
 
@@ -31,7 +38,7 @@ interface Props {
 
 interface FormState {
   title: string;
-  hull: HullType;
+  listingClass: string;
   price: string;
   currency: ListingCurrency;
   marina: string;
@@ -43,6 +50,7 @@ interface FormState {
   berths: string;
   flag: string;
   engineBrand: string;
+  engineModel: string;
   engineHp: string;
   engineHours: string;
   fuel: FuelType;
@@ -57,7 +65,7 @@ interface FormState {
 
 const EMPTY: FormState = {
   title: "",
-  hull: "motor",
+  listingClass: "motor_yacht",
   price: "",
   currency: "EUR",
   marina: MARINA_PRESETS[0]?.name ?? "Göcek D-Marin",
@@ -68,7 +76,8 @@ const EMPTY: FormState = {
   cabins: "2",
   berths: "4",
   flag: "Türkiye",
-  engineBrand: "",
+  engineBrand: ENGINE_BRANDS[0],
+  engineModel: "",
   engineHp: "",
   engineHours: "",
   fuel: "diesel",
@@ -88,7 +97,7 @@ const labelClass = "mb-1.5 block text-[10px] font-semibold uppercase tracking-[0
 function formFromListing(boat: BoatListing): FormState {
   return {
     title: boat.title,
-    hull: boat.hull,
+    listingClass: readListingType(boat.equipment) ?? ({ sail: "sailing", motor: "motor_yacht", catamaran: "catamaran", rib: "rib" }[boat.hull]),
     price: String(boat.price),
     currency: boat.currency,
     marina: boat.marina,
@@ -99,14 +108,15 @@ function formFromListing(boat: BoatListing): FormState {
     cabins: String(boat.cabins),
     berths: String(boat.berths),
     flag: boat.flag,
-    engineBrand: boat.engineBrand,
+    engineBrand: splitEngine(boat.engineBrand).brand,
+    engineModel: splitEngine(boat.engineBrand).model,
     engineHp: boat.engineHp ? String(boat.engineHp) : "",
     engineHours: String(boat.engineHours),
     fuel: boat.fuel,
     cruiseKn: boat.cruiseKn ? String(boat.cruiseKn) : "",
     fuelTankL: boat.fuelTankL != null ? String(boat.fuelTankL) : "",
     waterTankL: boat.waterTankL != null ? String(boat.waterTankL) : "",
-    equipment: [...boat.equipment],
+    equipment: publicEquipment(boat.equipment),
     description: boat.description,
     sellerPhone: boat.sellerPhone,
     photos: boat.photos ?? [],
@@ -161,7 +171,8 @@ export function CreateBoatListingSheet({ open, onClose, sellerName, listingCount
       return true;
     }
     if (n === 2) {
-      if (form.engineBrand.trim().length < 2) {
+      const named = form.engineBrand !== "other" || form.engineModel.trim().length >= 2;
+      if (!named) {
         setError(t("boats.form_need_engine"));
         return false;
       }
@@ -198,11 +209,14 @@ export function CreateBoatListingSheet({ open, onClose, sellerName, listingCount
       currency: form.currency,
       marina: form.marina,
       region: marina.region,
-      hull: form.hull,
+      hull: hullForType(form.listingClass),
       loaM: Number(form.loaM),
       beamM: Number(form.beamM) || 0,
       draftM: Number(form.draftM) || 0,
-      engineBrand: sanitizePlainText(form.engineBrand, 80),
+      engineBrand: sanitizePlainText(
+        [form.engineBrand === "other" ? "" : form.engineBrand, form.engineModel].filter(Boolean).join(" "),
+        80,
+      ),
       engineHp: Math.round(Number(form.engineHp) || 0),
       engineHours: Math.round(Number(form.engineHours) || 0),
       fuel: form.fuel,
@@ -214,7 +228,7 @@ export function CreateBoatListingSheet({ open, onClose, sellerName, listingCount
       waterTankL: form.waterTankL ? Number(form.waterTankL) : null,
       lat: marina.lat,
       lng: marina.lng,
-      equipment: form.equipment,
+      equipment: withListingType(form.equipment, form.listingClass),
       description: sanitizeMultiline(form.description, 2000),
       seller: sanitizePlainText(editing?.seller || sellerName, 80),
       sellerPhone: sanitizePhone(form.sellerPhone, 20),
@@ -341,24 +355,18 @@ export function CreateBoatListingSheet({ open, onClose, sellerName, listingCount
                   placeholder={t("boats.form_title_ph")}
                 />
               </Field>
-              <Field label={t("boats.hull")}>
-                <div className="grid grid-cols-2 gap-1.5">
-                  {HULL_TYPES.map((h) => (
-                    <button
-                      key={h}
-                      type="button"
-                      onClick={() => patch({ hull: h })}
-                      className={
-                        "min-h-11 rounded-lg border text-[12px] font-semibold " +
-                        (form.hull === h
-                          ? "border-cyan-400 bg-cyan-400/15 text-cyan-100"
-                          : "border-white/10 bg-white/5 text-white/70")
-                      }
-                    >
-                      {t(`boats.hull_${h}`)}
-                    </button>
+              <Field label={t("vessel.type")}>
+                <select
+                  className={fieldClass}
+                  value={form.listingClass}
+                  onChange={(e) => patch({ listingClass: e.target.value })}
+                >
+                  {VESSEL_TYPES.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {t(`vessel.type_${item.id}`)}
+                    </option>
                   ))}
-                </div>
+                </select>
               </Field>
               <div className="grid grid-cols-[1fr_auto] gap-2">
                 <Field label={t("boats.form_price")}>
@@ -435,12 +443,24 @@ export function CreateBoatListingSheet({ open, onClose, sellerName, listingCount
 
           {step === 2 && (
             <>
-              <Field label={t("boats.engine_brand")}>
-                <input
+              <Field label={t("vessel.engine_brand")}>
+                <select
                   className={fieldClass}
                   value={form.engineBrand}
                   onChange={(e) => patch({ engineBrand: e.target.value })}
-                  placeholder="Yanmar / Mercury"
+                >
+                  {ENGINE_BRANDS.map((brand) => (
+                    <option key={brand} value={brand}>{brand}</option>
+                  ))}
+                  <option value="other">{t("vessel.other_brand")}</option>
+                </select>
+              </Field>
+              <Field label={t("vessel.engine_model")}>
+                <input
+                  className={fieldClass}
+                  value={form.engineModel}
+                  onChange={(e) => patch({ engineModel: e.target.value })}
+                  placeholder={t("vessel.engine_model_ph")}
                 />
               </Field>
               <div className="grid grid-cols-2 gap-2">
@@ -471,7 +491,7 @@ export function CreateBoatListingSheet({ open, onClose, sellerName, listingCount
                 </div>
               </Field>
               <Field label={t("boats.form_equipment")}>
-                <div className="grid grid-cols-1 gap-1.5">
+                <div className="grid grid-cols-2 gap-1.5">
                   {FEATURED_EQUIPMENT.map((eq) => {
                     const on = form.equipment.includes(eq);
                     return (

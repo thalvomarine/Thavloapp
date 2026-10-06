@@ -12,10 +12,20 @@ export const FUEL_TYPES: FuelType[] = ["diesel", "petrol"];
 
 export const FEATURED_EQUIPMENT = [
   "Bow Thruster",
+  "Stern Thruster",
   "Generator",
   "Watermaker",
   "Solar",
   "Air Conditioning",
+  "Radar",
+  "Autopilot",
+  "Windlass",
+  "Inverter",
+  "Life Raft",
+  "Stabilizers",
+  "Heating",
+  "Teak Deck",
+  "Dinghy",
 ] as const;
 
 export type FeaturedEquipment = (typeof FEATURED_EQUIPMENT)[number];

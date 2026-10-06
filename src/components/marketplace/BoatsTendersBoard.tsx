@@ -18,6 +18,7 @@ import {
   type HullType,
 } from "@/lib/boat-listings";
 import { requestMapFocus } from "@/lib/map-focus-bus";
+import { publicEquipment, readListingType } from "@/lib/marine-catalog";
 
 const HUE: Record<BoatListing["hue"], string> = {
   navy: "from-[#0B192C] via-[#123154] to-[#1a4a6e]",
@@ -300,7 +301,7 @@ function ListingPlate({
       <div className="relative flex h-full flex-col justify-between p-4">
         <div className="flex items-start justify-between gap-2">
           <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-amber-100/80">
-            {t(`boats.hull_${boat.hull}`)}
+            {listingClassLabel(boat, t)}
           </p>
           {badge ? (
             <span className="rounded-full border border-white/20 bg-black/30 px-2 py-0.5 text-[10px] font-medium text-white/90">
@@ -454,7 +455,7 @@ function BoatDetailSheet({
           </div>
           <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-white/10 bg-white/10">
             <Spec label={t("boats.year")} value={String(boat.year)} />
-            <Spec label={t("boats.hull")} value={t(`boats.hull_${boat.hull}`)} />
+            <Spec label={t("boats.hull")} value={listingClassLabel(boat, t)} />
             <Spec label={t("boats.loa")} value={`${boat.loaM.toFixed(2)} m`} />
             <Spec label={t("boats.beam")} value={boat.beamM ? `${boat.beamM.toFixed(2)} m` : "—"} />
             <Spec label={t("boats.draft")} value={boat.draftM ? `${boat.draftM.toFixed(2)} m` : "—"} />
@@ -471,7 +472,7 @@ function BoatDetailSheet({
             <p className="text-[13px] leading-relaxed text-white/80">{boat.description}</p>
           )}
           <div className="flex flex-wrap gap-1.5">
-            {boat.equipment.map((eq) => (
+            {publicEquipment(boat.equipment).map((eq) => (
               <StatusBadge key={eq} tone="info" className="!normal-case !tracking-normal">
                 {t(`boats.eq.${slug(eq)}`, { defaultValue: eq })}
               </StatusBadge>
@@ -551,6 +552,11 @@ function Spec({ label, value }: { label: string; value: string }) {
       <dd className="mt-0.5 text-[14px] font-medium text-white">{value}</dd>
     </div>
   );
+}
+
+function listingClassLabel(boat: BoatListing, t: (key: string) => string): string {
+  const id = readListingType(boat.equipment);
+  return id ? t(`vessel.type_${id}`) : t(`boats.hull_${boat.hull}`);
 }
 
 function slug(value: string): string {

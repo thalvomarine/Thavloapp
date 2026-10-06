@@ -12,9 +12,13 @@ import { MaintenanceDueCard } from "@/components/passport/MaintenanceDueCard";
 import { InstalledPartsCard, type InstalledPart } from "@/components/passport/InstalledPartsCard";
 import { DocumentVaultPanel } from "@/components/passport/DocumentVaultPanel";
 import { VesselAiPanel } from "@/components/passport/VesselAiPanel";
+import { VesselSpecForm, fuelLabel, vesselCategoryLabel, vesselTypeLabel, type VesselSpec } from "@/components/passport/VesselSpecForm";
+import { ENGINE_BRANDS, joinEngine, splitEngine } from "@/lib/marine-catalog";
+import { toast } from "sonner";
+import { sanitizePlainText } from "@/lib/sanitize";
 import { GlassPanel } from "@/components/mission/GlassPanel";
 import { StatusChip } from "@/components/mission/StatusChip";
-import { Ship, Plus, Activity } from "lucide-react";
+import { Ship, Activity } from "lucide-react";
 import { formatTL } from "@/lib/filter";
 
 
@@ -24,6 +28,18 @@ export const Route = createFileRoute("/_authenticated/app/passport")({
 });
 
 const ACTIVE_STATUSES = ["Pending", "Accepted", "EnRoute", "OnSite", "InProgress", "PartsPending"];
+
+function blankSpec(): VesselSpec {
+  return {
+    name: "",
+    category: "yacht",
+    vesselType: "motor_yacht",
+    lengthM: "",
+    fuel: "diesel",
+    engineBrand: ENGINE_BRANDS[0],
+    engineModel: "",
+  };
+}
 
 function PassportPage() {
   const { user, loading } = useSessionUser();
@@ -54,17 +70,32 @@ function Passport({ userId }: { userId: string }) {
   const [activeJobs, setActiveJobs] = useState<JobRow[]>([]);
   const [completedJobs, setCompletedJobs] = useState<JobRow[]>([]);
   const [parts, setParts] = useState<InstalledPart[]>([]);
+  const [registryOpen, setRegistryOpen] = useState(false);
+  const [spec, setSpec] = useState<VesselSpec>(blankSpec);
+  const [vesselId, setVesselId] = useState<string | null>(null);
+  const [savingVessel, setSavingVessel] = useState(false);
 
   useEffect(() => {
     (async () => {
       const { data: v } = await supabase
         .from("vessels")
-        .select("name, vessel_type, length_m, engine_model, fuel_type, category, created_at")
+        .select("id, name, vessel_type, length_m, engine_model, fuel_type, category, created_at")
         .eq("owner_id", userId)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
       if (v) {
+        const engine = splitEngine(v.engine_model);
+        setVesselId(v.id);
+        setSpec({
+          name: v.name ?? "",
+          category: (v.category || "yacht").toLowerCase(),
+          vesselType: v.vessel_type || "motor_yacht",
+          lengthM: v.length_m ? String(v.length_m) : "",
+          fuel: (v.fuel_type || "diesel").toLowerCase(),
+          engineBrand: engine.brand,
+          engineModel: engine.model,
+        });
         setVessel({
           name: v.name,
           vessel_type: v.vessel_type,
@@ -113,24 +144,60 @@ function Passport({ userId }: { userId: string }) {
 
   if (vesselLoading) return <ThalvoLoader />;
 
+  const saveVessel = async () => {
+    const name = sanitizePlainText(spec.name, 80);
+    if (!name) {
+      toast.error(t("vessel.need_name"));
+      return;
+    }
+    setSavingVessel(true);
+    const payload = {
+      owner_id: userId,
+      name,
+      category: spec.category,
+      vessel_type: spec.vesselType,
+      length_m: spec.lengthM ? Number(spec.lengthM) : null,
+      fuel_type: spec.fuel,
+      engine_model: joinEngine(spec.engineBrand, spec.engineModel),
+    };
+    const write = vesselId
+      ? supabase.from("vessels").update(payload).eq("id", vesselId).eq("owner_id", userId)
+      : supabase.from("vessels").insert(payload).select("id").single();
+    const { data, error } = await write;
+    setSavingVessel(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    if (!vesselId && data && "id" in data) setVesselId(data.id);
+    setVessel({
+      name,
+      category: spec.category,
+      vessel_type: spec.vesselType,
+      length_m: payload.length_m,
+      engine_model: payload.engine_model,
+      fuel_type: spec.fuel,
+      manufacturer: null,
+      model: null,
+      home_marina: profile?.home_marina ?? null,
+      flag: null,
+      engine_hours: null,
+    });
+    setRegistryOpen(false);
+    toast.success(t("vessel.saved"));
+  };
+
   if (!vessel) {
     return (
       <BoatPassportShell title={t("passport.title")} eyebrow={t("passport.eyebrow")}>
-        <GlassPanel className="text-center py-10">
-          <div className="mx-auto size-14 rounded-2xl bg-sky-400/10 border border-sky-400/25 grid place-items-center text-sky-300 mb-4">
+        <GlassPanel className="text-center py-8">
+          <div className="mx-auto mb-4 grid size-14 place-items-center rounded-2xl border border-cyan-300/25 bg-cyan-400/10 text-cyan-200">
             <Ship className="size-6" />
           </div>
           <h2 className="text-lg font-semibold text-white">{t("passport.no_vessel_title")}</h2>
-          <p className="text-sm text-white/60 mt-1 max-w-md mx-auto">
-            {t("passport.no_vessel_body")}
-          </p>
-          <Link
-            to="/app/profile"
-            className="mt-5 inline-flex items-center gap-2 rounded-xl border border-sky-400/30 bg-sky-500/15 hover:bg-sky-500/25 px-4 py-2 text-sm text-sky-200"
-          >
-            <Plus className="size-4" /> {t("passport.register_vessel")}
-          </Link>
+          <p className="mx-auto mt-1 max-w-md text-sm text-white/60">{t("passport.no_vessel_body")}</p>
         </GlassPanel>
+        <VesselSpecForm value={spec} onChange={setSpec} onSave={() => void saveVessel()} saving={savingVessel} />
       </BoatPassportShell>
     );
   }
@@ -165,6 +232,24 @@ function Passport({ userId }: { userId: string }) {
       right={<StatusChip tone="info" icon={<Activity className="size-3" />}>{t("passport.active_count", { count: activeJobs.length })}</StatusChip>}
     >
       <VesselIdentityCard vessel={vessel} ownerName={profile?.full_name} />
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => setRegistryOpen((open) => !open)}
+          className="h-10 rounded-full border border-cyan-300/30 px-4 text-[12px] font-semibold text-cyan-100"
+        >
+          {t(registryOpen ? "common.close" : "vessel.edit")}
+        </button>
+      </div>
+      {registryOpen && (
+        <VesselSpecForm
+          value={spec}
+          onChange={setSpec}
+          onSave={() => void saveVessel()}
+          onCancel={() => setRegistryOpen(false)}
+          saving={savingVessel}
+        />
+      )}
 
       <div className="grid gap-3 md:grid-cols-2">
         <MaintenanceDueCard

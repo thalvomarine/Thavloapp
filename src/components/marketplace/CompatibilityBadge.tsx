@@ -1,4 +1,5 @@
 import { Cpu, CircleAlert, CircleCheck } from "lucide-react";
+import { publicCompatibility } from "@/lib/marine-catalog";
 
 interface Props {
   compatibility?: string[] | null;
@@ -15,7 +16,7 @@ function matches(compat: string[], engine: string | null | undefined, vtype: str
 
 /** CompatibilityBadge — does this part match the captain's vessel? */
 export function CompatibilityBadge({ compatibility, vesselEngine, vesselType, className = "" }: Props) {
-  const list = compatibility ?? [];
+  const list = publicCompatibility(compatibility);
   if (list.length === 0) {
     return (
       <span className={"inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 text-white/75 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] " + className}>

@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { fuelLabel, vesselTypeLabel } from "@/components/passport/VesselSpecForm";
 import { GlassPanel } from "@/components/mission/GlassPanel";
 import { Ship, Anchor, Gauge, Fuel, Ruler, Flag } from "lucide-react";
 
@@ -53,10 +54,10 @@ export function VesselIdentityCard({ vessel, ownerName }: Props) {
         </div>
       </div>
       <div className="p-4 grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-        <Field icon={<Ship className="size-4" />} label={t("passport.field_type")} value={vessel.vessel_type || "—"} />
+        <Field icon={<Ship className="size-4" />} label={t("passport.field_type")} value={vesselTypeLabel(vessel.vessel_type, t)} />
         <Field icon={<Ruler className="size-4" />} label={t("passport.field_length")} value={vessel.length_m ? `${vessel.length_m} m` : "—"} />
         <Field icon={<Gauge className="size-4" />} label={t("passport.field_engine")} value={vessel.engine_model || "—"} />
-        <Field icon={<Fuel className="size-4" />} label={t("passport.field_fuel")} value={vessel.fuel_type || "—"} />
+        <Field icon={<Fuel className="size-4" />} label={t("passport.field_fuel")} value={fuelLabel(vessel.fuel_type, t)} />
         <Field icon={<Anchor className="size-4" />} label={t("passport.field_home_marina")} value={vessel.home_marina || t("passport.not_set")} />
         <Field
           icon={<Flag className="size-4" />}

@@ -312,7 +312,7 @@ export async function answerFromTraining(input: {
     try {
       const { fetchMarineWeather } = await import("./marine-weather");
       const report = await fetchMarineWeather(place.lat, place.lng);
-      const label = "name" in place ? place.name : null;
+      const label = "name" in place && typeof place.name === "string" ? place.name : null;
       return {
         text: formatWeather(report, input.lang, label),
         domain,

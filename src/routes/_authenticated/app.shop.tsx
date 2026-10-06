@@ -15,6 +15,7 @@ import { StatusBadge } from "@/components/core/StatusBadge";
 import { MoneyAmount } from "@/components/core/MoneyAmount";
 import { EmptyState } from "@/components/core/EmptyState";
 import { CartSheet } from "@/components/marketplace/CartSheet";
+import { PART_BRANDS } from "@/lib/marine-catalog";
 
 
 export const Route = createFileRoute("/_authenticated/app/shop")({
@@ -22,7 +23,6 @@ export const Route = createFileRoute("/_authenticated/app/shop")({
   component: ShopPage,
 });
 
-const BRANDS = ["Yamaha", "Volvo Penta", "Yanmar", "Mercury", "Suzuki"];
 const CATEGORIES = ["Filters", "Impellers", "Oils", "Anodes", "Belts"];
 
 interface Part {
@@ -115,10 +115,19 @@ function Shop() {
           className="w-full h-11 pl-9 pr-3 rounded-2xl bg-white/5 border border-white/10 text-white placeholder:text-white/40 text-sm outline-none focus:border-sky-400/60" />
       </div>
 
-      <div className="flex w-full min-w-0 max-w-full gap-2 overflow-x-auto overscroll-x-contain no-scrollbar pb-1">
-        <Pill active={!brand} onClick={() => setBrand("")}>{t("shop.all_brands")}</Pill>
-        {BRANDS.map((b) => <Pill key={b} active={brand === b} onClick={() => setBrand(brand === b ? "" : b)}>{b}</Pill>)}
-      </div>
+      <label className="block">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-cyan-200/70">{t("shop.all_brands")}</span>
+        <select
+          value={brand}
+          onChange={(e) => setBrand(e.target.value)}
+          className="mt-1.5 h-11 w-full rounded-xl border border-cyan-400/25 bg-[#071422] px-3 text-sm text-white outline-none focus:border-cyan-300"
+        >
+          <option value="">{t("shop.all_brands")}</option>
+          {PART_BRANDS.map((item) => (
+            <option key={item} value={item}>{item}</option>
+          ))}
+        </select>
+      </label>
       <div className="flex w-full min-w-0 max-w-full gap-2 overflow-x-auto overscroll-x-contain no-scrollbar pb-1">
         <Pill active={!category} onClick={() => setCategory("")}>{t("shop.all_categories")}</Pill>
         {CATEGORIES.map((c) => <Pill key={c} active={category === c} onClick={() => setCategory(category === c ? "" : c)}>{c}</Pill>)}
