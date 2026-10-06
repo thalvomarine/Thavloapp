@@ -19,6 +19,8 @@ import {
   Wrench,
 } from "lucide-react";
 import { LeafletPointerGuard, stopMapEvent } from "@/lib/leaflet-dom";
+import { CompassMark } from "@/components/brand/CompassMark";
+import { openThalvoAi } from "@/lib/thalvo-ai-bus";
 
 export interface ChartLayers {
   seamarks: boolean;
@@ -599,6 +601,19 @@ export function ChartFabStack({
         </LeafletPointerGuard>
       )}
       <LeafletPointerGuard className="pointer-events-auto flex w-11 flex-col items-center gap-3">
+        <button
+          type="button"
+          onPointerDown={stopMapEvent}
+          onClick={(e) => {
+            stopMapEvent(e);
+            openThalvoAi();
+          }}
+          title="THALVO AI"
+          aria-label="THALVO AI"
+          className={FAB_BTN}
+        >
+          <CompassMark size={18} />
+        </button>
         <button
           type="button"
           onPointerDown={stopMapEvent}

@@ -7,6 +7,7 @@ import {
   rankNearbyPoints,
   runCaptainConsultation,
 } from "@/lib/aiCaptainService";
+import { answerFromTraining } from "@/lib/thalvo-ai/domain";
 import type { CaptainCockpitContext, NearbyChartPoint } from "@/lib/ai-captain-types";
 
 const MessageSchema = z.object({
@@ -86,14 +87,21 @@ export const askThalvoAi = createServerFn({ method: "POST" })
     const messages = data.messages.slice(-12);
     const totalChars = messages.reduce((sum, message) => sum + message.content.length, 0);
     if (totalChars > 12000) throw new Error("ai_too_long");
+    const key = (process.env.THALVO_AI_API_KEY ?? process.env.LOVABLE_API_KEY ?? "").trim();
+    const lastUser = [...messages].reverse().find((message) => message.role === "user");
+    if (!key) {
+      const trained = await answerFromTraining({
+        text: lastUser?.content ?? "",
+        lang: data.lang,
+        position: data.context?.position ?? null,
+      });
+      return { text: trained.text, emergency: trained.emergency, actions: [] };
+    }
     if (!allowLocalAiQuota(context.userId)) throw new Error("ai_rate_limited");
     const quota = await context.supabase.rpc("consume_captain_ai_quota");
     if (quota.error && /ai_rate_limited/i.test(quota.error.message)) {
       throw new Error("ai_rate_limited");
     }
-
-    const key = process.env.THALVO_AI_API_KEY ?? process.env.LOVABLE_API_KEY;
-    if (!key) throw new Error("Missing THALVO_AI_API_KEY");
     const gateway = createThalvoAiProvider(key);
     const modelId = process.env.THALVO_AI_MODEL ?? CAPTAIN_MODEL_DEFAULT;
     const model = gateway(modelId);

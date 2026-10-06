@@ -136,6 +136,20 @@
   "ops_alerts": {
     "pool_title": "Active job pool / radar",
     "pool_empty": "No open jobs in the pool.",
+    "your_missions": "Your missions",
+    "active_jobs": "Open jobs",
+    "no_active_jobs": "No job is assigned to you.",
+    "mission_opportunity": "Mission",
+    "incoming": "Incoming",
+    "request_feed": "Requests",
+    "no_requests": "No request is waiting in your area.",
+    "overview": "Overview",
+    "open_requests": "Open requests",
+    "trust_open": "Trust record",
+    "funded": "Payment is in escrow",
+    "escrow_note": "Released when the job is complete",
+    "available_now": "Available now",
+    "on_standby": "On standby",
     "accept": "Accept job",
     "claimed": "Job assigned to you.",
     "open": "Open",
@@ -146,7 +160,12 @@
     "sos_title": "SOS on the net",
     "sos_burst_title": "{{count}} SOS calls on the net",
     "sos_body": "{{vessel}} requested emergency service.",
+    "sos_body_at": "{{vessel}} · {{position}}",
     "sos_burst_body": "Multiple SOS calls arrived. Open radar for live triage.",
+    "fault_title": "New fault report",
+    "fault_burst_title": "{{count}} new fault reports",
+    "fault_body_at": "{{category}} · {{position}}",
+    "location_not_shared": "The report was saved, but the position did not reach provider charts.",
     "unknown_job": "Service call"
   },
   "ops": {
@@ -303,6 +322,8 @@
     "checkout": "Checkout",
     "delivery_marina": "Delivery marina",
     "order_placed": "Order placed — supplier notified.",
+    "orders_placed": "{{count}} orders placed — one order per dealer.",
+    "order_failed": "The order was not created.",
     "commission_note": "THALVO 10% marketplace fee included.",
     "from_catalog": "From THALVO catalog",
     "browse_catalog": "Browse catalog",
@@ -1103,8 +1124,13 @@
       "building_placeholder": "Building",
       "arrival": {
         "label": "Arrival reliability",
-        "detail": "Derived from captain ratings and dispatched missions.",
-        "detail_empty": "No dispatch history yet."
+        "detail": "Share of arrivals inside the agreed ETA.",
+        "detail_empty": "No timed arrival yet."
+      },
+      "response": {
+        "label": "Response time",
+        "detail": "Median minutes from the request to this provider's offer.",
+        "detail_empty": "No offer timing yet."
       },
       "completion": {
         "label": "Completion rate",
@@ -1129,7 +1155,8 @@
       },
       "dispute": {
         "label": "Dispute rate",
-        "detail_empty": "Dispute log ships in the next release."
+        "detail": "Disputes filed against completed missions.",
+        "detail_empty": "Complete a mission before a dispute rate exists."
       }
     }
   },
@@ -1461,7 +1488,7 @@
     "zoom_out": "Zoom out",
     "search_placeholder": "Search bays, marinas or services...",
     "search_no_results": "No results found.",
-    "sheet_navigate": "Anchor Here / Plot Course",
+    "sheet_navigate": "Show on chart",
     "sheet_emergency": "Emergency / Call a Boat",
     "locate_me": "Go to my location",
     "locate_locating": "Locating…",
@@ -1476,6 +1503,8 @@
     "route_deck_eta_min": "~{{min}} min",
     "route_deck_eta_hm": "~{{h}} h {{m}} min",
     "route_deck_optimizing": "Optimizing route…",
+    "route_deck_ashore_dep": "Fix is ashore. Track starts on the nearest fairway · {{nm}} NM",
+    "route_deck_ashore_arr": "Arrival is ashore. Track ends on the nearest fairway · {{nm}} NM",
     "route_deck_legs": "{{count}} legs",
     "route_deck_no_legs": "No legs yet",
     "route_deck_leg_row": "Leg {{n}}: {{brg}}° {{card}} · {{nm}} NM · ~{{min}} min",

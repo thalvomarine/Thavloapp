@@ -136,6 +136,20 @@
   "ops_alerts": {
     "pool_title": "Aktif iş havuzu / radar",
     "pool_empty": "Havuzda açık iş yok.",
+    "your_missions": "Görevleriniz",
+    "active_jobs": "Açık işler",
+    "no_active_jobs": "Üzerinizde açık iş yok.",
+    "mission_opportunity": "Görev",
+    "incoming": "Gelen",
+    "request_feed": "Talepler",
+    "no_requests": "Bölgenizde bekleyen talep yok.",
+    "overview": "Özet",
+    "open_requests": "Açık talepler",
+    "trust_open": "Güven kaydı",
+    "funded": "Ödeme emanet hesabında",
+    "escrow_note": "Tamamlanınca serbest kalır",
+    "available_now": "Şimdi müsait",
+    "on_standby": "Beklemede",
     "accept": "İşi kabul et",
     "claimed": "İş üzerinize alındı.",
     "open": "Aç",
@@ -146,7 +160,12 @@
     "sos_title": "Ağda SOS",
     "sos_burst_title": "Ağda {{count}} adet SOS var",
     "sos_body": "{{vessel}} acil servis istedi.",
+    "sos_body_at": "{{vessel}} · {{position}}",
     "sos_burst_body": "Birden fazla SOS geldi. Radar üzerinden canlı triyaj yapın.",
+    "fault_title": "Yeni arıza bildirimi",
+    "fault_burst_title": "{{count}} yeni arıza bildirimi",
+    "fault_body_at": "{{category}} · {{position}}",
+    "location_not_shared": "Kayıt düştü ama konum usta haritasına iletilemedi.",
     "unknown_job": "Servis çağrısı"
   },
   "ops": {
@@ -303,6 +322,8 @@
     "checkout": "Öde",
     "delivery_marina": "Teslimat marinası",
     "order_placed": "Sipariş alındı — tedarikçi bilgilendirildi.",
+    "orders_placed": "{{count}} sipariş alındı — her bayiye ayrı sipariş gitti.",
+    "order_failed": "Sipariş kaydı açılmadı.",
     "commission_note": "THALVO %10 pazaryeri komisyonu dahildir.",
     "from_catalog": "THALVO kataloğundan",
     "browse_catalog": "Kataloğu aç",
@@ -1103,8 +1124,13 @@
       "building_placeholder": "Oluşuyor",
       "arrival": {
         "label": "Varış güvenilirliği",
-        "detail": "Kaptan puanları ve atanan görevlerden türetilir.",
-        "detail_empty": "Henüz görev geçmişi yok."
+        "detail": "Anlaşılan süre içinde varılan görevlerin payı.",
+        "detail_empty": "Henüz süre ölçülmüş bir varış yok."
+      },
+      "response": {
+        "label": "Yanıt süresi",
+        "detail": "Talebin açılışından teklife kadar geçen ortanca süre.",
+        "detail_empty": "Henüz teklif zamanı yok."
       },
       "completion": {
         "label": "Tamamlama oranı",
@@ -1129,7 +1155,8 @@
       },
       "dispute": {
         "label": "İtiraz oranı",
-        "detail_empty": "İtiraz kaydı bir sonraki sürümde geliyor."
+        "detail": "Tamamlanan görevlere yazılmış itirazlar.",
+        "detail_empty": "İtiraz oranı için önce tamamlanmış görev gerekir."
       }
     }
   },
@@ -1461,7 +1488,7 @@
     "zoom_out": "Uzaklaştır",
     "search_placeholder": "Koy, marina veya servis ara...",
     "search_no_results": "Sonuç bulunamadı.",
-    "sheet_navigate": "Bu Koya Demirle / Rota Çiz",
+    "sheet_navigate": "Haritada aç",
     "sheet_emergency": "Acil Servis / Bot Çağır",
     "locate_me": "Mevcut konumuma git",
     "locate_locating": "Konum alınıyor…",
@@ -1476,6 +1503,8 @@
     "route_deck_eta_min": "~{{min}} dk",
     "route_deck_eta_hm": "~{{h}} sa {{m}} dk",
     "route_deck_optimizing": "Rota optimizasyonu yapılıyor…",
+    "route_deck_ashore_dep": "Konum karada. Seyir en yakın suyundan başlar · {{nm}} NM",
+    "route_deck_ashore_arr": "Varış karada. Rota en yakın suyunda biter · {{nm}} NM",
     "route_deck_legs": "{{count}} bacak",
     "route_deck_no_legs": "Henüz bacak yok",
     "route_deck_leg_row": "Bacak {{n}}: {{brg}}° {{card}} · {{nm}} NM · ~{{min}} dk",

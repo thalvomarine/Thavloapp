@@ -52,7 +52,16 @@ function FlyTo({ lat, lng, zoom }: { lat: number; lng: number; zoom: number }) {
   return null;
 }
 
-export function CoverageChart({ bay, fill = false }: { bay: CoverageBayId; fill?: boolean }) {
+export function CoverageChart({
+  bay,
+  fill = false,
+  own = null,
+}: {
+  bay: CoverageBayId;
+  fill?: boolean;
+  /** This browser's fix. Not published and not shown to anyone else. */
+  own?: { lat: number; lng: number } | null;
+}) {
   const { t } = useTranslation();
   const [mounted, setMounted] = useState(false);
   const [zones, setZones] = useState<MarineZone[] | null>(null);
@@ -108,7 +117,7 @@ export function CoverageChart({ bay, fill = false }: { bay: CoverageBayId; fill?
         maxZoom={18}
         zoomControl={!fill}
         scrollWheelZoom={fill}
-        className="thalvo-ecdis"
+        className={fill ? "thalvo-ecdis thalvo-chart-frame" : "thalvo-ecdis"}
         style={{ width: "100%", height: "100%", background: "#0b132b" }}
       >
         <TileLayer
@@ -119,7 +128,22 @@ export function CoverageChart({ bay, fill = false }: { bay: CoverageBayId; fill?
           errorTileUrl={VOID_TILE}
         />
         <TileLayer url={MARINE_SEAMARK_TILE_URL} minZoom={4} maxZoom={18} opacity={0.9} errorTileUrl={CLEAR_TILE} />
-        <FlyTo lat={center.lat} lng={center.lng} zoom={center.zoom} />
+        <FlyTo
+          lat={own?.lat ?? center.lat}
+          lng={own?.lng ?? center.lng}
+          zoom={own ? 14 : center.zoom}
+        />
+        {own ? (
+          <CircleMarker
+            center={[own.lat, own.lng]}
+            radius={8}
+            pathOptions={{ color: "#67e8f9", fillColor: "#67e8f9", fillOpacity: 0.95, weight: 2 }}
+          >
+            <Popup>
+              <p className="text-sm font-semibold text-slate-900">{t("chart.locate_me")}</p>
+            </Popup>
+          </CircleMarker>
+        ) : null}
         {pins.map((z) => (
           <CircleMarker
             key={z.id}

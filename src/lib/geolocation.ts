@@ -141,10 +141,7 @@ export function readLastFix(): GeoFix | null {
   }
 }
 
-/** Request one validated fix. Never resolves with a fabricated position. */
-export function getFix(options: PositionOptions = GEO_OPTIONS): Promise<GeoResult> {
-  if (!isSupported()) return Promise.resolve(fail("unsupported"));
-
+function requestPosition(options: PositionOptions): Promise<GeoResult> {
   return new Promise((resolve) => {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -167,6 +164,26 @@ export function getFix(options: PositionOptions = GEO_OPTIONS): Promise<GeoResul
       },
       options,
     );
+  });
+}
+
+/**
+ * Request one validated fix. Never resolves with a fabricated position.
+ * A high-accuracy timeout is retried once with the network fix. Laptops and
+ * indoor phones often have no GPS chip and would otherwise fail the first try.
+ */
+export function getFix(options: PositionOptions = GEO_OPTIONS): Promise<GeoResult> {
+  if (!isSupported()) return Promise.resolve(fail("unsupported"));
+
+  return requestPosition(options).then((res) => {
+    if (res.ok || !options.enableHighAccuracy) return res;
+    if (res.failure.state !== "timeout" && res.failure.state !== "unavailable") return res;
+    return requestPosition({
+      ...options,
+      enableHighAccuracy: false,
+      maximumAge: 60_000,
+      timeout: Math.max(options.timeout ?? 8_000, 15_000),
+    });
   });
 }
 

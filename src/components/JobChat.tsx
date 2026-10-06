@@ -47,8 +47,8 @@ export function JobChat({ jobId, meId }: { jobId: string; meId: string }) {
 
   const send = async () => {
     if (!text.trim() || sending) return;
-    // Client-side barrier: refuse high-risk sends outright. DB trigger
-    // masks anything else that slips through as defense-in-depth.
+    // The database trigger rejects contact, payment and off-platform text
+    // even if this check is skipped.
     if (blocked) {
       setAlert(true);
       // M7: log blocked send attempt as telemetry.
@@ -63,15 +63,27 @@ export function JobChat({ jobId, meId }: { jobId: string; meId: string }) {
     const filtered = filterMessage(sanitizeMultiline(text, 2000));
     if (filtered.masked) setAlert(true);
     setSending(true);
-    await supabase.from("job_messages").insert({
+    const { error } = await supabase.from("job_messages").insert({
       job_id: jobId,
       sender_id: meId,
       text: filtered.text,
       masked: filtered.masked,
       blocked_terms: filtered.blocked,
     });
-    setText("");
     setSending(false);
+    if (error) {
+      setAlert(true);
+      if (/LEAK_BLOCKED/i.test(error.message)) {
+        emitEvent({
+          type: "chat.high_risk_blocked",
+          subject_type: "chat",
+          subject_id: jobId,
+          metadata: { categories: preflight.categories, signal_count: preflight.signals.length },
+        });
+      }
+      return;
+    }
+    setText("");
   };
 
   return (

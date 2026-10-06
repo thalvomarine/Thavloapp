@@ -1,11 +1,12 @@
 import { Link } from "@tanstack/react-router";
 import { useMemo, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { CoverageChart, type CoverageBayId } from "@/components/public/CoverageChart";
+import { COVERAGE_BAYS, CoverageChart, type CoverageBayId } from "@/components/public/CoverageChart";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { Wordmark } from "@/components/Wordmark";
 import { fetchPublicPackages, fetchPublicParts, usePublicData } from "@/lib/public-catalog";
-import { formatMoney } from "@/lib/formatters";
+import { formatDm, formatMoney } from "@/lib/formatters";
+import { getFix } from "@/lib/geolocation";
 import { sanitizeNext } from "@/lib/nav";
 import { Map as MapIcon, ShoppingBag, Wrench, X } from "lucide-react";
 
@@ -32,104 +33,127 @@ const LEGEND = [
 export function ChartDeck({ panel }: { panel?: ChartPanel }) {
   const { t } = useTranslation();
   const [bay, setBay] = useState<CoverageBayId>("gocek");
+  const [own, setOwn] = useState<{ lat: number; lng: number } | null>(null);
+  const [locating, setLocating] = useState(false);
+  const [locError, setLocError] = useState<string | null>(null);
+  const fix = own ?? COVERAGE_BAYS[bay];
+  const position = formatDm(fix.lat, fix.lng);
+
+  const locate = async () => {
+    setLocating(true);
+    setLocError(null);
+    const res = await getFix();
+    setLocating(false);
+    if (res.ok) {
+      setOwn({ lat: res.fix.lat, lng: res.fix.lng });
+      return;
+    }
+    setLocError(t(res.failure.messageKey, { defaultValue: res.failure.defaultMessage }));
+  };
 
   return (
-    <div className="thalvo-dark relative h-dvh w-full overflow-hidden bg-[#0A192F] text-white">
-      <CoverageChart bay={bay} fill />
-
-      <header className="pointer-events-none absolute inset-x-0 top-0 z-[1100] flex items-start justify-between gap-3 px-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
-        <Link
-          to="/"
-          search={{ panel: undefined }}
-          className="pointer-events-auto flex items-center gap-2 rounded-full border border-white/10 bg-[#071422]/85 py-1 pl-1.5 pr-3 shadow-2xl backdrop-blur-md"
-        >
-          <Wordmark size="sm" className="text-white" decorative />
-          <span className="thalvo-display text-[15px] tracking-[0.14em] text-white">THALVO</span>
-        </Link>
-        <div className="pointer-events-auto flex items-center gap-2">
-          <LanguageSwitcher tone="dark" />
-          <Link
-            to="/auth"
-            className="inline-flex h-9 items-center rounded-full bg-[#F5B942] px-4 text-xs font-semibold text-[#1A1406]"
-          >
-            {t("auth.sign_in")}
+    <div className="thalvo-dark flex h-dvh w-full flex-col overflow-hidden bg-[#06101c] text-white">
+      <header className="z-[1100] shrink-0 border-b border-white/[0.08] bg-[#071422] pt-[env(safe-area-inset-top)]">
+        <div className="flex h-11 items-center gap-3 px-3">
+          <Link to="/" search={{ panel: undefined }} className="flex shrink-0 items-center gap-2">
+            <Wordmark size="sm" className="text-white" decorative />
+            <span className="thalvo-display text-[14px] tracking-[0.18em] text-white">THALVO</span>
           </Link>
+          <p className="hidden truncate text-[11px] text-white/40 sm:block">{t("public.panel_kicker")}</p>
+          <p className="thalvo-num hidden text-[12px] text-cyan-100/90 md:block">{position}</p>
+          <div className="ml-auto flex items-center gap-2">
+            <LanguageSwitcher tone="dark" />
+            <Link
+              to="/auth"
+              className="inline-flex h-8 items-center rounded-md bg-[#F5B942] px-3 text-[12px] font-semibold text-[#1A1406]"
+            >
+              {t("auth.sign_in")}
+            </Link>
+          </div>
+        </div>
+        <div className="flex items-end gap-1 px-2">
+          {BAYS.map((id) => {
+            const on = bay === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => {
+                  setOwn(null);
+                  setBay(id);
+                }}
+                className={
+                  "h-9 border-b-2 px-3 text-[13px] font-semibold " +
+                  (on ? "border-cyan-300 text-white" : "border-transparent text-white/45")
+                }
+              >
+                {t(`public.coverage_${id}`)}
+              </button>
+            );
+          })}
+          <p className="thalvo-num mb-2 ml-auto pr-2 text-[11px] text-cyan-100/80 md:hidden">{position}</p>
         </div>
       </header>
 
-      <div className="pointer-events-none absolute inset-x-0 top-[calc(env(safe-area-inset-top)+3.6rem)] z-[1100] flex justify-center px-3">
-        <div className="pointer-events-auto flex gap-1 rounded-full border border-white/10 bg-[#071422]/85 p-1 shadow-2xl backdrop-blur-md">
-          {BAYS.map((id) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => setBay(id)}
-              className={
-                "h-8 rounded-full px-3 text-xs font-semibold " +
-                (bay === id ? "bg-cyan-400/20 text-cyan-100" : "text-white/65")
-              }
-            >
-              {t(`public.coverage_${id}`)}
-            </button>
-          ))}
-        </div>
-      </div>
+      <div className="relative min-h-0 flex-1">
+        <CoverageChart bay={bay} fill own={own} />
+        {!panel && (
+          <button
+            type="button"
+            onClick={() => void locate()}
+            disabled={locating}
+            aria-label={t("chart.locate_me")}
+            className="absolute right-3 top-3 z-[1100] grid size-11 place-items-center rounded-full border border-white/15 bg-[#071422]/92 text-[12px] text-cyan-100 disabled:opacity-60"
+          >
+            {locating ? "…" : "◎"}
+          </button>
+        )}
+        {!panel && locError && (
+          <p className="absolute left-3 right-16 top-3 z-[1100] rounded-md bg-[#071422]/92 px-3 py-2 text-[12px] text-amber-100">
+            {locError}
+          </p>
+        )}
 
-      {!panel && (
-        <div className="pointer-events-none absolute bottom-[calc(env(safe-area-inset-bottom)+5.4rem)] left-3 z-[1100] hidden lg:block">
-          <div className="pointer-events-auto w-52 rounded-2xl border border-white/10 bg-[#071422]/88 p-3 shadow-2xl backdrop-blur-md">
-            <p className="thalvo-display text-[13px] tracking-[0.16em] text-white/80">
-              {t("public.legend_title")}
-            </p>
-            <ul className="mt-2 space-y-1.5">
+        {!panel && (
+          <div className="pointer-events-none absolute inset-x-3 bottom-3 z-[1100] flex items-end justify-between gap-3">
+            <ul className="flex flex-wrap gap-x-3 gap-y-1 rounded-md bg-[#071422]/88 px-2.5 py-1.5">
               {LEGEND.map((item) => (
-                <li key={item.id} className="flex items-center gap-2 text-[12px] text-white/75">
-                  <span className="size-2 rounded-full" style={{ background: item.color }} />
+                <li key={item.id} className="flex items-center gap-1.5 text-[11px] text-white/75">
+                  <span className="size-1.5 rounded-full" style={{ background: item.color }} />
                   {t(`marine.kind_${item.id}`)}
                 </li>
               ))}
             </ul>
-            <p className="mt-3 text-[11px] leading-snug text-white/45">{t("public.coverage_note")}</p>
-            <div className="mt-2 flex gap-3 text-[11px]">
-              <Link to="/privacy" className="text-white/50 hover:text-white">
+            <div className="hidden shrink-0 gap-3 text-[11px] sm:flex">
+              <Link to="/privacy" className="pointer-events-auto text-white/45 hover:text-white">
                 {t("public.footer_privacy")}
               </Link>
-              <Link to="/terms" className="text-white/50 hover:text-white">
+              <Link to="/terms" className="pointer-events-auto text-white/45 hover:text-white">
                 {t("public.footer_terms")}
               </Link>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {panel === "parts" && <PartsPanel />}
-      {panel === "services" && <ServicesPanel />}
+        {panel === "parts" && <PartsPanel />}
+        {panel === "services" && <ServicesPanel />}
+      </div>
 
-      <nav
-        className="pointer-events-none fixed inset-x-0 z-[1200]"
-        style={{ bottom: "max(0.85rem, env(safe-area-inset-bottom))" }}
-      >
-        <div className="pointer-events-auto mx-auto w-full max-w-lg px-3">
-          <div className="grid h-14 grid-cols-3 items-center rounded-full border border-white/10 bg-[#071422]/92 px-1 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.75)] backdrop-blur-xl">
-            <DockLink
-              panel={undefined}
-              active={!panel}
-              icon={<MapIcon className="size-4" />}
-              label={t("nav.map")}
-            />
-            <DockLink
-              panel="parts"
-              active={panel === "parts"}
-              icon={<ShoppingBag className="size-4" />}
-              label={t("public.tab_parts")}
-            />
-            <DockLink
-              panel="services"
-              active={panel === "services"}
-              icon={<Wrench className="size-4" />}
-              label={t("public.tab_services")}
-            />
-          </div>
+      <nav className="z-[1200] shrink-0 border-t border-white/[0.08] bg-[#071422] pb-[env(safe-area-inset-bottom)]">
+        <div className="mx-auto grid h-14 max-w-lg grid-cols-3">
+          <DockLink panel={undefined} active={!panel} icon={<MapIcon className="size-4" />} label={t("nav.map")} />
+          <DockLink
+            panel="parts"
+            active={panel === "parts"}
+            icon={<ShoppingBag className="size-4" />}
+            label={t("public.tab_parts")}
+          />
+          <DockLink
+            panel="services"
+            active={panel === "services"}
+            icon={<Wrench className="size-4" />}
+            label={t("public.tab_services")}
+          />
         </div>
       </nav>
     </div>
@@ -152,8 +176,8 @@ function DockLink({
       to="/"
       search={{ panel }}
       className={
-        "flex h-full flex-col items-center justify-center gap-0.5 text-[10px] font-semibold tracking-wide " +
-        (active ? "text-cyan-200" : "text-white/60")
+        "flex h-full flex-col items-center justify-center gap-0.5 border-t-2 text-[11px] font-semibold " +
+        (active ? "border-cyan-300 text-cyan-100" : "border-transparent text-white/50")
       }
     >
       {icon}
@@ -173,7 +197,7 @@ function PanelFrame({
 }) {
   const { t } = useTranslation();
   return (
-    <aside className="pointer-events-auto z-[1100] flex flex-col overflow-hidden border border-white/10 bg-[#071422]/94 shadow-2xl backdrop-blur-xl max-lg:fixed max-lg:inset-x-0 max-lg:bottom-[calc(env(safe-area-inset-bottom)+4.6rem)] max-lg:max-h-[min(72dvh,680px)] max-lg:rounded-t-[28px] lg:absolute lg:bottom-[calc(env(safe-area-inset-bottom)+5.5rem)] lg:left-3 lg:top-[calc(env(safe-area-inset-top)+4.8rem)] lg:w-[420px] lg:rounded-[28px]">
+    <aside className="pointer-events-auto absolute z-[1100] flex flex-col overflow-hidden border border-white/10 bg-[#071422]/96 shadow-2xl backdrop-blur-xl max-lg:inset-x-0 max-lg:bottom-0 max-lg:max-h-[78%] max-lg:rounded-t-2xl lg:bottom-3 lg:left-3 lg:top-3 lg:w-[400px] lg:rounded-2xl">
       <div className="flex items-start justify-between gap-3 px-5 pb-3 pt-4">
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-cyan-200/80">{kicker}</p>
@@ -268,6 +292,11 @@ function PartsPanel() {
         <Retry onRetry={reload} />
       ) : data === null ? (
         <Skeleton rows={4} />
+      ) : data.length === 0 ? (
+        <div className="px-1">
+          <p className="text-[15px] font-semibold text-white">{t("public.parts_empty_title")}</p>
+          <p className="mt-1.5 text-[13px] leading-snug text-white/55">{t("public.parts_empty_body")}</p>
+        </div>
       ) : (
         <div className="space-y-4">
           {SHELVES.map((shelf) => {

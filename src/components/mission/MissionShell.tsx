@@ -3,7 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent, type Poi
 import { createPortal } from "react-dom";
 import { Wordmark } from "@/components/Wordmark";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
-import { ThalvoAiFab } from "@/components/ThalvoAiFab";
+import { ThalvoChat } from "@/components/ThalvoChat";
 import { AccountMenuButton } from "@/components/mission/AccountMenuButton";
 import { SosSheet } from "@/components/mission/SosSheet";
 import { EmergencyServiceSheet } from "@/components/mission/EmergencyServiceSheet";
@@ -139,35 +139,28 @@ export function MissionShell({ profile, children, fullBleed = false }: Props) {
       {/* Top status rail — replaced by the map cockpit's own floating top bar in fullBleed mode */}
       {!fullBleed && (
         <header className="sticky top-0 z-30 border-b border-white/[0.06] bg-[oklch(0.13_0.02_250/0.7)] backdrop-blur-xl pt-[env(safe-area-inset-top)]">
-          <div className="mx-auto max-w-6xl px-4 h-14 flex items-center justify-between gap-3">
-            <Link to="/app" className="flex items-center gap-3 min-w-0">
+          <div className="mx-auto flex h-12 max-w-6xl items-center justify-between gap-3 px-4">
+            <Link to="/app" className="flex min-w-0 items-center gap-2.5">
               <Wordmark size="sm" className="text-white" />
-              <span className="hidden sm:inline text-[10px] font-semibold uppercase tracking-[0.22em] text-white/40">
-                MarineOS · Mission Control
-              </span>
+              <span className="thalvo-display text-[14px] tracking-[0.16em] text-white">THALVO</span>
             </Link>
             <div className="flex items-center gap-2">
-              <div className="hidden sm:flex items-center gap-2 text-[11px] text-white/60">
-                <span className="size-1.5 rounded-full bg-emerald-400 shadow-[0_0_10px_theme(colors.emerald.400)]" />
-                LIVE
-              </div>
               <LanguageSwitcher tone="dark" />
               <AccountMenuButton profile={profile} isAdmin={isAdmin} />
             </div>
           </div>
-          {/* Captain identity line */}
-          <div className="mx-auto max-w-6xl px-4 pb-2.5 flex items-center justify-between gap-3 text-[11px]">
-            <div className="text-white/70 truncate">
-              <span className="text-white/40 uppercase tracking-[0.18em] mr-2">
-                {isSupplier ? "Supplier" : profile.role === "Provider" ? "Provider" : "Captain"}
+          <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 pb-2 text-[12px]">
+            <div className="truncate text-white/70">
+              <span className="mr-2 text-white/40">
+                {isSupplier
+                  ? t("auth.role_supplier")
+                  : profile.role === "Provider"
+                    ? t("auth.role_provider")
+                    : t("auth.role_client")}
               </span>
               <span className="font-semibold text-white">{profile.full_name}</span>
-              {profile.boat_name && (
-                <span className="text-white/50"> · ⚓ {profile.boat_name}</span>
-              )}
-              {profile.business_name && (
-                <span className="text-white/50"> · {profile.business_name}</span>
-              )}
+              {profile.boat_name && <span className="text-white/50"> · {profile.boat_name}</span>}
+              {profile.business_name && <span className="text-white/50"> · {profile.business_name}</span>}
             </div>
             <div className="shrink-0 flex items-center gap-3 text-white/50">
               <LocalDateLabel />
@@ -326,14 +319,9 @@ export function MissionShell({ profile, children, fullBleed = false }: Props) {
         <CockpitErrorBoundary>{children}</CockpitErrorBoundary>
       </main>
 
-      {/* The floating Compass/AI launcher used to sit at the exact same
-          bottom offset as the dock nav above and collide with it on every
-          non-map screen (Marketplace, Missions, My Vessel…). The map
-          cockpit already exposes its own AI entry point via ChartFabStack,
-          well clear of the dock — so the standalone launcher stays hidden
-          everywhere and only the chat sheet it owns (opened through the
-          shared THALVO_AI_OPEN_EVENT bus) is reused. */}
-      <ThalvoAiFab hideLauncher />
+      {/* Above the dock on every screen except the chart, where ChartFabStack
+          owns the corner and opens this same panel through THALVO_AI_OPEN_EVENT. */}
+      <ThalvoChat showLauncher={!fullBleed} />
 
       {hasSos &&
         sheetHostReady &&

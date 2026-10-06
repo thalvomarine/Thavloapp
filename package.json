@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
+    "prebuild": "node scripts/assert-tanstack-start.mjs",
     "build": "vite build",
     "postbuild": "node scripts/prepare-web-spa.mjs",
     "build:dev": "vite build --mode development",
@@ -12,7 +13,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit",
-    "test": "node --test --experimental-strip-types src/lib/geolocation.test.ts src/lib/nav.test.ts src/lib/payments.test.ts src/lib/sea-route.test.ts src/lib/tile-cache.test.ts",
+    "test": "node --test --experimental-strip-types src/lib/geolocation.test.ts src/lib/nav.test.ts src/lib/payments.test.ts src/lib/sea-route.test.ts src/lib/tile-cache.test.ts src/lib/trust.test.ts src/lib/thalvo-ai/domain.test.ts",
     "cap:prepare": "node scripts/prepare-web-spa.mjs",
     "cap:sync": "npm run build && npx cap sync",
     "build:mobile": "npm run cap:sync"
@@ -60,7 +61,7 @@
     "@tailwindcss/vite": "^4.2.1",
     "@tanstack/react-query": "^5.101.1",
     "@tanstack/react-router": "^1.170.41",
-    "@tanstack/react-start": "^1.168.60",
+    "@tanstack/react-start": "1.168.60",
     "@tanstack/router-plugin": "^1.168.18",
     "@types/leaflet": "^1.9.21",
     "ai": "^7.0.4",

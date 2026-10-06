@@ -51,11 +51,11 @@ export function CartSheet({ onClose, onCatalogReload }: Props) {
     const { data, error } = await supabase.rpc("checkout_parts_cart", {
       _items: cart.items.map((i) => ({ part_id: i.part_id, qty: i.qty })),
       _delivery_marina: sanitizePlainText(marina, 80),
-      _vessel_id: vesselId || null,
+      _vessel_id: vesselId || undefined,
       _delivery_method: deliveryMethod,
       _delivery_eta_minutes: etaMinutes,
-      _delivery_location_label: sanitizePlainText(dropOff, 120) || null,
-      _notes: sanitizeMultiline(notes, 500) || null,
+      _delivery_location_label: sanitizePlainText(dropOff, 120) || undefined,
+      _notes: sanitizeMultiline(notes, 500) || undefined,
     });
     if (error) {
       if (/OUT_OF_STOCK/i.test(error.message)) {
@@ -66,21 +66,29 @@ export function CartSheet({ onClose, onCatalogReload }: Props) {
       }
       return;
     }
-    const newOrderId = (data as string | null) ?? null;
-    emitEvent({
-      type: "order.submitted",
-      subject_type: "order",
-      subject_id: newOrderId,
-      metadata: {
-        item_count: cart.items.length,
-        delivery_method: deliveryMethod,
-        marina,
-      },
-    });
+    const raw = data as string[] | string | null;
+    const orderIds = Array.isArray(raw) ? raw.filter(Boolean) : raw ? [raw] : [];
+    if (orderIds.length === 0) {
+      toast.error(t("shop.order_failed"));
+      return;
+    }
+    for (const orderId of orderIds) {
+      emitEvent({
+        type: "order.submitted",
+        subject_type: "order",
+        subject_id: orderId,
+        metadata: {
+          item_count: cart.items.length,
+          delivery_method: deliveryMethod,
+          marina,
+          order_count: orderIds.length,
+        },
+      });
+    }
     cart.clear();
-    toast.success(t("shop.order_placed"));
+    toast.success(orderIds.length > 1 ? t("shop.orders_placed", { count: orderIds.length }) : t("shop.order_placed"));
     setPay(false);
-    setPlacedOrderId(newOrderId ?? "new");
+    setPlacedOrderId(orderIds[0] ?? "new");
   };
 
   if (placedOrderId) {

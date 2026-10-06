@@ -3,13 +3,8 @@
  *
  * Derived from data we already store: provider rating, completed jobs,
  * accepted offers, cancellation ratio, verification flags.
- * Missing signals (response speed, arrival accuracy, dispute rate,
- * document verification) return `null` — components must render them as
- * "Building score" placeholders, never as fake numbers.
- *
- * TODO(reputation-events): when we ship the event-sourced reputation
- * pipeline (arrival timestamps, dispute log, KYC states), swap the
- * placeholder-null branches here for real derivations.
+ * Arrival, response time, disputes and identity stay null until the
+ * matching records exist. They are never filled from the star rating.
  */
 
 export type TrustTone = "reliable" | "building" | "watch" | "risk";
@@ -20,6 +15,15 @@ export interface TrustInputs {
   offersAccepted?: number | null; // count(accept_offer) — optional
   cancellationCount?: number | null;
   verified?: boolean;             // KYC / certification present
+  /** On-time arrivals / timed arrivals. Null until a timed arrival exists. */
+  arrivalOnTimeRatio?: number | null;
+  arrivalSamples?: number | null;
+  /** Median minutes from job open to this provider's offer. */
+  medianResponseMinutes?: number | null;
+  responseSamples?: number | null;
+  /** Null when the dispute log could not be read. */
+  disputeCount?: number | null;
+  completedJobs?: number | null;
 }
 
 export interface TrustMetric {
@@ -63,11 +67,22 @@ function fairnessScore(rating: number | null): number | null {
   return clamp(Math.round(60 + (rating - 3.5) * 12));
 }
 
-function reliabilityScore(rating: number | null, jobs: number | null): number | null {
-  if (rating == null && (jobs == null || jobs === 0)) return null;
-  const base = ratingToScore(rating) ?? 60;
-  const vol = jobs && jobs > 0 ? Math.min(15, Math.log10(jobs + 1) * 8) : 0;
-  return clamp(Math.round(base * 0.85 + vol));
+function arrivalScore(ratio: number | null | undefined, samples: number | null | undefined): number | null {
+  if (ratio == null || samples == null || samples <= 0) return null;
+  return clamp(Math.round(ratio * 100));
+}
+
+function responseScore(minutes: number | null | undefined, samples: number | null | undefined): number | null {
+  if (minutes == null || samples == null || samples <= 0) return null;
+  if (minutes <= 20) return 95;
+  if (minutes <= 60) return 82;
+  if (minutes <= 180) return 68;
+  return 45;
+}
+
+function disputeScore(disputes: number | null | undefined, completed: number | null | undefined): number | null {
+  if (disputes == null || completed == null || completed <= 0) return null;
+  return clamp(Math.round(100 - (disputes / completed) * 100));
 }
 
 export function toneFromScore(score: number | null): TrustTone {
@@ -88,12 +103,13 @@ export function labelFromTone(tone: TrustTone): string {
 }
 
 export function computeTrust(inputs: TrustInputs): TrustReport {
-  const arrival = reliabilityScore(inputs.rating, inputs.jobsCompleted);
+  const arrival = arrivalScore(inputs.arrivalOnTimeRatio, inputs.arrivalSamples);
+  const response = responseScore(inputs.medianResponseMinutes, inputs.responseSamples);
   const completion = ratingToScore(inputs.rating);
   const fairness = fairnessScore(inputs.rating);
   const volume = volumeToScore(inputs.jobsCompleted);
   const verifiedScore = inputs.verified ? 100 : null;
-  const dispute: number | null = null; // TODO(reputation-events)
+  const dispute = disputeScore(inputs.disputeCount, inputs.completedJobs);
 
   const metrics: TrustMetric[] = [
     {
@@ -101,9 +117,20 @@ export function computeTrust(inputs: TrustInputs): TrustReport {
       label: "Arrival reliability",
       score: arrival,
       detail: arrival == null
-        ? "No dispatch history yet."
-        : "Derived from captain ratings and dispatched missions.",
+        ? "No timed arrival yet."
+        : "Share of arrivals inside the agreed ETA.",
       placeholder: arrival == null,
+      count: inputs.arrivalSamples ?? 0,
+    },
+    {
+      key: "response",
+      label: "Response time",
+      score: response,
+      detail: response == null
+        ? "No offer timing yet."
+        : "Median minutes from the request to this provider's offer.",
+      placeholder: response == null,
+      count: inputs.medianResponseMinutes == null ? 0 : Math.round(inputs.medianResponseMinutes),
     },
     {
       key: "completion",
@@ -147,9 +174,11 @@ export function computeTrust(inputs: TrustInputs): TrustReport {
       key: "dispute",
       label: "Dispute rate",
       score: dispute,
-      // TODO(reputation-events): compute from disputes table when introduced.
-      detail: "Dispute log ships in the next release.",
-      placeholder: true,
+      detail: dispute == null
+        ? "Complete a mission before a dispute rate exists."
+        : "Disputes filed against completed missions.",
+      placeholder: dispute == null,
+      count: inputs.disputeCount ?? 0,
     },
   ];
 

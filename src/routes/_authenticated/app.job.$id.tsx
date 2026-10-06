@@ -28,7 +28,8 @@ import { OfferCard } from "@/components/mission/OfferCard";
 import { EscrowPanel, type EscrowUiState } from "@/components/mission/EscrowPanel";
 import { PaymentTimeline, deriveEscrow } from "@/components/mission/PaymentTimeline";
 import { TrustExplanationSheet } from "@/components/trust/TrustExplanationSheet";
-import { computeTrust } from "@/lib/trust";
+import { computeTrust, type TrustReport } from "@/lib/trust";
+import { loadTrustSignals } from "@/lib/trust-signals";
 import { emitEvent } from "@/lib/events";
 import {
   PaymentIntentPanel,
@@ -144,6 +145,26 @@ function ClientJob({ job, meId }: { job: Job; meId: string }) {
   const [tick, setTick] = useState(0);
   const [completing, setCompleting] = useState(false);
   const [trustFor, setTrustFor] = useState<Offer | null>(null);
+  const [trustReport, setTrustReport] = useState<TrustReport | null>(null);
+
+  useEffect(() => {
+    const providerId = trustFor?.provider_id;
+    if (!providerId) {
+      setTrustReport(null);
+      return;
+    }
+    let live = true;
+    loadTrustSignals(providerId).then((signals) => {
+      if (!live) return;
+      setTrustReport(computeTrust({
+        ...signals,
+        rating: signals.rating ?? trustFor?.provider_details?.rating ?? null,
+        jobsCompleted: signals.jobsCompleted ?? trustFor?.provider_details?.jobs_completed ?? null,
+        verified: signals.verified || Boolean(trustFor?.provider_details?.certification_url),
+      }));
+    });
+    return () => { live = false; };
+  }, [trustFor]);
 
   useEffect(() => {
     const t = setInterval(() => setTick((x) => x + 1), 5000);
@@ -730,7 +751,7 @@ function ClientJob({ job, meId }: { job: Job; meId: string }) {
         open={!!trustFor}
         onClose={() => setTrustFor(null)}
         subject={trustFor?.profiles?.full_name ?? t("mission.provider_fallback")}
-        report={computeTrust({
+        report={trustReport ?? computeTrust({
           rating: trustFor?.provider_details?.rating ?? null,
           jobsCompleted: trustFor?.provider_details?.jobs_completed ?? null,
           verified: Boolean(trustFor?.provider_details?.certification_url),

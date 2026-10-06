@@ -419,6 +419,9 @@
   margin: 0 10px 92px 0;
   max-width: 42vw;
 }
+.thalvo-chart-frame .leaflet-control-attribution {
+  margin: 0 8px 8px 0;
+}
 .thalvo-ecdis .leaflet-control-attribution a {
   color: rgb(255 255 255 / 0.5);
 }

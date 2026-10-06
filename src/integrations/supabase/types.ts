@@ -370,6 +370,7 @@ export type Database = {
           created_at: string
           description: string
           dispatched_at: string | null
+          arrived_at: string | null
           eta_minutes: number | null
           extra_parts_cost: number
           id: string
@@ -392,6 +393,7 @@ export type Database = {
           created_at?: string
           description?: string
           dispatched_at?: string | null
+          arrived_at?: string | null
           eta_minutes?: number | null
           extra_parts_cost?: number
           id?: string
@@ -414,6 +416,7 @@ export type Database = {
           created_at?: string
           description?: string
           dispatched_at?: string | null
+          arrived_at?: string | null
           eta_minutes?: number | null
           extra_parts_cost?: number
           id?: string
@@ -1344,6 +1347,87 @@ export type Database = {
         }
         Relationships: []
       }
+      user_boats: {
+        Row: {
+          boat_brand: string | null
+          created_at: string
+          engine_brand: string | null
+          engine_model: string | null
+          id: string
+          serial_number: string | null
+          user_id: string
+        }
+        Insert: {
+          boat_brand?: string | null
+          created_at?: string
+          engine_brand?: string | null
+          engine_model?: string | null
+          id?: string
+          serial_number?: string | null
+          user_id: string
+        }
+        Update: {
+          boat_brand?: string | null
+          created_at?: string
+          engine_brand?: string | null
+          engine_model?: string | null
+          id?: string
+          serial_number?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ai_memories: {
+        Row: {
+          created_at: string
+          embedding: string | null
+          id: string
+          memory_text: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          memory_text: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          memory_text?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      chat_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          role: string
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          role: string
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          role?: string
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       public_parts_catalog: {
@@ -1431,6 +1515,18 @@ export type Database = {
         Args: never
         Returns: undefined
       }
+      match_ai_memories: {
+        Args: {
+          match_count: number
+          match_user: string
+          query_embedding: string
+        }
+        Returns: {
+          id: string
+          memory_text: string
+          similarity: number
+        }[]
+      }
       admin_set_user_available: {
         Args: { _available: boolean; _user_id: string }
         Returns: undefined
@@ -1467,20 +1563,20 @@ export type Database = {
         }
         Returns: undefined
       }
-      checkout_parts_cart:
-        | { Args: { _delivery_marina: string; _items: Json }; Returns: string }
-        | {
-            Args: {
-              _delivery_eta_minutes?: number
-              _delivery_location_label?: string
-              _delivery_marina: string
-              _delivery_method?: string
-              _items: Json
-              _notes?: string
-              _vessel_id?: string
-            }
-            Returns: string
-          }
+      checkout_parts_cart: {
+        Args: {
+          _delivery_eta_minutes?: number
+          _delivery_location_label?: string
+          _delivery_marina: string
+          _delivery_method?: string
+          _items: Json
+          _notes?: string
+          _vessel_id?: string
+        }
+        Returns: string[]
+      }
+      provider_trust_signals: { Args: { _provider: string }; Returns: Json }
+      reveal_contact_allowed: { Args: never; Returns: boolean }
       complete_job: { Args: { _job_id: string }; Returns: Json }
       has_role: {
         Args: {

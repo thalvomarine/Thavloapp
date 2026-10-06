@@ -9,6 +9,7 @@ import { BoatPassportShell } from "@/components/passport/BoatPassportShell";
 import { ReputationPanel } from "@/components/trust/ReputationPanel";
 import { GlassPanel } from "@/components/mission/GlassPanel";
 import { computeTrust, type TrustReport } from "@/lib/trust";
+import { loadTrustSignals } from "@/lib/trust-signals";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/app/reputation")({
@@ -37,13 +38,13 @@ function ReputationInner({ userId }: { userId: string }) {
 
   useEffect(() => {
     (async () => {
-      const { data: pd } = await supabase
-        .from("provider_details")
-        .select("rating, jobs_completed, certification_url")
-        .eq("id", userId)
-        .maybeSingle();
-      const d = (pd as { rating: number | null; jobs_completed: number | null; certification_url: string | null } | null) ?? null;
-      setDetails(d);
+      try {
+      const signals = await loadTrustSignals(userId);
+      setDetails({
+        rating: signals.rating,
+        jobs_completed: signals.jobsCompleted,
+        certification_url: signals.verified ? "on-file" : null,
+      });
 
       const { count: accepted } = await supabase
         .from("jobs")
@@ -60,12 +61,15 @@ function ReputationInner({ userId }: { userId: string }) {
 
       setReport(
         computeTrust({
-          rating: d?.rating ?? null,
-          jobsCompleted: d?.jobs_completed ?? null,
+          ...signals,
           offersAccepted: accepted ?? 0,
-          verified: Boolean(d?.certification_url),
         }),
       );
+      } catch (err) {
+        console.error(err);
+        toast.error(t("shell.error.body"));
+        setReport(computeTrust({ rating: null, jobsCompleted: null }));
+      }
     })();
   }, [userId]);
 
