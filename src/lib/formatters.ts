@@ -65,6 +65,18 @@ export function formatDistance(km: number | null | undefined): string {
   return `${Math.round(km)} km`;
 }
 
+/** Maritime DD°MM.MM' — "36°45.15'N  28°56.57'E". */
+export function formatDm(lat: number, lng: number): string {
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return "—";
+  const hem = (value: number, pos: string, neg: string) => {
+    const abs = Math.abs(value);
+    const degrees = Math.floor(abs);
+    const minutes = ((abs - degrees) * 60).toFixed(2).padStart(5, "0");
+    return `${degrees}°${minutes}'${value >= 0 ? pos : neg}`;
+  };
+  return `${hem(lat, "N", "S")}  ${hem(lng, "E", "W")}`;
+}
+
 /** Signed decimal degrees → "41.0082°N, 28.9784°E". */
 export function formatCoordinates(
   lat: number | null | undefined,
