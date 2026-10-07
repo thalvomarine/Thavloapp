@@ -101,7 +101,8 @@
     "map": "Map",
     "inventory": "Stock",
     "dock_market": "Market",
-    "dock_vessel": "Vessel"
+    "dock_vessel": "Vessel",
+    "dock_counter": "Counter"
   },
   "esvc": {
     "eyebrow": "Emergency service net",
@@ -1027,6 +1028,8 @@
   },
   "dealer": {
     "eyebrow": "THALVO · Dealer",
+    "eyebrow_counter": "Chandlery",
+    "counter_title": "Counter",
     "eyebrow_console": "THALVO · Dealer Console",
     "title": "Inventory",
     "access_only_title": "Dealer access only",
@@ -1036,6 +1039,9 @@
     "stat_skus": "SKUs",
     "stat_units": "Units",
     "stat_low_out": "Low / out",
+    "stat_sales": "Sales",
+    "stat_sold_units": "Units sold",
+    "stock_watch": "{{low}} low, {{out}} out of stock.",
     "tab_orders": "Orders",
     "tab_inventory": "Inventory",
     "add_part": "Add spare part",

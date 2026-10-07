@@ -83,7 +83,7 @@ function DealerConsole({ userId, businessName, marina }: { userId: string; busin
   const { t } = useTranslation();
   const [rows, setRows] = useState<Row[]>([]);
   const [orders, setOrders] = useState<DealerOrderRow[]>([]);
-  const [tab, setTab] = useState<"orders" | "inventory">("orders");
+  const [tab, setTab] = useState<"orders" | "inventory">("inventory");
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Row | null>(null);
   const [busy, setBusy] = useState(false);
@@ -165,29 +165,36 @@ function DealerConsole({ userId, businessName, marina }: { userId: string; busin
     }
   };
 
-  const activeOrders = orders.filter((o) =>
-    ["Submitted", "DealerReview", "Paid", "Confirmed", "Preparing", "OutForDelivery"].includes(o.status)
-  ).length;
+  const soldOrders = orders.filter((o) => o.status !== "Cancelled");
+  const soldUnits = soldOrders.reduce(
+    (sum, order) => sum + (order.items ?? []).reduce((qty, item) => qty + Number(item.qty || 0), 0),
+    0,
+  );
 
   return (
     <MarketplaceShell
-      eyebrow="THALVO · Dealer Console"
-      title={businessName ?? "Inventory"}
-      right={<StatusChip tone="info">{marina ?? "Marina not set"}</StatusChip>}
+      eyebrow={t("dealer.eyebrow_counter")}
+      title={businessName ?? t("dealer.counter_title")}
+      right={<StatusChip tone="info">{marina ?? t("dealer.marina_not_set")}</StatusChip>}
     >
-      <div className="grid grid-cols-4 gap-2">
-        <StatMini label="Active" value={String(activeOrders)} tone={activeOrders > 0 ? "warning" : "neutral"} />
-        <StatMini label="SKUs" value={String(rows.length)} />
-        <StatMini label="Units" value={String(totalStock)} />
-        <StatMini label="Low / out" value={`${lowSkus} / ${outSkus}`} tone={lowSkus + outSkus > 0 ? "warning" : "neutral"} />
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <StatMini label={t("dealer.stat_skus")} value={String(rows.length)} />
+        <StatMini label={t("dealer.stat_units")} value={String(totalStock)} />
+        <StatMini label={t("dealer.stat_sales")} value={String(soldOrders.length)} />
+        <StatMini label={t("dealer.stat_sold_units")} value={String(soldUnits)} />
       </div>
+      {(lowSkus > 0 || outSkus > 0) && (
+        <p className="text-[12px] font-medium text-amber-200">
+          {t("dealer.stock_watch", { low: lowSkus, out: outSkus })}
+        </p>
+      )}
 
-      <div className="flex gap-1.5 -mx-1 px-1">
-        <TabPill active={tab === "orders"} onClick={() => setTab("orders")} icon={<Package className="size-3.5" />} badge={unread > 0 ? (unread > 9 ? "9+" : String(unread)) : null}>
-          Orders
-        </TabPill>
+      <div className="flex gap-1.5 -mx-1 overflow-x-auto px-1">
         <TabPill active={tab === "inventory"} onClick={() => setTab("inventory")} icon={<Store className="size-3.5" />}>
-          Inventory
+          {t("dealer.tab_inventory")}
+        </TabPill>
+        <TabPill active={tab === "orders"} onClick={() => setTab("orders")} icon={<Package className="size-3.5" />} badge={unread > 0 ? (unread > 9 ? "9+" : String(unread)) : null}>
+          {t("dealer.tab_orders")}
         </TabPill>
       </div>
 
@@ -200,7 +207,7 @@ function DealerConsole({ userId, businessName, marina }: { userId: string; busin
             onClick={() => { setEditing(null); setShowForm(true); }}
             className="w-full h-11 rounded-2xl bg-sky-500 hover:bg-sky-400 text-slate-900 font-semibold text-sm inline-flex items-center justify-center gap-2 transition-colors"
           >
-            <Plus className="size-4" /> Add spare part
+            <Plus className="size-4" /> {t("dealer.add_part")}
           </button>
 
           <DealerStockPanel

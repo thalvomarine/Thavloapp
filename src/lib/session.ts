@@ -124,14 +124,19 @@ export function useProfile(userId: string | undefined) {
     // NOTE: no timeout fallback and no synthesized profile — we never invent a
     // role (previously defaulted to "Client"), which caused Provider users to
     // render as Captain when the fetch was slow.
-    void Promise.all([
-      supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
-      supabase.from("profile_contacts").select("phone").eq("id", userId).maybeSingle(),
-    ])
-      .then(([profileRes, contactRes]) => {
-        if (!mounted) return;
-        const err = profileRes.error;
-        if (err) {
+    void (async () => {
+      const { data: claimed, error: claimError } = await supabase.rpc("claim_signup_role");
+      if (claimError && !/claim_signup_role|PGRST202|schema cache|Could not find the function/i.test(claimError.message)) {
+        console.warn("[session] signup role", claimError.message);
+      }
+      const claimedRole = normalizeUserRole(claimed);
+      const [profileRes, contactRes] = await Promise.all([
+        supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
+        supabase.from("profile_contacts").select("phone").eq("id", userId).maybeSingle(),
+      ]);
+      if (!mounted) return;
+      const err = profileRes.error;
+      if (err) {
           if (isMissingRelation(err)) {
             // Fresh Supabase project: profiles table is not in the schema cache
             // yet. Keep the cockpit (map + SOS) mounted instead of a blank tree.
@@ -145,20 +150,26 @@ export function useProfile(userId: string | undefined) {
         } else {
           const row = profileRes.data as unknown as Profile | null;
           const next = row
-            ? asProfile({ ...row, phone: contactRes.data?.phone ?? null })
+            ? asProfile({
+                ...row,
+                phone: contactRes.data?.phone ?? null,
+                role:
+                  row.role === "Client" && (claimedRole === "Supplier" || claimedRole === "Provider")
+                    ? claimedRole
+                    : row.role,
+              })
             : null;
           setProfile(next);
           if (next) rememberCockpitRole(next.id, next.role);
           setError(null);
         }
         setLoading(false);
-      })
-      .catch((e: unknown) => {
-        if (!mounted) return;
-        setProfile(null);
-        setError(e instanceof Error ? e : new Error(String(e)));
-        setLoading(false);
-      });
+    })().catch((e: unknown) => {
+      if (!mounted) return;
+      setProfile(null);
+      setError(e instanceof Error ? e : new Error(String(e)));
+      setLoading(false);
+    });
     const channelId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const ch = supabase
       .channel(`profile:${userId}:${channelId}`)

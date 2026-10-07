@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
@@ -66,6 +66,7 @@ interface JobRow {
 function Passport({ userId }: { userId: string }) {
   const { t } = useTranslation();
   const { profile } = useProfile(userId);
+  if (profile?.role === "Supplier") return <Navigate to="/app/dealer" replace />;
   const [vessel, setVessel] = useState<VesselIdentity | null>(null);
   const [vesselLoading, setVesselLoading] = useState(true);
   const [activeJobs, setActiveJobs] = useState<JobRow[]>([]);

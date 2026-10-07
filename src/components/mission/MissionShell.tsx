@@ -1,4 +1,4 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, Navigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent, type PointerEvent, type ReactNode, type TouchEvent } from "react";
 import { createPortal } from "react-dom";
 import { Wordmark } from "@/components/Wordmark";
@@ -115,6 +115,10 @@ export function MissionShell({ profile, children, fullBleed = false }: Props) {
     return () => setMapChromeOverlay("sos", false);
   }, [sosOpen, svcOpen]);
 
+  if (isSupplier && (path === "/app" || path === "/app/")) {
+    return <Navigate to="/app/dealer" replace />;
+  }
+
   const fireSos = (
     event?: MouseEvent<HTMLButtonElement> | TouchEvent<HTMLButtonElement> | PointerEvent<HTMLButtonElement>,
   ) => {
@@ -202,17 +206,19 @@ export function MissionShell({ profile, children, fullBleed = false }: Props) {
                     to="/app/dealer"
                     active={path.startsWith("/app/dealer") || path.startsWith("/app/supplier")}
                     icon={<Store className="size-[16px]" />}
-                    label={t("nav.inventory")}
+                    label={t("nav.dock_counter")}
                   />
                   <NavTab
                     to="/app/marketplace"
-                    active={
-                      path.startsWith("/app/marketplace") ||
-                      path.startsWith("/app/orders") ||
-                      path.startsWith("/app/dealer")
-                    }
+                    active={path.startsWith("/app/marketplace") || path.startsWith("/app/shop")}
                     icon={<MarketplaceMark size={18} />}
                     label={t("nav.dock_market")}
+                  />
+                  <NavTab
+                    to="/app/orders"
+                    active={path.startsWith("/app/orders")}
+                    icon={<ClipboardList className="size-[16px]" />}
+                    label={t("nav.orders")}
                   />
                 </>
               ) : isProvider ? (

@@ -1511,6 +1511,10 @@ export type Database = {
           role: Database["public"]["Enums"]["user_role"]
         }[]
       }
+      claim_signup_role: {
+        Args: never
+        Returns: Database["public"]["Enums"]["user_role"]
+      }
       consume_captain_ai_quota: {
         Args: never
         Returns: undefined

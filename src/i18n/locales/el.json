@@ -101,7 +101,8 @@
     "map": "Χάρτης",
     "inventory": "Απόθεμα",
     "dock_market": "Αγορά",
-    "dock_vessel": "Σκάφος"
+    "dock_vessel": "Σκάφος",
+    "dock_counter": "Πάγκος"
   },
   "esvc": {
     "eyebrow": "Δίκτυο έκτακτης υπηρεσίας",
@@ -1022,6 +1023,8 @@
   },
   "dealer": {
     "eyebrow": "THALVO · Dealer",
+    "eyebrow_counter": "Ναυτικό κατάστημα",
+    "counter_title": "Πάγκος",
     "eyebrow_console": "THALVO · Dealer Console",
     "title": "Inventory",
     "access_only_title": "Dealer access only",
@@ -1031,6 +1034,9 @@
     "stat_skus": "SKUs",
     "stat_units": "Units",
     "stat_low_out": "Low / out",
+    "stat_sales": "Πωλήσεις",
+    "stat_sold_units": "Τεμάχια",
+    "stock_watch": "{{low}} χαμηλά, {{out}} εξαντλημένα.",
     "tab_orders": "Orders",
     "tab_inventory": "Inventory",
     "add_part": "Add spare part",

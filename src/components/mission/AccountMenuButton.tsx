@@ -79,7 +79,7 @@ export function AccountMenuButton({ profile, isAdmin, compact = false }: Props) 
         {isSupplier && (
           <DropdownMenuItem asChild>
             <Link to="/app/dealer">
-              <Store className="size-4 mr-2" /> Inventory
+              <Store className="size-4 mr-2" /> {t("nav.dock_counter")}
             </Link>
           </DropdownMenuItem>
         )}

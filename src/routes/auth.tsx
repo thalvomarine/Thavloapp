@@ -106,6 +106,8 @@ function AuthPage() {
               full_name: fullName,
               boat_name: role === "Client" ? boatName : null,
               role,
+              business_name: role === "Supplier" ? businessName || fullName : null,
+              home_marina: role === "Supplier" ? homeMarina : null,
               phone: phone.trim() || null,
               account_type: role === "Client" ? accountType : null,
               preferred_language: normalizeAppLng(i18n.resolvedLanguage) === "en" ? "en" : "tr",
