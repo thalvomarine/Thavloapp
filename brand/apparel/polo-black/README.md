@@ -35,14 +35,15 @@ Kaynak logo: `src/assets/thalvo-logo-full-alpha.png` ve `thalvo-mark-alpha.png`.
 Baskı için master’ları kullanın; mockup görselleri referans amaçlıdır.
 
 
-## 5 varyant (site adresi dahil)
+## Ön / arka set (önerilen)
 
-`variants/` klasöründe `thalvo.org` içeren 5 yerleşim:
+`front-back/` — **THALVO MarineOS** + `thalvo.org` önlü-arkalı tasarım:
 
-1. Classic Chest — sol göğüs + URL
-2. Back Flag — sırt + URL
-3. Crest + Hem — göğüs crest, etekte URL
-4. Chest + Sleeve — göğüs + kol URL
-5. Center Stack — ön orta + MarineOS + URL
+- Ön: sol göğüs crest + THALVO / MarineOS / thalvo.org
+- Arka: büyük crest + aynı metin yığını
 
-Detay: `variants/README.md`
+Detay: `front-back/README.md`
+
+## 5 ek varyant
+
+`variants/` — alternatif yerleşimler (`thalvo.org` dahil). Detay: `variants/README.md`
