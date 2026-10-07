@@ -32,3 +32,8 @@ thalvo.org
 
 - Ön (sol göğüs): ~7–8 cm
 - Arka (orta): ~18–22 cm yükseklik
+
+
+## 5 varyant (ön / arka / sol kol)
+
+`variants/` — Classic Portolan, Compass Rose, Galleon Chart, Aegean Coast, Rhumb Star.
