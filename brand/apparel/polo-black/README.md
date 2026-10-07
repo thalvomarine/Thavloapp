@@ -47,3 +47,8 @@ Detay: `front-back/README.md`
 ## 5 ek varyant
 
 `variants/` — alternatif yerleşimler (`thalvo.org` dahil). Detay: `variants/README.md`
+
+
+## Piri Reis edisyonu
+
+`piri-reis/` — Osmanlı portolan haritası temalı ön/arka set (aynı gold tonları + THALVO MarineOS + thalvo.org).
