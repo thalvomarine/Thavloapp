@@ -37,7 +37,7 @@ Baskı için master’ları kullanın; mockup görselleri referans amaçlıdır.
 
 ## 5 varyant (site adresi dahil)
 
-`variants/` klasöründe `thalvo.vercel.app` içeren 5 yerleşim:
+`variants/` klasöründe `thalvo.org` içeren 5 yerleşim:
 
 1. Classic Chest — sol göğüs + URL
 2. Back Flag — sırt + URL

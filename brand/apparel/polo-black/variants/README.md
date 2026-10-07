@@ -1,6 +1,6 @@
 # THALVO Polo — 5 Tasarım (site adresi dahil)
 
-Site: **thalvo.vercel.app** · Kumaş: siyah · Baskı: champagne / gold
+Site: **thalvo.org** · Kumaş: siyah · Baskı: champagne / gold
 
 | # | Tasarım | Yerleşim | Mockup | Baskı master |
 |---|---------|----------|--------|--------------|
@@ -12,7 +12,7 @@ Site: **thalvo.vercel.app** · Kumaş: siyah · Baskı: champagne / gold
 
 ## Baskı notları
 
-- URL yazımı: `thalvo.vercel.app` (https yok)
+- URL yazımı: `thalvo.org` (https yok)
 - Göğüs crest: ~7–8 cm
 - Sırt (02): ~18–22 cm yükseklik
 - Kol URL (04): ~6–8 cm genişlik, yatay
