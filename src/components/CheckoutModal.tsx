@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { CreditCard, Loader2, ShieldCheck, Lock, CheckCircle2, X, AlertTriangle, WifiOff, FlaskConical } from "lucide-react";
 import { formatTL } from "@/lib/filter";
 import { useOnlineStatus } from "@/lib/pwa";
+import { caretAfterGrouping, digitsOnly, groupCard, groupExpiry } from "@/lib/digit-format";
 
 interface Props {
   open: boolean;
@@ -55,7 +56,7 @@ export function CheckoutModal({ open, amount, title, subtitle, onClose, onPaid, 
   if (!open) return null;
 
   const validate = (): string | null => {
-    const digits = card.replace(/\s/g, "");
+    const digits = card.replace(/\D/g, "");
     if (!name.trim()) return t("checkout.field_required");
     if (digits.length < 13) return t("checkout.field_required");
     if (!/^\d{2}\/\d{2}$/.test(exp.trim())) return t("checkout.field_required");
@@ -155,7 +156,13 @@ export function CheckoutModal({ open, amount, title, subtitle, onClose, onPaid, 
                 </div>
                 <input
                   value={card}
-                  onChange={(e) => setCard(e.target.value)}
+                  onChange={(e) => {
+                    const el = e.target;
+                    const next = groupCard(el.value);
+                    setCard(next);
+                    const caret = caretAfterGrouping(el.value, next, el.selectionStart);
+                    requestAnimationFrame(() => el.setSelectionRange(caret, caret));
+                  }}
                   placeholder="4242 4242 4242 4242"
                   autoComplete="off"
                   inputMode="numeric"
@@ -179,18 +186,25 @@ export function CheckoutModal({ open, amount, title, subtitle, onClose, onPaid, 
                   <p className="text-xs font-semibold text-muted-foreground">{t("checkout.exp")}</p>
                   <input
                     value={exp}
-                    onChange={(e) => setExp(e.target.value)}
+                    onChange={(e) => {
+                      const el = e.target;
+                      const next = groupExpiry(el.value);
+                      setExp(next);
+                      const caret = caretAfterGrouping(el.value, next, el.selectionStart);
+                      requestAnimationFrame(() => el.setSelectionRange(caret, caret));
+                    }}
                     placeholder="12/28"
                     autoComplete="off"
+                    inputMode="numeric"
                     maxLength={5}
-                    className="mt-1 w-full bg-transparent text-lg font-semibold focus:outline-none placeholder:text-white/20"
+                    className="mt-1 w-full bg-transparent text-lg font-semibold tabular-nums focus:outline-none placeholder:text-white/20"
                   />
                 </div>
                 <div className="rounded-xl border border-border p-3 bg-muted/30">
                   <p className="text-xs font-semibold text-muted-foreground">{t("checkout.cvc")}</p>
                   <input
                     value={cvc}
-                    onChange={(e) => setCvc(e.target.value)}
+                    onChange={(e) => setCvc(digitsOnly(e.target.value, 4))}
                     placeholder="123"
                     autoComplete="off"
                     maxLength={4}

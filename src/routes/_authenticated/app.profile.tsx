@@ -19,6 +19,7 @@ import { InstallAppButton } from "@/components/pwa/InstallAppButton";
 import { AboutThalvo } from "@/components/AboutThalvo";
 import { sanitizeMultiline, sanitizePlainText } from "@/lib/sanitize";
 import { ENGINE_BRANDS, FUEL_IDS, VESSEL_TYPES, joinEngine } from "@/lib/marine-catalog";
+import { parseGrouped } from "@/lib/digit-format";
 import { VesselSpecForm, fuelLabel, vesselCategoryLabel, vesselTypeLabel, type VesselSpec } from "@/components/passport/VesselSpecForm";
 
 
@@ -269,7 +270,7 @@ function ClientProfile({ profile }: { profile: Profile }) {
       name: vesselName,
       category: newVessel.category,
       vessel_type: newVessel.vesselType,
-      length_m: newVessel.lengthM ? Number(newVessel.lengthM) : null,
+      length_m: newVessel.lengthM ? parseGrouped(newVessel.lengthM) : null,
       engine_model: joinEngine(newVessel.engineBrand, sanitizePlainText(newVessel.engineModel, 80) ?? ""),
       fuel_type: newVessel.fuel,
     });

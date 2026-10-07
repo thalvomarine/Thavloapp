@@ -1,25 +1,41 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import tr from "./locales/tr.json";
-import en from "./locales/en.json";
-import el from "./locales/el.json";
 
 const STORAGE_KEY = "thalvo-lang";
 
 export type AppLng = "tr" | "en" | "el";
 
 /**
- * Bundled catalogs — imported as JSON so Capacitor's `capacitor://` /
- * `file://` WebView never has to fetch `/locales/*.json` at runtime.
+ * Turkish is in the first bundle. English and Greek load on demand, still
+ * from the app package, so a Capacitor WebView does not fetch `/locales`.
  * `initAsync: false` keeps `t()` usable on the first render; the previous
  * `void i18n.init()` + LanguageDetector path left keys like
  * `public.hero_headline` on screen until a later tick.
  */
 const resources = {
   tr: { translation: tr },
-  en: { translation: en },
-  el: { translation: el },
 } as const;
+
+const localeLoaders: Record<Exclude<AppLng, "tr">, () => Promise<{ default: typeof tr }>> = {
+  en: () => import("./locales/en.json"),
+  el: () => import("./locales/el.json"),
+};
+
+const localeJobs = new Map<AppLng, Promise<void>>();
+
+/** English and Greek stay out of the first download. Turkish paints immediately. */
+export function ensureLanguage(lng: AppLng): Promise<void> {
+  if (lng === "tr" || i18n.hasResourceBundle(lng, "translation")) return Promise.resolve();
+  let job = localeJobs.get(lng);
+  if (!job) {
+    job = localeLoaders[lng]().then((mod) => {
+      i18n.addResourceBundle(lng, "translation", mod.default, true, true);
+    });
+    localeJobs.set(lng, job);
+  }
+  return job;
+}
 
 export function normalizeAppLng(raw: string | null | undefined): AppLng {
   const lng = (raw ?? "").toLowerCase();
@@ -80,9 +96,8 @@ i18n.on("languageChanged", (lng) => {
 export function applyPreferredLanguage() {
   persistLanguage = true;
   const stored = readStoredLng();
-  if (stored && stored !== normalizeAppLng(i18n.resolvedLanguage)) {
-    void i18n.changeLanguage(stored);
-  }
+  if (!stored || stored === normalizeAppLng(i18n.resolvedLanguage)) return;
+  void ensureLanguage(stored).then(() => i18n.changeLanguage(stored));
 }
 
 export default i18n;

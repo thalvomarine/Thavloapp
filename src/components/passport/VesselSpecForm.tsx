@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { caretAfterGrouping, groupMeasure } from "@/lib/digit-format";
 import {
   ENGINE_BRANDS,
   FUEL_IDS,
@@ -75,7 +76,13 @@ export function VesselSpecForm({
             className={fieldClass}
             inputMode="decimal"
             value={value.lengthM}
-            onChange={(e) => patch({ lengthM: e.target.value })}
+            onChange={(e) => {
+              const el = e.target;
+              const next = groupMeasure(el.value);
+              patch({ lengthM: next });
+              const caret = caretAfterGrouping(el.value, next, el.selectionStart);
+              requestAnimationFrame(() => el.setSelectionRange(caret, caret));
+            }}
           />
         </label>
         <label className="block">

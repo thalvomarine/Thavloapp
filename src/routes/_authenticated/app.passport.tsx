@@ -14,6 +14,7 @@ import { DocumentVaultPanel } from "@/components/passport/DocumentVaultPanel";
 import { VesselAiPanel } from "@/components/passport/VesselAiPanel";
 import { VesselSpecForm, fuelLabel, vesselCategoryLabel, vesselTypeLabel, type VesselSpec } from "@/components/passport/VesselSpecForm";
 import { ENGINE_BRANDS, joinEngine, splitEngine } from "@/lib/marine-catalog";
+import { groupMeasure, parseGrouped } from "@/lib/digit-format";
 import { toast } from "sonner";
 import { sanitizePlainText } from "@/lib/sanitize";
 import { GlassPanel } from "@/components/mission/GlassPanel";
@@ -91,7 +92,7 @@ function Passport({ userId }: { userId: string }) {
           name: v.name ?? "",
           category: (v.category || "yacht").toLowerCase(),
           vesselType: v.vessel_type || "motor_yacht",
-          lengthM: v.length_m ? String(v.length_m) : "",
+          lengthM: v.length_m ? groupMeasure(String(v.length_m)) : "",
           fuel: (v.fuel_type || "diesel").toLowerCase(),
           engineBrand: engine.brand,
           engineModel: engine.model,
@@ -156,7 +157,7 @@ function Passport({ userId }: { userId: string }) {
       name,
       category: spec.category,
       vessel_type: spec.vesselType,
-      length_m: spec.lengthM ? Number(spec.lengthM) : null,
+      length_m: spec.lengthM ? parseGrouped(spec.lengthM) : null,
       fuel_type: spec.fuel,
       engine_model: joinEngine(spec.engineBrand, spec.engineModel),
     };

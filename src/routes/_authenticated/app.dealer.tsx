@@ -15,6 +15,7 @@ import { Loader2, Plus, Store, X, Package } from "lucide-react";
 import { toast } from "sonner";
 import type { OrderStatus } from "@/lib/orders";
 import { ImageUploader } from "@/components/ImageUploader";
+import { caretAfterGrouping, groupThousands, parseGrouped } from "@/lib/digit-format";
 import { MARINA_PRESETS } from "@/lib/boat-listings";
 import {
   PART_BRANDS,
@@ -281,8 +282,8 @@ function PartForm({
   const [altSku, setAltSku] = useState("");
   const [condition, setCondition] = useState<PartCondition | "">(readPartCondition(existing?.compatibility));
   const [compat, setCompat] = useState(publicCompatibility(existing?.compatibility).join(", "));
-  const [price, setPrice] = useState(existing ? String(existing.price) : "");
-  const [stock, setStock] = useState(existing ? String(existing.stock) : "1");
+  const [price, setPrice] = useState(existing ? groupThousands(String(existing.price)) : "");
+  const [stock, setStock] = useState(existing ? groupThousands(String(existing.stock)) : "1");
   const [marina, setMarina] = useState(existing?.marina ?? defaultMarina ?? "");
   const [image, setImage] = useState(existing?.image_url ?? "");
   const [deliveryMode, setDeliveryMode] = useState<string>(DELIVERY_MODE_KEYS[1]);
@@ -301,7 +302,7 @@ function PartForm({
         const withCondition = withPartCondition(tags, condition);
         return withCondition.length ? withCondition : null;
       })(),
-      price: Number(price), stock: Number(stock) || 0,
+      price: parseGrouped(price), stock: parseGrouped(stock) || 0,
       marina: marina || null, image_url: image || null,
       supplier_id: userId, active: true,
     };
@@ -413,10 +414,22 @@ function PartForm({
           </Field>
           <div className="grid grid-cols-2 gap-2">
             <Field label={t("dealer.field_price")}>
-              <input inputMode="numeric" value={price} onChange={(e) => setPrice(e.target.value)} className={inputCls} />
+              <input inputMode="numeric" value={price} onChange={(e) => {
+                const el = e.target;
+                const next = groupThousands(el.value);
+                setPrice(next);
+                const caret = caretAfterGrouping(el.value, next, el.selectionStart);
+                requestAnimationFrame(() => el.setSelectionRange(caret, caret));
+              }} className={inputCls} />
             </Field>
             <Field label={t("dealer.field_stock")}>
-              <input inputMode="numeric" value={stock} onChange={(e) => setStock(e.target.value)} className={inputCls} />
+              <input inputMode="numeric" value={stock} onChange={(e) => {
+                const el = e.target;
+                const next = groupThousands(el.value);
+                setStock(next);
+                const caret = caretAfterGrouping(el.value, next, el.selectionStart);
+                requestAnimationFrame(() => el.setSelectionRange(caret, caret));
+              }} className={inputCls} />
             </Field>
           </div>
           <Field label={t("dealer.field_marina")}>

@@ -17,6 +17,7 @@ import {
   formatDegrees,
   type MarineZoneKind,
 } from "@/lib/marine-data";
+import { caretAfterGrouping, groupMeasure, parseGrouped } from "@/lib/digit-format";
 
 interface Props {
   open: boolean;
@@ -58,7 +59,7 @@ export function AdminZoneDialog({ open, onOpenChange, position, onSaved }: Props
       lat: position.lat,
       lng: position.lng,
       vhf_channel: vhf.trim() === "" ? null : vhf.trim().slice(0, 12),
-      depth_m: depth.trim() === "" ? null : Number(depth),
+      depth_m: depth.trim() === "" ? null : parseGrouped(depth),
       description: description.trim() === "" ? null : description.trim().slice(0, 600),
       created_by: auth.user?.id ?? null,
     });
@@ -143,7 +144,13 @@ export function AdminZoneDialog({ open, onOpenChange, position, onSaved }: Props
                 className={fieldClass}
                 inputMode="decimal"
                 value={depth}
-                onChange={(e) => setDepth(e.target.value)}
+                onChange={(e) => {
+                  const el = e.target;
+                  const next = groupMeasure(el.value);
+                  setDepth(next);
+                  const caret = caretAfterGrouping(el.value, next, el.selectionStart);
+                  requestAnimationFrame(() => el.setSelectionRange(caret, caret));
+                }}
               />
             </label>
           </div>

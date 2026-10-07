@@ -18,6 +18,7 @@ import { AiAdvisor, type AiRecommendation } from "@/components/mission/AiAdvisor
 import { openThalvoSos } from "@/lib/sos-bus";
 import { MissionStatusTrack, stageFromJob } from "@/components/mission/MissionStatusTrack";
 import { emitEvent } from "@/lib/events";
+import { caretAfterGrouping, groupThousands, parseGrouped } from "@/lib/digit-format";
 import { createRealtimeBuffer, runWhenIdle } from "@/lib/schedule";
 import { Anchor, Wrench, Radio, Gauge, Activity, Loader2, Send, ChevronRight } from "lucide-react";
 import { TrustMark } from "@/components/brand/ProductMarks";
@@ -476,8 +477,8 @@ function RequestCard({
     await supabase.from("job_offers").insert({
       job_id: request.id,
       provider_id: user.id,
-      price: Number(price),
-      eta_minutes: Number(eta),
+      price: parseGrouped(price),
+      eta_minutes: parseGrouped(eta),
       note: notePayload || null,
     });
     // M7: best-effort — server should emit once offer submission moves into an RPC.
@@ -485,7 +486,7 @@ function RequestCard({
       type: "offer.submitted",
       subject_type: "offer",
       subject_id: request.id,
-      metadata: { job_id: request.id, price: Number(price), eta_minutes: Number(eta) },
+      metadata: { job_id: request.id, price: parseGrouped(price), eta_minutes: parseGrouped(eta) },
     });
     setBusy(false);
     setOpen(false);
@@ -543,14 +544,26 @@ function RequestCard({
           <div className="grid grid-cols-2 gap-2">
             <input
               value={price}
-              onChange={(e) => setPrice(e.target.value)}
+              onChange={(e) => {
+                const el = e.target;
+                const next = groupThousands(el.value);
+                setPrice(next);
+                const caret = caretAfterGrouping(el.value, next, el.selectionStart);
+                requestAnimationFrame(() => el.setSelectionRange(caret, caret));
+              }}
               inputMode="numeric"
               placeholder={t("provider.your_price")}
               className="h-10 rounded-xl border border-white/15 bg-white/5 text-white placeholder:text-white/40 px-3 text-sm outline-none focus:border-sky-400/60"
             />
             <input
               value={eta}
-              onChange={(e) => setEta(e.target.value)}
+              onChange={(e) => {
+                const el = e.target;
+                const next = groupThousands(el.value);
+                setEta(next);
+                const caret = caretAfterGrouping(el.value, next, el.selectionStart);
+                requestAnimationFrame(() => el.setSelectionRange(caret, caret));
+              }}
               inputMode="numeric"
               placeholder={t("provider.your_eta")}
               className="h-10 rounded-xl border border-white/15 bg-white/5 text-white placeholder:text-white/40 px-3 text-sm outline-none focus:border-sky-400/60"

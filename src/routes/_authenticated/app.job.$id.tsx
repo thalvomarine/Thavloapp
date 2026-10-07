@@ -9,6 +9,7 @@ import { CheckoutModal } from "@/components/CheckoutModal";
 import { JobChat } from "@/components/JobChat";
 import { useProfile, useSessionUser } from "@/lib/session";
 import { formatTL, harborDistanceKm, kmToNm } from "@/lib/filter";
+import { caretAfterGrouping, groupThousands, parseGrouped } from "@/lib/digit-format";
 import {
   AlertOctagon,
   Anchor,
@@ -884,7 +885,7 @@ function ProviderJob({ job, meId }: { job: Job; meId: string }) {
     await supabase.rpc("add_extra_part", {
       _job_id: job.id,
       _name: sanitizePlainText(partName, 200),
-      _price: Number(partPrice),
+      _price: parseGrouped(partPrice),
       _photo: partPhoto || "https://images.unsplash.com/photo-1581092160607-ee22b1a3f4a1?w=400",
       _source: sanitizePlainText(source, 120),
     });
@@ -1014,7 +1015,7 @@ function ProviderJob({ job, meId }: { job: Job; meId: string }) {
             <CatalogPicker
               onPick={(p) => {
                 setPartName(p.name);
-                setPartPrice(String(p.price));
+                setPartPrice(groupThousands(String(p.price)));
                 setPartPhoto(p.image_url ?? "");
                 setSource(`THALVO Catalog · ${p.brand}`);
               }}
@@ -1027,7 +1028,13 @@ function ProviderJob({ job, meId }: { job: Job; meId: string }) {
             />
             <input
               value={partPrice}
-              onChange={(e) => setPartPrice(e.target.value)}
+              onChange={(e) => {
+                const el = e.target;
+                const next = groupThousands(el.value);
+                setPartPrice(next);
+                const caret = caretAfterGrouping(el.value, next, el.selectionStart);
+                requestAnimationFrame(() => el.setSelectionRange(caret, caret));
+              }}
               inputMode="numeric"
               placeholder={t("provider.part_price")}
               className="w-full h-11 rounded-xl border border-input bg-background px-3 text-sm"

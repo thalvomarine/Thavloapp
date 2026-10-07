@@ -5,7 +5,7 @@ import {
   Anchor, Bell, Camera, Check, ChevronLeft, ChevronRight, Compass,
   Globe2, MapPin, Ship, Sparkles, Store, Wrench, X,
 } from "lucide-react";
-import i18n, { normalizeAppLng, type AppLng } from "@/i18n";
+import i18n, { ensureLanguage, normalizeAppLng, type AppLng } from "@/i18n";
 import type { Profile } from "@/lib/session";
 import {
   RescueMark, PassportMark, MarketplaceMark, ControlTowerMark,
@@ -67,7 +67,7 @@ export function OnboardingOverlay({ profile, isAdmin, onComplete }: Props) {
 
   const changeLang = (l: AppLng) => {
     setLang(l);
-    void i18n.changeLanguage(l);
+    void ensureLanguage(l).then(() => i18n.changeLanguage(l));
     try { window.localStorage.setItem("thalvo-lang", l); } catch { /* noop */ }
   };
 

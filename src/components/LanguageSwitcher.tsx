@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Globe } from "lucide-react";
-import { normalizeAppLng, type AppLng } from "@/i18n";
+import { ensureLanguage, normalizeAppLng, type AppLng } from "@/i18n";
 
 const OPTIONS: Array<{ value: AppLng; label: string }> = [
   { value: "tr", label: "Türkçe" },
@@ -21,7 +21,10 @@ export function LanguageSwitcher({ tone = "light" }: { tone?: "light" | "dark" }
       <select
         aria-label="Language"
         value={current}
-        onChange={(e) => void i18n.changeLanguage(e.target.value)}
+        onChange={(e) => {
+          const next = normalizeAppLng(e.target.value);
+          void ensureLanguage(next).then(() => i18n.changeLanguage(next));
+        }}
         className="bg-transparent focus:outline-none pr-1 cursor-pointer"
       >
         {OPTIONS.map((opt) => (

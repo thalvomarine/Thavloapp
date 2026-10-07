@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ChangeEvent } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { ChevronLeft, ChevronRight, Plus, X } from "lucide-react";
@@ -24,6 +24,7 @@ import {
   withListingType,
 } from "@/lib/marine-catalog";
 import { sanitizeMultiline, sanitizePhone, sanitizePlainText } from "@/lib/sanitize";
+import { caretAfterGrouping, groupMeasure, groupThousands, parseGrouped } from "@/lib/digit-format";
 import { ImageUploader } from "@/components/ImageUploader";
 
 interface Props {
@@ -98,29 +99,41 @@ function formFromListing(boat: BoatListing): FormState {
   return {
     title: boat.title,
     listingClass: readListingType(boat.equipment) ?? ({ sail: "sailing", motor: "motor_yacht", catamaran: "catamaran", rib: "rib" }[boat.hull]),
-    price: String(boat.price),
+    price: groupThousands(String(boat.price)),
     currency: boat.currency,
     marina: boat.marina,
     year: String(boat.year),
-    loaM: String(boat.loaM),
-    beamM: boat.beamM ? String(boat.beamM) : "",
-    draftM: boat.draftM ? String(boat.draftM) : "",
-    cabins: String(boat.cabins),
-    berths: String(boat.berths),
+    loaM: groupMeasure(String(boat.loaM)),
+    beamM: boat.beamM ? groupMeasure(String(boat.beamM)) : "",
+    draftM: boat.draftM ? groupMeasure(String(boat.draftM)) : "",
+    cabins: groupThousands(String(boat.cabins)),
+    berths: groupThousands(String(boat.berths)),
     flag: boat.flag,
     engineBrand: splitEngine(boat.engineBrand).brand,
     engineModel: splitEngine(boat.engineBrand).model,
-    engineHp: boat.engineHp ? String(boat.engineHp) : "",
-    engineHours: String(boat.engineHours),
+    engineHp: boat.engineHp ? groupThousands(String(boat.engineHp)) : "",
+    engineHours: groupThousands(String(boat.engineHours)),
     fuel: boat.fuel,
-    cruiseKn: boat.cruiseKn ? String(boat.cruiseKn) : "",
-    fuelTankL: boat.fuelTankL != null ? String(boat.fuelTankL) : "",
-    waterTankL: boat.waterTankL != null ? String(boat.waterTankL) : "",
+    cruiseKn: boat.cruiseKn ? groupMeasure(String(boat.cruiseKn)) : "",
+    fuelTankL: boat.fuelTankL != null ? groupThousands(String(boat.fuelTankL)) : "",
+    waterTankL: boat.waterTankL != null ? groupThousands(String(boat.waterTankL)) : "",
     equipment: publicEquipment(boat.equipment),
     description: boat.description,
     sellerPhone: boat.sellerPhone,
     photos: boat.photos ?? [],
   };
+}
+
+function writeGrouped(
+  event: ChangeEvent<HTMLInputElement>,
+  format: (value: string) => string,
+  apply: (value: string) => void,
+) {
+  const el = event.target;
+  const next = format(el.value);
+  apply(next);
+  const caret = caretAfterGrouping(el.value, next, el.selectionStart);
+  requestAnimationFrame(() => el.setSelectionRange(caret, caret));
 }
 
 export function CreateBoatListingSheet({ open, onClose, sellerName, listingCount, ownerId, editing, onSaved }: Props) {
@@ -152,7 +165,7 @@ export function CreateBoatListingSheet({ open, onClose, sellerName, listingCount
         setError(t("boats.form_need_title"));
         return false;
       }
-      if (!(Number(form.price) > 0)) {
+      if (!(parseGrouped(form.price) > 0)) {
         setError(t("boats.form_need_price"));
         return false;
       }
@@ -164,7 +177,7 @@ export function CreateBoatListingSheet({ open, onClose, sellerName, listingCount
         setError(t("boats.form_need_year"));
         return false;
       }
-      if (!(Number(form.loaM) > 0)) {
+      if (!(parseGrouped(form.loaM) > 0)) {
         setError(t("boats.form_need_loa"));
         return false;
       }
@@ -200,32 +213,32 @@ export function CreateBoatListingSheet({ open, onClose, sellerName, listingCount
     setError(null);
     if (!validateStep(3) || saving) return;
     const marina = marinaCoords(form.marina);
-    const cabins = Math.max(0, Math.round(Number(form.cabins) || 0));
+    const cabins = Math.max(0, Math.round(parseGrouped(form.cabins) || 0));
     const listing: BoatListing = {
       id: editing?.id ?? crypto.randomUUID(),
       title: sanitizePlainText(form.title, 80),
       year: Math.round(Number(form.year)),
-      price: Math.round(Number(form.price)),
+      price: Math.round(parseGrouped(form.price)),
       currency: form.currency,
       marina: form.marina,
       region: marina.region,
       hull: hullForType(form.listingClass),
-      loaM: Number(form.loaM),
-      beamM: Number(form.beamM) || 0,
-      draftM: Number(form.draftM) || 0,
+      loaM: parseGrouped(form.loaM),
+      beamM: parseGrouped(form.beamM) || 0,
+      draftM: parseGrouped(form.draftM) || 0,
       engineBrand: sanitizePlainText(
         [form.engineBrand === "other" ? "" : form.engineBrand, form.engineModel].filter(Boolean).join(" "),
         80,
       ),
-      engineHp: Math.round(Number(form.engineHp) || 0),
-      engineHours: Math.round(Number(form.engineHours) || 0),
+      engineHp: Math.round(parseGrouped(form.engineHp) || 0),
+      engineHours: Math.round(parseGrouped(form.engineHours) || 0),
       fuel: form.fuel,
       flag: sanitizePlainText(form.flag, 40) || "Türkiye",
       cabins,
-      berths: Math.max(cabins, Math.round(Number(form.berths) || cabins)),
-      cruiseKn: Number(form.cruiseKn) || 0,
-      fuelTankL: form.fuelTankL ? Number(form.fuelTankL) : null,
-      waterTankL: form.waterTankL ? Number(form.waterTankL) : null,
+      berths: Math.max(cabins, Math.round(parseGrouped(form.berths) || cabins)),
+      cruiseKn: parseGrouped(form.cruiseKn) || 0,
+      fuelTankL: form.fuelTankL ? parseGrouped(form.fuelTankL) : null,
+      waterTankL: form.waterTankL ? parseGrouped(form.waterTankL) : null,
       lat: marina.lat,
       lng: marina.lng,
       equipment: withListingType(form.equipment, form.listingClass),
@@ -374,7 +387,7 @@ export function CreateBoatListingSheet({ open, onClose, sellerName, listingCount
                     className={fieldClass}
                     inputMode="decimal"
                     value={form.price}
-                    onChange={(e) => patch({ price: e.target.value })}
+                    onChange={(e) => writeGrouped(e, groupThousands, (price) => patch({ price }))}
                     placeholder="285000"
                   />
                 </Field>
@@ -414,28 +427,28 @@ export function CreateBoatListingSheet({ open, onClose, sellerName, listingCount
                   <input className={fieldClass} value={form.flag} onChange={(e) => patch({ flag: e.target.value })} placeholder="TR / Delaware" />
                 </Field>
                 <Field label={`${t("boats.loa")} (m)`}>
-                  <input className={fieldClass} inputMode="decimal" value={form.loaM} onChange={(e) => patch({ loaM: e.target.value })} />
+                  <input className={fieldClass} inputMode="decimal" value={form.loaM} onChange={(e) => writeGrouped(e, groupMeasure, (loaM) => patch({ loaM }))} />
                 </Field>
                 <Field label={`${t("boats.beam")} (m)`}>
-                  <input className={fieldClass} inputMode="decimal" value={form.beamM} onChange={(e) => patch({ beamM: e.target.value })} />
+                  <input className={fieldClass} inputMode="decimal" value={form.beamM} onChange={(e) => writeGrouped(e, groupMeasure, (beamM) => patch({ beamM }))} />
                 </Field>
                 <Field label={`${t("boats.draft")} (m)`}>
-                  <input className={fieldClass} inputMode="decimal" value={form.draftM} onChange={(e) => patch({ draftM: e.target.value })} />
+                  <input className={fieldClass} inputMode="decimal" value={form.draftM} onChange={(e) => writeGrouped(e, groupMeasure, (draftM) => patch({ draftM }))} />
                 </Field>
                 <Field label={t("boats.cabins")}>
-                  <input className={fieldClass} inputMode="numeric" value={form.cabins} onChange={(e) => patch({ cabins: e.target.value })} />
+                  <input className={fieldClass} inputMode="numeric" value={form.cabins} onChange={(e) => writeGrouped(e, groupThousands, (cabins) => patch({ cabins }))} />
                 </Field>
                 <Field label={t("boats.berths")}>
-                  <input className={fieldClass} inputMode="numeric" value={form.berths} onChange={(e) => patch({ berths: e.target.value })} />
+                  <input className={fieldClass} inputMode="numeric" value={form.berths} onChange={(e) => writeGrouped(e, groupThousands, (berths) => patch({ berths }))} />
                 </Field>
                 <Field label={`${t("boats.cruise")} (kn)`}>
-                  <input className={fieldClass} inputMode="decimal" value={form.cruiseKn} onChange={(e) => patch({ cruiseKn: e.target.value })} />
+                  <input className={fieldClass} inputMode="decimal" value={form.cruiseKn} onChange={(e) => writeGrouped(e, groupMeasure, (cruiseKn) => patch({ cruiseKn }))} />
                 </Field>
                 <Field label={`${t("boats.fuel_tank")} (L)`}>
-                  <input className={fieldClass} inputMode="numeric" value={form.fuelTankL} onChange={(e) => patch({ fuelTankL: e.target.value })} />
+                  <input className={fieldClass} inputMode="numeric" value={form.fuelTankL} onChange={(e) => writeGrouped(e, groupThousands, (fuelTankL) => patch({ fuelTankL }))} />
                 </Field>
                 <Field label={`${t("boats.water_tank")} (L)`}>
-                  <input className={fieldClass} inputMode="numeric" value={form.waterTankL} onChange={(e) => patch({ waterTankL: e.target.value })} />
+                  <input className={fieldClass} inputMode="numeric" value={form.waterTankL} onChange={(e) => writeGrouped(e, groupThousands, (waterTankL) => patch({ waterTankL }))} />
                 </Field>
               </div>
             </>
@@ -465,10 +478,10 @@ export function CreateBoatListingSheet({ open, onClose, sellerName, listingCount
               </Field>
               <div className="grid grid-cols-2 gap-2">
                 <Field label={t("boats.engine_hp")}>
-                  <input className={fieldClass} inputMode="numeric" value={form.engineHp} onChange={(e) => patch({ engineHp: e.target.value })} />
+                  <input className={fieldClass} inputMode="numeric" value={form.engineHp} onChange={(e) => writeGrouped(e, groupThousands, (engineHp) => patch({ engineHp }))} />
                 </Field>
                 <Field label={t("boats.hours")}>
-                  <input className={fieldClass} inputMode="numeric" value={form.engineHours} onChange={(e) => patch({ engineHours: e.target.value })} />
+                  <input className={fieldClass} inputMode="numeric" value={form.engineHours} onChange={(e) => writeGrouped(e, groupThousands, (engineHours) => patch({ engineHours }))} />
                 </Field>
               </div>
               <Field label={t("boats.fuel")}>
