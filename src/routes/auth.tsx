@@ -1,5 +1,5 @@
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,18 +8,27 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { Loader2, Ship, Wrench, Anchor, Store, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { getValidUser } from "@/lib/auth-guard";
 import { sanitizeNext } from "@/lib/nav";
-import { markSignupWelcome } from "@/lib/signup-welcome";
+import {
+  armEmailConfirmedNotice,
+  clearEmailUnconfirmed,
+  confirmationRedirect,
+  isEmailNotConfirmedMessage,
+  markEmailUnconfirmed,
+  markSignupWelcome,
+} from "@/lib/signup-welcome";
 import { normalizeAppLng } from "@/i18n";
 import { SeaBackdrop } from "@/components/brand/SeaBackdrop";
 import { ENGINE_BRANDS } from "@/lib/marine-catalog";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
-  validateSearch: (s: Record<string, unknown>): { next?: string } => {
+  validateSearch: (s: Record<string, unknown>): { next?: string; confirmed?: "1" } => {
     const n = sanitizeNext(s.next);
-    return n ? { next: n } : {};
+    const confirmed = s.confirmed === "1" || s.confirmed === 1 || s.confirmed === true;
+    return { ...(n ? { next: n } : {}), ...(confirmed ? { confirmed: "1" as const } : {}) };
   },
   beforeLoad: async ({ search }) => {
+    if (search.confirmed === "1") armEmailConfirmedNotice();
     const user = await getValidUser();
     if (!user) return;
     const next = sanitizeNext(search.next);
@@ -46,7 +55,7 @@ function isInvalidCredentialsError(message: string): boolean {
 function AuthPage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { next } = Route.useSearch();
+  const { next, confirmed } = Route.useSearch();
   const goNext = () => (next ? navigate({ href: next }) : navigate({ to: "/app" }));
   const [mode, setMode] = useState<"signin" | "signup">("signup");
   const [role, setRole] = useState<"Client" | "Provider" | "Supplier">("Client");
@@ -67,6 +76,18 @@ function AuthPage() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (confirmed !== "1") return;
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!session) return;
+      if (event !== "SIGNED_IN" && event !== "INITIAL_SESSION") return;
+      clearEmailUnconfirmed();
+      armEmailConfirmedNotice();
+      goNext();
+    });
+    return () => sub.subscription.unsubscribe();
+  }, [confirmed]);
+
   const toggleBrand = (b: string) =>
     setBrands((prev) => (prev.includes(b) ? prev.filter((x) => x !== b) : [...prev, b]));
 
@@ -80,6 +101,7 @@ function AuthPage() {
           email,
           password,
           options: {
+            emailRedirectTo: confirmationRedirect(),
             data: {
               full_name: fullName,
               boat_name: role === "Client" ? boatName : null,
@@ -96,8 +118,15 @@ function AuthPage() {
         // Prefer the session from signUp; otherwise open the cockpit with password.
         if (!data.session) {
           const { error: siErr } = await supabase.auth.signInWithPassword({ email, password });
+          if (siErr && isEmailNotConfirmedMessage(siErr.message)) {
+            markEmailUnconfirmed();
+            toast.warning(t("auth.email_unconfirmed_banner"), { duration: 8000 });
+            navigate({ to: "/" });
+            return;
+          }
           if (siErr) throw siErr;
         }
+        clearEmailUnconfirmed();
 
         const userId = data.user?.id ?? (await supabase.auth.getUser()).data.user?.id;
         if (role === "Provider" && userId) {
@@ -132,7 +161,14 @@ function AuthPage() {
         goNext();
       }
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : "Unknown error");
+      const message = e instanceof Error ? e.message : "Unknown error";
+      if (isEmailNotConfirmedMessage(message)) {
+        markEmailUnconfirmed();
+        toast.warning(t("auth.email_unconfirmed_banner"), { duration: 8000 });
+        navigate({ to: "/" });
+        return;
+      }
+      setErr(message);
     } finally {
       setBusy(false);
     }
@@ -192,7 +228,7 @@ function AuthPage() {
                 <button
                   type="button"
                   onClick={() => setMode("signin")}
-                  className="w-full pt-2 text-xs text-white/50 hover:text-white"
+                  className="w-full pt-3 text-[15px] font-semibold tracking-wide text-[#F5B942] hover:text-amber-200"
                 >
                   {t("auth.have_account")}
                 </button>
@@ -421,7 +457,7 @@ function AuthPage() {
               <button
                 type="button"
                 onClick={() => setMode(mode === "signup" ? "signin" : "signup")}
-                className="w-full text-xs text-muted-foreground hover:text-foreground"
+                className="w-full pt-1 text-[15px] font-semibold tracking-wide text-[#F5B942] hover:text-amber-200"
               >
                 {mode === "signup" ? t("auth.have_account") : t("auth.no_account")}
               </button>

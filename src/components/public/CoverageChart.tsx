@@ -44,12 +44,67 @@ const CLEAR_TILE =
   "data:image/svg+xml;charset=UTF-8," +
   encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"/>');
 
-function FlyTo({ lat, lng, zoom }: { lat: number; lng: number; zoom: number }) {
+function GoTo({ lat, lng, zoom }: { lat: number; lng: number; zoom: number }) {
   const map = useMap();
   useEffect(() => {
-    map.flyTo([lat, lng], zoom, { duration: 0.6 });
+    const mobile = window.matchMedia("(max-width: 767px)").matches;
+    if (mobile) map.setView([lat, lng], zoom, { animate: false });
+    else map.flyTo([lat, lng], zoom, { duration: 0.45 });
   }, [map, lat, lng, zoom]);
   return null;
+}
+
+function FitFrame() {
+  const map = useMap();
+  useEffect(() => {
+    const kick = () => map.invalidateSize({ animate: false });
+    kick();
+    const frame = requestAnimationFrame(kick);
+    const later = window.setTimeout(kick, 300);
+    window.addEventListener("resize", kick);
+    window.visualViewport?.addEventListener("resize", kick);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.clearTimeout(later);
+      window.removeEventListener("resize", kick);
+      window.visualViewport?.removeEventListener("resize", kick);
+    };
+  }, [map]);
+  return null;
+}
+
+function Seamarks() {
+  const map = useMap();
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    const mobile = window.matchMedia("(max-width: 767px)").matches;
+    if (!mobile) {
+      setOn(true);
+      return;
+    }
+    const enable = () => {
+      if (map.getZoom() >= 13) setOn(true);
+    };
+    map.on("zoomend", enable);
+    const later = window.setTimeout(enable, 1500);
+    return () => {
+      map.off("zoomend", enable);
+      window.clearTimeout(later);
+    };
+  }, [map]);
+  if (!on) return null;
+  return (
+    <TileLayer
+      url={MARINE_SEAMARK_TILE_URL}
+      minZoom={4}
+      maxZoom={18}
+      opacity={0.9}
+      errorTileUrl={CLEAR_TILE}
+      updateWhenIdle
+      updateWhenZooming={false}
+      keepBuffer={1}
+    />
+  );
 }
 
 export function CoverageChart({
@@ -120,15 +175,19 @@ export function CoverageChart({
         className={fill ? "thalvo-ecdis thalvo-chart-frame" : "thalvo-ecdis"}
         style={{ width: "100%", height: "100%", background: "#0b132b" }}
       >
+        <FitFrame />
         <TileLayer
           url={MARINE_DARK_TILE_URL}
           minZoom={4}
           maxZoom={18}
           maxNativeZoom={MARINE_DARK_TILE_MAX_NATIVE_ZOOM}
           errorTileUrl={VOID_TILE}
+          updateWhenIdle
+          updateWhenZooming={false}
+          keepBuffer={2}
         />
-        <TileLayer url={MARINE_SEAMARK_TILE_URL} minZoom={4} maxZoom={18} opacity={0.9} errorTileUrl={CLEAR_TILE} />
-        <FlyTo
+        <Seamarks />
+        <GoTo
           lat={own?.lat ?? center.lat}
           lng={own?.lng ?? center.lng}
           zoom={own ? 14 : center.zoom}

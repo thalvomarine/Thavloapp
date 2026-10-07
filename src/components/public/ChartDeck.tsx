@@ -9,6 +9,7 @@ import { formatDm, formatMoney } from "@/lib/formatters";
 import { getFix } from "@/lib/geolocation";
 import { sanitizeNext } from "@/lib/nav";
 import { Map as MapIcon, ShoppingBag, Wrench, X } from "lucide-react";
+import { clearEmailUnconfirmed, isEmailUnconfirmed } from "@/lib/signup-welcome";
 
 export type ChartPanel = "parts" | "services";
 
@@ -36,6 +37,7 @@ export function ChartDeck({ panel }: { panel?: ChartPanel }) {
   const [own, setOwn] = useState<{ lat: number; lng: number } | null>(null);
   const [locating, setLocating] = useState(false);
   const [locError, setLocError] = useState<string | null>(null);
+  const [unconfirmed, setUnconfirmed] = useState(isEmailUnconfirmed);
   const fix = own ?? COVERAGE_BAYS[bay];
   const position = formatDm(fix.lat, fix.lng);
 
@@ -52,26 +54,26 @@ export function ChartDeck({ panel }: { panel?: ChartPanel }) {
   };
 
   return (
-    <div className="thalvo-dark flex h-dvh w-full flex-col overflow-hidden bg-[#06101c] text-white">
-      <header className="z-[1100] shrink-0 border-b border-white/[0.08] bg-[#071422] pt-[env(safe-area-inset-top)]">
-        <div className="flex h-11 items-center gap-3 px-3">
-          <Link to="/" search={{ panel: undefined }} className="flex shrink-0 items-center gap-2">
+    <div className="thalvo-dark flex h-svh max-h-svh w-full max-w-[100vw] flex-col overflow-hidden bg-[#06101c] text-white">
+      <header className="z-[1100] shrink-0 overflow-hidden border-b border-white/[0.08] bg-[#071422] pt-[env(safe-area-inset-top)]">
+        <div className="flex h-11 min-w-0 items-center gap-2 px-2">
+          <Link to="/" search={{ panel: undefined }} className="flex min-w-0 shrink items-center gap-2">
             <Wordmark size="sm" className="text-white" decorative />
-            <span className="thalvo-display text-[14px] tracking-[0.18em] text-white">THALVO</span>
+            <span className="thalvo-display hidden text-[14px] tracking-[0.18em] text-white min-[420px]:inline">THALVO</span>
           </Link>
-          <p className="hidden truncate text-[11px] text-white/40 sm:block">{t("public.panel_kicker")}</p>
-          <p className="thalvo-num hidden text-[12px] text-cyan-100/90 md:block">{position}</p>
-          <div className="ml-auto flex items-center gap-2">
+          <p className="hidden min-w-0 truncate text-[11px] text-white/40 sm:block">{t("public.panel_kicker")}</p>
+          <p className="thalvo-num hidden min-w-0 truncate text-[12px] text-cyan-100/90 md:block">{position}</p>
+          <div className="ml-auto flex shrink-0 items-center gap-1.5">
             <LanguageSwitcher tone="dark" />
             <Link
               to="/auth"
-              className="inline-flex h-8 items-center rounded-md bg-[#F5B942] px-3 text-[12px] font-semibold text-[#1A1406]"
+              className="inline-flex h-8 max-w-[6.5rem] items-center truncate rounded-md bg-[#F5B942] px-2.5 text-[12px] font-semibold text-[#1A1406]"
             >
               {t("auth.sign_in")}
             </Link>
           </div>
         </div>
-        <div className="flex items-end gap-1 px-2">
+        <div className="flex min-w-0 items-end gap-1 overflow-x-auto px-2">
           {BAYS.map((id) => {
             const on = bay === id;
             return (
@@ -83,7 +85,7 @@ export function ChartDeck({ panel }: { panel?: ChartPanel }) {
                   setBay(id);
                 }}
                 className={
-                  "h-9 border-b-2 px-3 text-[13px] font-semibold " +
+                  "h-9 shrink-0 border-b-2 px-3 text-[13px] font-semibold " +
                   (on ? "border-cyan-300 text-white" : "border-transparent text-white/45")
                 }
               >
@@ -91,11 +93,27 @@ export function ChartDeck({ panel }: { panel?: ChartPanel }) {
               </button>
             );
           })}
-          <p className="thalvo-num mb-2 ml-auto pr-2 text-[11px] text-cyan-100/80 md:hidden">{position}</p>
+          <p className="thalvo-num mb-2 ml-auto shrink-0 pr-2 text-[11px] text-cyan-100/80 md:hidden">{position}</p>
         </div>
       </header>
 
-      <div className="relative min-h-0 flex-1">
+      <div className="relative min-h-0 min-w-0 flex-1 overflow-hidden">
+        {unconfirmed && (
+          <div className="absolute inset-x-2 top-2 z-[1200] flex items-start gap-2 rounded-xl border border-amber-300/50 bg-[#3a2a08]/95 px-3 py-2 text-[13px] font-medium leading-snug text-amber-50">
+            <p className="min-w-0 flex-1">{t("auth.email_unconfirmed_banner")}</p>
+            <button
+              type="button"
+              aria-label={t("common.close")}
+              onClick={() => {
+                clearEmailUnconfirmed();
+                setUnconfirmed(false);
+              }}
+              className="grid size-7 shrink-0 place-items-center rounded-full text-amber-100"
+            >
+              <X className="size-3.5" />
+            </button>
+          </div>
+        )}
         <CoverageChart bay={bay} fill own={own} />
         {!panel && (
           <button
@@ -103,7 +121,10 @@ export function ChartDeck({ panel }: { panel?: ChartPanel }) {
             onClick={() => void locate()}
             disabled={locating}
             aria-label={t("chart.locate_me")}
-            className="absolute right-3 top-3 z-[1100] grid size-11 place-items-center rounded-full border border-white/15 bg-[#071422]/92 text-[12px] text-cyan-100 disabled:opacity-60"
+            className={
+              "absolute right-3 z-[1100] grid size-11 place-items-center rounded-full border border-white/15 bg-[#071422]/92 text-[12px] text-cyan-100 disabled:opacity-60 " +
+              (unconfirmed ? "top-16" : "top-3")
+            }
           >
             {locating ? "…" : "◎"}
           </button>
@@ -115,10 +136,10 @@ export function ChartDeck({ panel }: { panel?: ChartPanel }) {
         )}
 
         {!panel && (
-          <div className="pointer-events-none absolute inset-x-3 bottom-3 z-[1100] flex items-end justify-between gap-3">
-            <ul className="flex flex-wrap gap-x-3 gap-y-1 rounded-md bg-[#071422]/88 px-2.5 py-1.5">
+          <div className="pointer-events-none absolute inset-x-2 bottom-2 z-[1100] flex max-w-full items-end justify-between gap-2">
+            <ul className="flex max-w-full flex-wrap gap-x-2 gap-y-1 rounded-md bg-[#071422]/88 px-2 py-1">
               {LEGEND.map((item) => (
-                <li key={item.id} className="flex items-center gap-1.5 text-[11px] text-white/75">
+                <li key={item.id} className="flex items-center gap-1.5 text-[10px] text-white/75">
                   <span className="size-1.5 rounded-full" style={{ background: item.color }} />
                   {t(`marine.kind_${item.id}`)}
                 </li>
@@ -176,12 +197,12 @@ function DockLink({
       to="/"
       search={{ panel }}
       className={
-        "flex h-full flex-col items-center justify-center gap-0.5 border-t-2 text-[11px] font-semibold " +
+        "flex h-full min-w-0 flex-col items-center justify-center gap-0.5 border-t-2 px-1 text-[11px] font-semibold " +
         (active ? "border-cyan-300 text-cyan-100" : "border-transparent text-white/50")
       }
     >
       {icon}
-      <span>{label}</span>
+      <span className="max-w-full truncate">{label}</span>
     </Link>
   );
 }

@@ -13,8 +13,14 @@ import { useEffect, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 import appCss from "../styles.css?url";
-import { applyPreferredLanguage } from "../i18n";
-import { Toaster } from "sonner";
+import i18n, { applyPreferredLanguage } from "../i18n";
+import { toast, Toaster } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  clearEmailUnconfirmed,
+  consumeEmailConfirmedNotice,
+  urlLooksLikeEmailConfirm,
+} from "@/lib/signup-welcome";
 import { stripVendorBadge } from "@/lib/strip-vendor-badge";
 import { NetworkStatusBanner } from "@/components/pwa/NetworkStatusBanner";
 import { initNativeShell } from "@/lib/native";
@@ -177,6 +183,20 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   useEffect(() => {
     applyPreferredLanguage();
+    const showConfirmed = () => {
+      try {
+        if (sessionStorage.getItem("thalvo:confirmed-shown") === "1") return;
+        sessionStorage.setItem("thalvo:confirmed-shown", "1");
+      } catch {
+        /* private mode */
+      }
+      clearEmailUnconfirmed();
+      toast.success(i18n.t("auth.email_confirmed"));
+    };
+    const { data: authSub } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) return;
+      if (urlLooksLikeEmailConfirm() || consumeEmailConfirmedNotice()) showConfirmed();
+    });
     const fontId = "thalvo-barlow";
     if (!document.getElementById(fontId)) {
       const link = document.createElement("link");
@@ -189,6 +209,7 @@ function RootComponent() {
     void registerPwa();
     stripVendorBadge();
     document.getElementById("thalvo-sos-fallback")?.remove();
+    return () => authSub.subscription.unsubscribe();
   }, []);
   return (
     <QueryClientProvider client={queryClient}>
