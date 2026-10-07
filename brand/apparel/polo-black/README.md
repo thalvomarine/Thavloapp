@@ -33,3 +33,16 @@ Siyah polo yaka tshirt için logo baskı tasarımı ve baskıya hazır dosyalar.
 
 Kaynak logo: `src/assets/thalvo-logo-full-alpha.png` ve `thalvo-mark-alpha.png`.
 Baskı için master’ları kullanın; mockup görselleri referans amaçlıdır.
+
+
+## 5 varyant (site adresi dahil)
+
+`variants/` klasöründe `thalvo.vercel.app` içeren 5 yerleşim:
+
+1. Classic Chest — sol göğüs + URL
+2. Back Flag — sırt + URL
+3. Crest + Hem — göğüs crest, etekte URL
+4. Chest + Sleeve — göğüs + kol URL
+5. Center Stack — ön orta + MarineOS + URL
+
+Detay: `variants/README.md`
