@@ -307,9 +307,6 @@ function DealerRow({
             )}
           </div>
 
-          <p className="text-[10px] text-white/40">
-            {t("dealer.phase9_note")}
-          </p>
         </div>
       )}
     </GlassPanel>

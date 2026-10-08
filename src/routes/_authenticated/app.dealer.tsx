@@ -40,8 +40,6 @@ const CATEGORY_VALUES = [
   "rib_inflatable_parts", "trailer_parts", "filters_oils", "accessories", "other",
 ] as const;
 const CUSTOM_CATEGORY_SENTINEL = "__custom__";
-// Values are enums for future logistics persistence — labels come from i18n at render time.
-const DELIVERY_MODE_KEYS = ["marina_pickup", "service_boat"] as const;
 
 interface Row {
   id: string; name: string; sku: string | null; brand: string; category: string;
@@ -88,6 +86,8 @@ function DealerConsole({ userId, businessName, marina }: { userId: string; busin
   const [editing, setEditing] = useState<Row | null>(null);
   const [busy, setBusy] = useState(false);
   const [unread, setUnread] = useState(0);
+  const [query, setQuery] = useState("");
+  const [stockFilter, setStockFilter] = useState<"all" | "low" | "out">("all");
 
   const load = () => supabase.from("parts_catalog").select("*").eq("supplier_id", userId).order("created_at", { ascending: false })
     .then(({ data }) => setRows((data as never) ?? []));
@@ -165,11 +165,19 @@ function DealerConsole({ userId, businessName, marina }: { userId: string; busin
     }
   };
 
-  const soldOrders = orders.filter((o) => o.status !== "Cancelled");
-  const soldUnits = soldOrders.reduce(
-    (sum, order) => sum + (order.items ?? []).reduce((qty, item) => qty + Number(item.qty || 0), 0),
-    0,
-  );
+  const stockValue = rows.reduce((sum, row) => sum + Number(row.price) * Number(row.stock), 0);
+  const openOrders = orders.filter(
+    (order) => !["Delivered", "Completed", "Cancelled"].includes(order.status),
+  ).length;
+  const needle = query.trim().toLowerCase();
+  const visibleRows = displayRows.filter((row) => {
+    if (stockFilter === "low" && !(row.stock > 0 && row.stock <= 3)) return false;
+    if (stockFilter === "out" && row.stock > 0) return false;
+    if (!needle) return true;
+    return [row.name, row.brand, row.sku, row.category].some((value) =>
+      (value ?? "").toLowerCase().includes(needle),
+    );
+  });
 
   return (
     <MarketplaceShell
@@ -180,8 +188,8 @@ function DealerConsole({ userId, businessName, marina }: { userId: string; busin
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <StatMini label={t("dealer.stat_skus")} value={String(rows.length)} />
         <StatMini label={t("dealer.stat_units")} value={String(totalStock)} />
-        <StatMini label={t("dealer.stat_sales")} value={String(soldOrders.length)} />
-        <StatMini label={t("dealer.stat_sold_units")} value={String(soldUnits)} />
+        <StatMini label={t("dealer.stat_value")} value={formatTL(stockValue)} />
+        <StatMini label={t("dealer.stat_open")} value={String(openOrders)} tone={openOrders > 0 ? "warning" : "neutral"} />
       </div>
       {(lowSkus > 0 || outSkus > 0) && (
         <p className="text-[12px] font-medium text-amber-200">
@@ -203,20 +211,51 @@ function DealerConsole({ userId, businessName, marina }: { userId: string; busin
         <DealerOrderQueue rows={orders} currency={(n) => formatTL(n)} onReload={() => void loadOrders()} />
       ) : (
         <>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={t("dealer.search_placeholder")}
+              className="h-11 min-w-0 flex-1 rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-cyan-300/50"
+            />
+            <div className="flex shrink-0 gap-1.5">
+              {(["all", "low", "out"] as const).map((key) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setStockFilter(key)}
+                  className={
+                    "h-11 rounded-xl border px-3 text-[12px] font-semibold " +
+                    (stockFilter === key
+                      ? "border-cyan-300 bg-cyan-400/15 text-cyan-50"
+                      : "border-white/10 bg-white/5 text-white/60")
+                  }
+                >
+                  {t(`dealer.filter_${key}`)}
+                </button>
+              ))}
+            </div>
+          </div>
           <button
             onClick={() => { setEditing(null); setShowForm(true); }}
-            className="w-full h-11 rounded-2xl bg-sky-500 hover:bg-sky-400 text-slate-900 font-semibold text-sm inline-flex items-center justify-center gap-2 transition-colors"
+            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-cyan-400 text-sm font-semibold text-slate-950 transition-colors hover:bg-cyan-300"
           >
             <Plus className="size-4" /> {t("dealer.add_part")}
           </button>
 
+          {visibleRows.length === 0 && rows.length > 0 ? (
+            <p className="rounded-2xl border border-dashed border-white/15 px-4 py-8 text-center text-sm text-white/55">
+              {t("dealer.search_empty")}
+            </p>
+          ) : (
           <DealerStockPanel
-            rows={displayRows}
+            rows={visibleRows}
             currencyFormat={(n) => formatTL(n)}
             onEdit={edit}
             onDelete={remove}
             onAdjustStock={adjustStock}
           />
+          )}
         </>
       )}
 
@@ -286,15 +325,12 @@ function PartForm({
     existingCategory && !isKnownCategory ? existingCategory : ""
   );
   const [sku, setSku] = useState(existing?.sku ?? "");
-  const [altSku, setAltSku] = useState("");
   const [condition, setCondition] = useState<PartCondition | "">(readPartCondition(existing?.compatibility));
   const [compat, setCompat] = useState(publicCompatibility(existing?.compatibility).join(", "));
   const [price, setPrice] = useState(existing ? groupThousands(String(existing.price)) : "");
   const [stock, setStock] = useState(existing ? groupThousands(String(existing.stock)) : "1");
   const [marina, setMarina] = useState(existing?.marina ?? defaultMarina ?? "");
   const [image, setImage] = useState(existing?.image_url ?? "");
-  const [deliveryMode, setDeliveryMode] = useState<string>(DELIVERY_MODE_KEYS[1]);
-  // TODO(logistics): persist deliveryMode + altSku when parts_catalog has those columns.
 
   const save = async () => {
     if (!name || !price) return toast.error(t("dealer.name_price_required"));
@@ -322,9 +358,6 @@ function PartForm({
     toast.success(existing ? t("dealer.sku_updated") : t("dealer.sku_added"));
     onSaved();
   };
-
-  const deliveryLabel = (m: string) =>
-    m === "marina_pickup" ? t("dealer.delivery_marina_pickup") : t("dealer.delivery_service_boat");
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={onClose}>
@@ -376,14 +409,9 @@ function PartForm({
               )}
             </Field>
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            <Field label={t("dealer.field_oem")}>
-              <input value={sku} onChange={(e) => setSku(e.target.value)} className={inputCls} />
-            </Field>
-            <Field label={t("dealer.field_alt")}>
-              <input value={altSku} onChange={(e) => setAltSku(e.target.value)} className={inputCls} />
-            </Field>
-          </div>
+          <Field label={t("dealer.field_oem")}>
+            <input value={sku} onChange={(e) => setSku(e.target.value)} className={inputCls} />
+          </Field>
           <Field label={t("dealer.field_condition")}>
             <div className="grid grid-cols-3 gap-1.5">
               {PART_CONDITIONS.map((item) => (
@@ -444,12 +472,6 @@ function PartForm({
             <datalist id="thalvo-marina-presets">
               {MARINA_PRESETS.map((item) => <option key={item.name} value={item.name} />)}
             </datalist>
-          </Field>
-          <Field label={t("dealer.field_delivery")}>
-            <select value={deliveryMode} onChange={(e) => setDeliveryMode(e.target.value)} className={inputCls}>
-              {DELIVERY_MODE_KEYS.map((m) => <option key={m} value={m} className="bg-slate-900">{deliveryLabel(m)}</option>)}
-            </select>
-            <p className="text-[10px] text-white/40 mt-1">{t("dealer.delivery_hint")}</p>
           </Field>
           <Field label={t("dealer.field_image")}>
             <ImageUploader value={image} onChange={setImage} userId={userId} />

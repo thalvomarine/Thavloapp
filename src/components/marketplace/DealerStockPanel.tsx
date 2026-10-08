@@ -24,6 +24,12 @@ interface Props {
   onAdjustStock?: (row: DealerStockRow, delta: number) => void;
 }
 
+function categoryLabel(category: string, t: ReturnType<typeof useTranslation>["t"]) {
+  const key = `dealer.categories.${category}`;
+  const label = t(key);
+  return label === key ? category : label;
+}
+
 /** DealerStockPanel — dealer-side inventory row list with quick stock adjust. */
 export function DealerStockPanel({ rows, currencyFormat, onEdit, onDelete, onAdjustStock }: Props) {
   const { t } = useTranslation();
@@ -45,7 +51,7 @@ export function DealerStockPanel({ rows, currencyFormat, onEdit, onDelete, onAdj
               {r.imageUrl ? <img src={r.imageUrl} alt="" className="size-full object-cover" /> : <Package className="size-5 text-white/30" />}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40">{r.brand} · {r.category}</p>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40">{r.brand} · {categoryLabel(r.category, t)}</p>
               <p className="text-sm font-semibold text-white truncate">{r.name}</p>
               {r.sku && <p className="text-[10px] text-white/40 font-mono truncate">OEM · {r.sku}</p>}
               <div className="mt-1.5 flex flex-wrap gap-1.5">

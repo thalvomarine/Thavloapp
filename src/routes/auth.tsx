@@ -253,12 +253,14 @@ function AuthPage() {
                     {t("auth.change_role")}
                   </button>
 
-                  <Field
-                    label={t("auth.full_name")}
-                    value={fullName}
-                    onChange={setFullName}
-                    required
-                  />
+                  {role !== "Supplier" && (
+                    <Field
+                      label={t("auth.full_name")}
+                      value={fullName}
+                      onChange={setFullName}
+                      required
+                    />
+                  )}
 
                   {role === "Client" && (
                     <>
@@ -356,12 +358,23 @@ function AuthPage() {
 
                   {role === "Supplier" && (
                     <>
+                      <p className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-[12px] leading-snug text-white/70">
+                        {t("auth.supplier_kicker")}
+                      </p>
+                      <Field
+                        label={t("auth.contact_name")}
+                        value={fullName}
+                        onChange={setFullName}
+                        required
+                        autoComplete="name"
+                      />
                       <Field
                         label={t("auth.business_name")}
                         value={businessName}
                         onChange={setBusinessName}
                         required
-                        placeholder="Aegean Marine Parts Ltd."
+                        autoComplete="organization"
+                        placeholder={t("auth.business_placeholder")}
                       />
                       <div>
                         <label className="text-xs font-bold text-muted-foreground">
@@ -370,9 +383,9 @@ function AuthPage() {
                         <select
                           value={homeMarina}
                           onChange={(e) => setHomeMarina(e.target.value)}
-                          className="mt-1 w-full h-11 rounded-xl border border-input bg-background px-3 text-sm"
+                          className="mt-1 h-11 w-full rounded-xl border border-input bg-background px-3 text-sm"
                         >
-                          {["Göcek", "Bodrum", "Marmaris", "Fethiye", "Kaş"].map((m) => (
+                          {["Göcek", "Marmaris", "Bodrum", "Fethiye", "Kaş"].map((m) => (
                             <option key={m}>{m}</option>
                           ))}
                         </select>
@@ -381,11 +394,12 @@ function AuthPage() {
                   )}
 
                   <Field
-                    label={`${t("auth.phone")} (${t("common.optional")})`}
+                    label={role === "Supplier" ? t("auth.phone") : `${t("auth.phone")} (${t("common.optional")})`}
                     value={phone}
                     onChange={setPhone}
                     type="tel"
                     autoComplete="tel"
+                    required={role === "Supplier"}
                     placeholder="+90…"
                   />
                   <p className="text-[10px] text-muted-foreground -mt-1">

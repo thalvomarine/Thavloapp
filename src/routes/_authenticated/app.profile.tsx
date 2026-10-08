@@ -49,7 +49,13 @@ function ProfilePage() {
   if ((!user && sessionLoading) || loading || !profile) return <ThalvoLoader />;
   return (
     <AppShell userId={user!.id}>
-      {profile.role === "Provider" ? <ProviderProfile profile={profile} /> : <ClientProfile profile={profile} />}
+      {profile.role === "Provider" ? (
+        <ProviderProfile profile={profile} />
+      ) : profile.role === "Supplier" ? (
+        <SupplierProfile profile={profile} />
+      ) : (
+        <ClientProfile profile={profile} />
+      )}
     </AppShell>
   );
 }
@@ -231,6 +237,77 @@ interface Vessel {
   id: string; owner_id: string; category: string; name: string;
   vessel_type: string | null; length_m: number | null;
   engine_model: string | null; fuel_type: string | null;
+}
+
+function SupplierProfile({ profile }: { profile: Profile }) {
+  const { t } = useTranslation();
+  const [contact, setContact] = useState(profile.full_name ?? "");
+  const [business, setBusiness] = useState(profile.business_name ?? "");
+  const [marina, setMarina] = useState(profile.home_marina ?? "Göcek");
+  const [phone, setPhone] = useState(profile.phone ?? "");
+  const [saving, setSaving] = useState(false);
+  const [savedTick, setSavedTick] = useState(false);
+
+  const save = async () => {
+    setSaving(true);
+    const { error } = await supabase.from("profiles").update({
+      full_name: sanitizePlainText(contact, 80) || profile.full_name,
+      business_name: sanitizePlainText(business, 120) || null,
+      home_marina: marina,
+    }).eq("id", profile.id);
+    if (!error) {
+      await supabase.from("profile_contacts").upsert({
+        id: profile.id,
+        phone: sanitizePlainText(phone, 40) || null,
+      });
+    }
+    setSaving(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setSavedTick(true);
+    setTimeout(() => setSavedTick(false), 1600);
+  };
+
+  return (
+    <div className="space-y-4">
+      <CockpitHeader
+        eyebrow={t("dealer.eyebrow_counter")}
+        title={business || t("dealer.counter_title")}
+        subtitle={marina}
+      />
+      <GlassPanel className="space-y-3">
+        <SectionHeader label={t("dealer.profile_company")} />
+        <Field label={t("auth.business_name")} value={business} onChange={setBusiness} />
+        <Field label={t("auth.contact_name")} value={contact} onChange={setContact} />
+        <div>
+          <label className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">{t("auth.home_marina")}</label>
+          <select
+            value={marina}
+            onChange={(e) => setMarina(e.target.value)}
+            className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-white outline-none focus:border-sky-400/60"
+          >
+            {( ["Göcek", "Marmaris", "Bodrum", "Fethiye", "Kaş"].includes(marina)
+              ? ["Göcek", "Marmaris", "Bodrum", "Fethiye", "Kaş"]
+              : [marina, "Göcek", "Marmaris", "Bodrum", "Fethiye", "Kaş"]
+            ).map((item) => (
+              <option key={item} value={item} className="bg-slate-900">{item}</option>
+            ))}
+          </select>
+        </div>
+        <Field label={t("auth.phone")} value={phone} onChange={setPhone} type="tel" />
+      </GlassPanel>
+      <button
+        onClick={() => void save()}
+        disabled={saving}
+        className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-cyan-400 font-semibold text-slate-950 disabled:opacity-60"
+      >
+        {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+        {savedTick ? t("profile.saved") : t("profile.save")}
+      </button>
+    </div>
+  );
 }
 
 function ClientProfile({ profile }: { profile: Profile }) {

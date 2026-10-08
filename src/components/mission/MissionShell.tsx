@@ -355,7 +355,7 @@ export function MissionShell({ profile, children, fullBleed = false }: Props) {
           document.body,
         )}
 
-      {firstRun.open && (
+      {firstRun.open && !isSupplier && (
         <OnboardingOverlay profile={profile} isAdmin={isAdmin} onComplete={firstRun.complete} />
       )}
     </div>
