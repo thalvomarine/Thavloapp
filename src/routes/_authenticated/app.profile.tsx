@@ -4,6 +4,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
+import { noteSchemaMiss, skipMissing } from "@/lib/schema-gap";
 import { AppShell } from "@/components/AppShell";
 import { ThalvoLoader } from "@/components/ThalvoLoader";
 import { n, useSessionUser, type Profile } from "@/lib/session";
@@ -257,11 +258,12 @@ function SupplierProfile({ profile }: { profile: Profile }) {
       business_name: sanitizePlainText(business, 120) || null,
       home_marina: marina,
     }).eq("id", profile.id);
-    if (!error) {
-      await supabase.from("profile_contacts").upsert({
+    if (!error && !skipMissing("profile_contacts")) {
+      const contact = await supabase.from("profile_contacts").upsert({
         id: profile.id,
         phone: sanitizePlainText(phone, 40) || null,
       });
+      noteSchemaMiss("profile_contacts", contact.error);
     }
     setSaving(false);
     if (error) {

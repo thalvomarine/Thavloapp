@@ -10,6 +10,7 @@ import { JobChat } from "@/components/JobChat";
 import { useProfile, useSessionUser } from "@/lib/session";
 import { formatTL, harborDistanceKm, kmToNm } from "@/lib/filter";
 import { getFix } from "@/lib/geolocation";
+import { noteSchemaMiss, skipMissing } from "@/lib/schema-gap";
 import { VesselRange } from "@/components/mission/VesselRange";
 import { caretAfterGrouping, groupThousands, parseGrouped } from "@/lib/digit-format";
 import {
@@ -207,13 +208,16 @@ function ClientJob({ job, meId }: { job: Job; meId: string }) {
     const push = async () => {
       const res = await getFix();
       if (!res.ok || stop) return;
-      const rpc = await supabase.rpc("refresh_own_call_position", {
-        _job_id: job.id,
-        _lat: res.fix.lat,
-        _lng: res.fix.lng,
-        _accuracy_m: Number.isFinite(res.fix.accuracy) ? Math.round(res.fix.accuracy) : undefined,
-      });
+      const rpc = skipMissing("refresh_own_call_position")
+        ? { error: { message: "missing" } }
+        : await supabase.rpc("refresh_own_call_position", {
+            _job_id: job.id,
+            _lat: res.fix.lat,
+            _lng: res.fix.lng,
+            _accuracy_m: Number.isFinite(res.fix.accuracy) ? Math.round(res.fix.accuracy) : undefined,
+          });
       if (rpc.error) {
+        noteSchemaMiss("refresh_own_call_position", rpc.error);
         await supabase
           .from("jobs")
           .update({
@@ -235,7 +239,13 @@ function ClientJob({ job, meId }: { job: Job; meId: string }) {
 
   const cancelCall = async () => {
     setCancelling(true);
+    if (skipMissing("cancel_own_call")) {
+      setCancelling(false);
+      toast.error(t("ops.cancel_failed"));
+      return;
+    }
     const { error } = await supabase.rpc("cancel_own_call", { _job_id: job.id });
+    if (error) noteSchemaMiss("cancel_own_call", error);
     setCancelling(false);
     if (error) toast.error(t("ops.cancel_failed"));
     else toast.success(t("ops.cancel_done"));

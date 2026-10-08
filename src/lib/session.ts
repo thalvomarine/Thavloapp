@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { noteSchemaMiss, skipMissing } from "@/lib/schema-gap";
 import type { Session, User } from "@supabase/supabase-js";
 import { isMissingRelation } from "@/lib/supabase-safe";
 
@@ -122,10 +123,10 @@ let claimPromise: Promise<UserRole | null> | null = null;
 function claimSignupRoleOnce(): Promise<UserRole | null> {
   if (!claimPromise) {
     claimPromise = (async () => {
+      if (skipMissing("claim_signup_role")) return null;
       const { data: claimed, error: claimError } = await supabase.rpc("claim_signup_role");
-      if (claimError && !/claim_signup_role|PGRST202|schema cache|Could not find the function/i.test(claimError.message)) {
-        console.warn("[session] signup role", claimError.message);
-      }
+      if (noteSchemaMiss("claim_signup_role", claimError)) return null;
+      if (claimError) console.warn("[session] signup role", claimError.message);
       if (claimError || claimed == null) return null;
       return normalizeUserRole(claimed);
     })();
@@ -150,8 +151,11 @@ export function useProfile(userId: string | undefined) {
       const claimedRole = await claimSignupRoleOnce();
       const [profileRes, contactRes] = await Promise.all([
         supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
-        supabase.from("profile_contacts").select("phone").eq("id", userId).maybeSingle(),
+        skipMissing("profile_contacts")
+          ? Promise.resolve({ data: null, error: null })
+          : supabase.from("profile_contacts").select("phone").eq("id", userId).maybeSingle(),
       ]);
+      if (contactRes.error) noteSchemaMiss("profile_contacts", contactRes.error);
       if (!mounted) return;
       const err = profileRes.error;
       if (err) {

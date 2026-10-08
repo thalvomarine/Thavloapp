@@ -94,7 +94,6 @@ export async function resolveTileSrc(url: string): Promise<string> {
     if (cache) {
       const hit = await cache.match(url);
       if (hit) {
-        console.log("[TileCache] Offline Hit (fallback)");
         return URL.createObjectURL(await hit.blob());
       }
     }

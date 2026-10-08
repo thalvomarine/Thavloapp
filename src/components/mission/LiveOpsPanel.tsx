@@ -21,6 +21,7 @@ import { GlassPanel } from "@/components/mission/GlassPanel";
 import { SEED_MISSIONS, SEED_OPS_STATS, type OpsMission, type OpsMissionStatus } from "@/lib/live-ops";
 import { requestMapFocus } from "@/lib/map-focus-bus";
 import { toast } from "sonner";
+import { noteSchemaMiss, skipMissing } from "@/lib/schema-gap";
 
 const STATUS_TONE: Record<OpsMissionStatus, "warning" | "info" | "neutral" | "success"> = {
   en_route: "warning",
@@ -263,7 +264,13 @@ function ActiveFaults() {
 
   const cancel = async (id: string) => {
     setCancelling(id);
+    if (skipMissing("cancel_own_call")) {
+      setCancelling(null);
+      toast.error(t("ops.cancel_failed"));
+      return;
+    }
     const { error } = await supabase.rpc("cancel_own_call", { _job_id: id });
+    if (error) noteSchemaMiss("cancel_own_call", error);
     setCancelling(null);
     if (error) toast.error(t("ops.cancel_failed"));
     else toast.success(t("ops.cancel_done"));

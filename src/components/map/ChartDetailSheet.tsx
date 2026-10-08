@@ -48,7 +48,6 @@ export function ChartDetailSheet({ point, fix, onClose, onNavigate, onEmergency 
   const [weatherLoading, setWeatherLoading] = useState(false);
 
   useEffect(() => {
-    console.log("[ChartDetailSheet] props", { point, fix });
     if (isValidChartPoint(point)) {
       setDisplayPoint(point);
       const raf = requestAnimationFrame(() => setVisible(true));

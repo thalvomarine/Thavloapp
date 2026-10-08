@@ -22,6 +22,7 @@ import { MissionStatusTrack, stageFromJob } from "@/components/mission/MissionSt
 import { emitEvent } from "@/lib/events";
 import { caretAfterGrouping, groupThousands, parseGrouped } from "@/lib/digit-format";
 import { createRealtimeBuffer, runWhenIdle } from "@/lib/schedule";
+import { noteSchemaMiss, skipMissing } from "@/lib/schema-gap";
 import { Anchor, Wrench, Radio, Gauge, Activity, Loader2, Send, ChevronRight } from "lucide-react";
 import { TrustMark } from "@/components/brand/ProductMarks";
 
@@ -92,12 +93,13 @@ function CaptainCockpit({ profile }: { profile: Profile }) {
 
   useEffect(() => {
     return runWhenIdle(() => {
+      if (skipMissing("provider_live_pins")) return;
       supabase
         .from("provider_live_pins")
         .select("id, service_type, lat, lng, full_name")
         .then(({ data, error }) => {
           if (error) {
-            console.warn("[cockpit] provider_live_pins unavailable", error.message);
+            noteSchemaMiss("provider_live_pins", error);
             return;
           }
           if (!data) return;
