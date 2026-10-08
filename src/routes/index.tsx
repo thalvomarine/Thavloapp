@@ -8,6 +8,7 @@ const DESCRIPTION =
 
 export const Route = createFileRoute("/")({
   ssr: false,
+  staleTime: 60_000,
   validateSearch: (search: Record<string, unknown>): { panel?: ChartPanel } => {
     if (search.panel === "parts" || search.panel === "services") return { panel: search.panel };
     return {};

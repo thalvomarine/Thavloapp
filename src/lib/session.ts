@@ -37,9 +37,11 @@ export interface Profile {
   home_lng: number | null;
 }
 
+let sessionSnap: { ready: boolean; session: Session | null } = { ready: false, session: null };
+
 export function useSessionUser() {
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [session, setSession] = useState<Session | null>(sessionSnap.session);
+  const [loading, setLoading] = useState(!sessionSnap.ready);
 
   useEffect(() => {
     let mounted = true;
@@ -47,6 +49,7 @@ export function useSessionUser() {
     // Do NOT force loading=false via a timeout — that races refresh and drops the user.
     void Promise.resolve(supabase.auth.getSession())
       .then(({ data }) => {
+        sessionSnap = { ready: true, session: data.session };
         if (!mounted) return;
         setSession(data.session);
         setLoading(false);
@@ -57,6 +60,7 @@ export function useSessionUser() {
         setLoading(false);
       });
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+      sessionSnap = { ready: true, session: s };
       setSession(s);
       setLoading(false);
     });
@@ -112,24 +116,38 @@ export function cockpitFallbackProfile(userId: string, role: UserRole = "Client"
   };
 }
 
+const profileCache = new Map<string, Profile>();
+let claimPromise: Promise<UserRole | null> | null = null;
+
+function claimSignupRoleOnce(): Promise<UserRole | null> {
+  if (!claimPromise) {
+    claimPromise = (async () => {
+      const { data: claimed, error: claimError } = await supabase.rpc("claim_signup_role");
+      if (claimError && !/claim_signup_role|PGRST202|schema cache|Could not find the function/i.test(claimError.message)) {
+        console.warn("[session] signup role", claimError.message);
+      }
+      if (claimError || claimed == null) return null;
+      return normalizeUserRole(claimed);
+    })();
+  }
+  return claimPromise;
+}
+
 export function useProfile(userId: string | undefined) {
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const cached = userId ? profileCache.get(userId) ?? null : null;
+  const [profile, setProfile] = useState<Profile | null>(cached);
+  const [loading, setLoading] = useState(Boolean(userId) && !cached);
   const [error, setError] = useState<Error | null>(null);
   useEffect(() => {
     if (!userId) { setProfile(null); setLoading(false); setError(null); return; }
     let mounted = true;
-    setLoading(true);
+    if (!profileCache.has(userId)) setLoading(true);
     setError(null);
     // NOTE: no timeout fallback and no synthesized profile — we never invent a
     // role (previously defaulted to "Client"), which caused Provider users to
     // render as Captain when the fetch was slow.
     void (async () => {
-      const { data: claimed, error: claimError } = await supabase.rpc("claim_signup_role");
-      if (claimError && !/claim_signup_role|PGRST202|schema cache|Could not find the function/i.test(claimError.message)) {
-        console.warn("[session] signup role", claimError.message);
-      }
-      const claimedRole = normalizeUserRole(claimed);
+      const claimedRole = await claimSignupRoleOnce();
       const [profileRes, contactRes] = await Promise.all([
         supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
         supabase.from("profile_contacts").select("phone").eq("id", userId).maybeSingle(),
@@ -141,7 +159,9 @@ export function useProfile(userId: string | undefined) {
             // Fresh Supabase project: profiles table is not in the schema cache
             // yet. Keep the cockpit (map + SOS) mounted instead of a blank tree.
             console.warn("[session] profiles unavailable — cockpit fallback", err.message);
-            setProfile(cockpitFallbackProfile(userId));
+            const fallback = cockpitFallbackProfile(userId);
+            profileCache.set(userId, fallback);
+            setProfile(fallback);
             setError(null);
           } else {
             setProfile(null);
@@ -159,8 +179,11 @@ export function useProfile(userId: string | undefined) {
                     : row.role,
               })
             : null;
+          if (next) {
+            profileCache.set(userId, next);
+            rememberCockpitRole(next.id, next.role);
+          }
           setProfile(next);
-          if (next) rememberCockpitRole(next.id, next.role);
           setError(null);
         }
         setLoading(false);
@@ -175,12 +198,14 @@ export function useProfile(userId: string | undefined) {
       .channel(`profile:${userId}:${channelId}`)
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "profiles", filter: `id=eq.${userId}` },
         (payload) =>
-          setProfile((prev) =>
-            asProfile({
+          setProfile((prev) => {
+            const next = asProfile({
               ...(payload.new as unknown as Profile),
               phone: prev?.phone ?? null,
-            }),
-          ))
+            });
+            profileCache.set(userId, next);
+            return next;
+          }))
       .subscribe();
     return () => { mounted = false; supabase.removeChannel(ch); };
   }, [userId]);

@@ -358,7 +358,7 @@ function ChartRasterLayers({
   useEffect(() => {
     // Low keepBuffer on WebView — satellite + seamark tiles otherwise pin
     // dozens of decoded bitmaps and OOM mid-range devices.
-    const keepBuffer = isNativeWebView() ? 1 : 2;
+    const keepBuffer = 1;
     const raster = {
       minZoom: CHART_MIN_ZOOM,
       maxZoom: CHART_MAX_ZOOM,
@@ -779,8 +779,8 @@ function LiveMapCanvas({
   }, [map]);
 
   const [layers, setLayers] = useState<ChartLayers>({
-    // Seamark overlay + CSS filter doubles tile GPU cost — enable after idle.
-    seamarks: !isNativeWebView(),
+    // Seamark overlay doubles tile work — paint the basemap first.
+    seamarks: false,
     hazards: true,
     moorings: true,
     reports: true,
@@ -798,10 +798,9 @@ function LiveMapCanvas({
   const lastPublishedCenter = useRef({ lat: GOCEK.lat, lng: GOCEK.lng });
 
   useEffect(() => {
-    if (!isNativeWebView()) return;
     return runWhenIdle(() => {
       setLayers((v) => (v.seamarks ? v : { ...v, seamarks: true }));
-    }, 2500);
+    }, 1400);
   }, []);
 
   const [zones, setZones] = useState<MarineZone[]>([]);
@@ -1204,8 +1203,9 @@ function LiveMapCanvas({
         keyboard
         zoomControl={false}
         attributionControl={false}
+        preferCanvas
         fadeAnimation={false}
-        zoomAnimation={!isNativeWebView()}
+        zoomAnimation={false}
         markerZoomAnimation={false}
         zoomSnap={0.25}
         zoomDelta={0.5}

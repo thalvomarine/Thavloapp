@@ -77,20 +77,31 @@ function FitFrame() {
   return null;
 }
 
+const PIN_ICONS = new Map<ChartPinKind, L.DivIcon>();
+
+function coveragePin(kind: ChartPinKind) {
+  const cached = PIN_ICONS.get(kind);
+  if (cached) return cached;
+  const icon = L.divIcon({
+    html: chartPinHtml(kind),
+    className: "thalvo-map-marker",
+    iconSize: CHART_PIN_SIZE,
+    iconAnchor: CHART_PIN_ANCHOR,
+    popupAnchor: [0, -40],
+  });
+  PIN_ICONS.set(kind, icon);
+  return icon;
+}
+
 function Seamarks() {
   const map = useMap();
   const [on, setOn] = useState(false);
   useEffect(() => {
-    const mobile = window.matchMedia("(max-width: 767px)").matches;
-    if (!mobile) {
-      setOn(true);
-      return;
-    }
     const enable = () => {
-      if (map.getZoom() >= 13) setOn(true);
+      if (map.getZoom() >= 12) setOn(true);
     };
     map.on("zoomend", enable);
-    const later = window.setTimeout(enable, 1500);
+    const later = window.setTimeout(enable, 1400);
     return () => {
       map.off("zoomend", enable);
       window.clearTimeout(later);
@@ -176,6 +187,10 @@ export function CoverageChart({
         maxZoom={18}
         zoomControl={!fill}
         scrollWheelZoom={fill}
+        preferCanvas
+        fadeAnimation={false}
+        zoomAnimation={false}
+        markerZoomAnimation={false}
         className={fill ? "thalvo-ecdis thalvo-chart-frame" : "thalvo-ecdis"}
         style={{ width: "100%", height: "100%", background: "#06101c" }}
       >
@@ -189,7 +204,7 @@ export function CoverageChart({
           errorTileUrl={VOID_TILE}
           updateWhenIdle
           updateWhenZooming={false}
-          keepBuffer={2}
+          keepBuffer={1}
         />
         <Seamarks />
         <GoTo
@@ -212,17 +227,11 @@ export function CoverageChart({
           <Marker
             key={z.id}
             position={[z.lat, z.lng]}
-            icon={L.divIcon({
-              html: chartPinHtml(
-                (["marina", "anchorage", "fuel", "hazard"].includes(z.kind)
-                  ? z.kind
-                  : "marina") as ChartPinKind,
-              ),
-              className: "thalvo-map-marker",
-              iconSize: CHART_PIN_SIZE,
-              iconAnchor: CHART_PIN_ANCHOR,
-              popupAnchor: [0, -40],
-            })}
+            icon={coveragePin(
+              (["marina", "anchorage", "fuel", "hazard"].includes(z.kind)
+                ? z.kind
+                : "marina") as ChartPinKind,
+            )}
           >
             <Popup>
               <p className="text-sm font-semibold text-slate-900">{z.name}</p>

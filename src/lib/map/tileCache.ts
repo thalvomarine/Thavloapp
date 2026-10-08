@@ -65,7 +65,6 @@ export async function resolveTileSrc(url: string): Promise<string> {
     try {
       const hit = await cache.match(url);
       if (hit) {
-        console.log("[TileCache] Offline Hit");
         const blob = await hit.blob();
         return URL.createObjectURL(blob);
       }
@@ -123,6 +122,7 @@ export function createCachedTileLayer(
 
       const url = this.getTileUrl(coords);
       let objectUrl: string | null = null;
+      const online = typeof navigator === "undefined" || navigator.onLine;
 
       const finishOk = () => {
         done(undefined, tile);
@@ -133,6 +133,13 @@ export function createCachedTileLayer(
         }
         done(err, tile);
       };
+
+      if (online) {
+        tile.onload = () => finishOk();
+        tile.onerror = () => finishErr(new Error("tile load error"));
+        tile.src = url;
+        return tile;
+      }
 
       void resolveTileSrc(url)
         .then((src) => {

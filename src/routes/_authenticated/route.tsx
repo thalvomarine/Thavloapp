@@ -7,6 +7,7 @@ import { sanitizeNext } from "@/lib/nav";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
+  staleTime: 60_000,
   beforeLoad: async ({ location }) => {
     const user = await getValidUser();
     // Carry the intended destination so /auth can return the visitor to it.
