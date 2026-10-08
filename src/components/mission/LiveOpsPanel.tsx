@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useSessionUser } from "@/lib/session";
@@ -20,6 +20,7 @@ import { CockpitHeader, MetricCard, StatusBadge } from "@/components/core";
 import { GlassPanel } from "@/components/mission/GlassPanel";
 import { SEED_MISSIONS, SEED_OPS_STATS, type OpsMission, type OpsMissionStatus } from "@/lib/live-ops";
 import { requestMapFocus } from "@/lib/map-focus-bus";
+import { toast } from "sonner";
 
 const STATUS_TONE: Record<OpsMissionStatus, "warning" | "info" | "neutral" | "success"> = {
   en_route: "warning",
@@ -79,13 +80,7 @@ export function LiveOpsPanel() {
         </span>
       </div>
 
-      <ul className="space-y-3">
-        {SEED_MISSIONS.map((mission) => (
-          <li key={mission.id}>
-            <OpsMissionCard mission={mission} onDetails={() => setSelected(mission)} />
-          </li>
-        ))}
-      </ul>
+      <ActiveFaults />
 
       {selected && <OpsMissionSheet mission={selected} onClose={() => setSelected(null)} />}
     </div>
@@ -233,6 +228,96 @@ function SpecRow({ label, value }: { label: string; value: string }) {
   );
 }
 
+function ActiveFaults() {
+  const { t } = useTranslation();
+  const { user } = useSessionUser();
+  const [rows, setRows] = useState<
+    Array<{ id: string; problem_category: string; status: string; marina: string }>
+  >([]);
+  const [cancelling, setCancelling] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    const load = () => {
+      void supabase
+        .from("jobs")
+        .select("id, problem_category, status, marina")
+        .eq("client_id", user.id)
+        .not("status", "in", "(Completed,Cancelled)")
+        .order("created_at", { ascending: false })
+        .then(({ data }) => setRows((data as typeof rows) ?? []));
+    };
+    load();
+    const ch = supabase
+      .channel(`active-faults:${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "jobs", filter: `client_id=eq.${user.id}` },
+        load,
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [user]);
+
+  const cancel = async (id: string) => {
+    setCancelling(id);
+    const { error } = await supabase.rpc("cancel_own_call", { _job_id: id });
+    setCancelling(null);
+    if (error) toast.error(t("ops.cancel_failed"));
+    else toast.success(t("ops.cancel_done"));
+  };
+
+  if (rows.length === 0) {
+    return <GlassPanel className="text-sm text-white/60">{t("ops.no_active_fault")}</GlassPanel>;
+  }
+
+  return (
+    <ul className="space-y-3">
+      {rows.map((row) => (
+        <li key={row.id} className="rounded-2xl border border-red-400/35 bg-[#1a0c10]/80 p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-red-200">
+                {t("ops.active_fault")}
+              </p>
+              <p className="mt-1 text-[15px] font-semibold text-white">
+                {t(`problems.${row.problem_category}`, { defaultValue: row.problem_category })}
+              </p>
+              <p className="mt-1 text-[12px] text-white/55">
+                {t(`status.${row.status}`, { defaultValue: row.status })}
+                {row.marina ? ` · ${row.marina}` : ""}
+              </p>
+            </div>
+            <span className="relative mt-1 flex size-2 shrink-0">
+              <span className="absolute inset-0 rounded-full bg-red-400 animate-ping opacity-70" />
+              <span className="relative size-2 rounded-full bg-red-400" />
+            </span>
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <Link
+              to="/app/job/$id"
+              params={{ id: row.id }}
+              className="grid h-10 place-items-center rounded-xl bg-white text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-900"
+            >
+              {t("ops.open_fault")}
+            </Link>
+            <button
+              type="button"
+              disabled={cancelling === row.id}
+              onClick={() => void cancel(row.id)}
+              className="h-10 rounded-xl border border-red-300/40 text-[11px] font-semibold uppercase tracking-[0.12em] text-red-100 disabled:opacity-50"
+            >
+              {t("ops.cancel_call")}
+            </button>
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function CaptainEmergencyCalls() {
   const { t } = useTranslation();
   const { user } = useSessionUser();
@@ -245,7 +330,7 @@ function CaptainEmergencyCalls() {
         .from("emergency_service_requests")
         .select("*")
         .eq("user_id", user.id)
-        .neq("status", "completed")
+        .in("status", ["pending", "en_route", "on_scene"])
         .order("created_at", { ascending: false })
         .limit(8)
         .then(({ data }) => setRows((data as EmergencyServiceRequest[] | null) ?? []));

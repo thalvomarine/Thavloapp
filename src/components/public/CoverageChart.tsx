@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { CircleMarker, MapContainer, Popup, TileLayer, useMap } from "react-leaflet";
+import { CircleMarker, MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
+import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { useTranslation } from "react-i18next";
 import { MapPlaceholder } from "@/components/ClientOnly";
@@ -8,6 +9,7 @@ import {
   MARINE_PUBLIC_BASE_URL,
   MARINE_SEAMARK_TILE_URL,
 } from "@/lib/chart-tiles";
+import { CHART_PIN_ANCHOR, CHART_PIN_SIZE, chartPinHtml, type ChartPinKind } from "@/lib/chart-pins";
 import {
   fetchMarineZones,
   ZONE_KIND_LABEL_KEYS,
@@ -28,6 +30,8 @@ const KIND_COLOR: Record<MarineZoneKind, string> = {
 };
 
 export const COVERAGE_BAYS = {
+  aegean: { lat: 37.15, lng: 27.2, zoom: 8 },
+  mediterranean: { lat: 36.35, lng: 29.1, zoom: 7 },
   gocek: { lat: 36.7525, lng: 28.9428, zoom: 11 },
   marmaris: { lat: 36.8525, lng: 28.278, zoom: 12 },
   bodrum: { lat: 37.034, lng: 27.43, zoom: 12 },
@@ -205,16 +209,20 @@ export function CoverageChart({
           </CircleMarker>
         ) : null}
         {pins.map((z) => (
-          <CircleMarker
+          <Marker
             key={z.id}
-            center={[z.lat, z.lng]}
-            radius={7}
-            pathOptions={{
-              color: KIND_COLOR[z.kind],
-              fillColor: KIND_COLOR[z.kind],
-              fillOpacity: 0.9,
-              weight: 2,
-            }}
+            position={[z.lat, z.lng]}
+            icon={L.divIcon({
+              html: chartPinHtml(
+                (["marina", "anchorage", "fuel", "hazard"].includes(z.kind)
+                  ? z.kind
+                  : "marina") as ChartPinKind,
+              ),
+              className: "thalvo-map-marker",
+              iconSize: CHART_PIN_SIZE,
+              iconAnchor: CHART_PIN_ANCHOR,
+              popupAnchor: [0, -40],
+            })}
           >
             <Popup>
               <p className="text-sm font-semibold text-slate-900">{z.name}</p>
@@ -226,7 +234,7 @@ export function CoverageChart({
               ) : null}
               {z.description ? <p className="mt-1 text-xs text-slate-700">{z.description}</p> : null}
             </Popup>
-          </CircleMarker>
+          </Marker>
         ))}
       </MapContainer>
     </div>

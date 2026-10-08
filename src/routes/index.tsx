@@ -4,7 +4,7 @@ import { ChartDeck, type ChartPanel } from "@/components/public/ChartDeck";
 
 const TITLE = "THALVO — Marine parts, service and the coast chart";
 const DESCRIPTION =
-  "Open the Göcek, Marmaris and Bodrum chart, then browse spare parts and service packages. Sign in only to order, call a technician, or open the live cockpit.";
+  "Open the Aegean and Mediterranean chart, then browse spare parts and service packages. Sign in only to order, call a technician, or open the live cockpit.";
 
 export const Route = createFileRoute("/")({
   ssr: false,

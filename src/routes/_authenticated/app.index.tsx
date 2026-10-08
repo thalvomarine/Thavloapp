@@ -2,7 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
-import { LiveMap, type LivePin } from "@/components/LiveMap";
+import { LiveMap, type LiveAlert, type LivePin } from "@/components/LiveMap";
+import { asCoordinate } from "@/lib/emergency-service";
 import { pickValidCoordinates } from "@/lib/geolocation";
 import { ThalvoLoader } from "@/components/ThalvoLoader";
 import { Wordmark } from "@/components/Wordmark";
@@ -16,6 +17,7 @@ import { AccountMenuButton } from "@/components/mission/AccountMenuButton";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { AiAdvisor, type AiRecommendation } from "@/components/mission/AiAdvisor";
 import { openThalvoSos } from "@/lib/sos-bus";
+import { VesselRange } from "@/components/mission/VesselRange";
 import { MissionStatusTrack, stageFromJob } from "@/components/mission/MissionStatusTrack";
 import { emitEvent } from "@/lib/events";
 import { caretAfterGrouping, groupThousands, parseGrouped } from "@/lib/digit-format";
@@ -209,6 +211,7 @@ function OperatorCockpit({ profile }: { profile: Profile }) {
   const [activeJobs, setActiveJobs] = useState<
     Array<{ id: string; problem_category: string; status: string }>
   >([]);
+  const [alerts, setAlerts] = useState<LiveAlert[]>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -217,7 +220,7 @@ function OperatorCockpit({ profile }: { profile: Profile }) {
         const pending = await supabase
           .from("jobs")
           .select(
-            "id, problem_category, description, marina, service_type, profiles!jobs_client_id_fkey(full_name, boat_name)",
+            "id, problem_category, description, marina, service_type, lat, lng, profiles!jobs_client_id_fkey(full_name, boat_name)",
           )
           .eq("status", "Pending")
           .order("created_at", { ascending: false });
@@ -225,12 +228,90 @@ function OperatorCockpit({ profile }: { profile: Profile }) {
         setRequests((pending.data as never) ?? []);
         const mine = await supabase
           .from("jobs")
-          .select("id, problem_category, status")
+          .select("id, problem_category, status, lat, lng, marina")
           .eq("provider_id", user.id)
           .not("status", "in", "(Completed,Cancelled)")
           .order("created_at", { ascending: false });
         if (mine.error) console.warn("[cockpit] jobs mine unavailable", mine.error.message);
         setActiveJobs((mine.data as never) ?? []);
+        const mineAlerts = ((mine.data ?? []) as Array<{
+          id: string;
+          lat: unknown;
+          lng: unknown;
+          problem_category: string;
+          marina: string | null;
+        }>).flatMap((row) => {
+          const lat = asCoordinate(row.lat);
+          const lng = asCoordinate(row.lng);
+          if (lat == null || lng == null) return [];
+          return [{
+            id: `job-${row.id}`,
+            lat,
+            lng,
+            title: row.marina?.trim() || row.problem_category,
+            kind: "fault" as const,
+            detail: row.marina?.trim() || undefined,
+          }];
+        });
+        const located = await supabase
+          .from("emergency_service_requests")
+          .select("id, lat, lng, vessel_name, category, urgency_level, bay_name, description, status")
+          .in("status", ["pending", "en_route", "on_scene"])
+          .order("created_at", { ascending: false })
+          .limit(40);
+        if (located.error) console.warn("[cockpit] located calls unavailable", located.error.message);
+        const pendingRows = (pending.data ?? []) as Array<{
+          id: string;
+          lat: unknown;
+          lng: unknown;
+          problem_category: string;
+          marina: string | null;
+          profiles: { boat_name: string | null; full_name: string } | null;
+        }>;
+        const jobAlerts = pendingRows.flatMap((row) => {
+          const lat = asCoordinate(row.lat);
+          const lng = asCoordinate(row.lng);
+          if (lat == null || lng == null) return [];
+          return [{
+            id: `job-${row.id}`,
+            lat,
+            lng,
+            title: row.profiles?.boat_name?.trim() || row.marina?.trim() || row.problem_category,
+            kind: "sos" as const,
+            detail: row.marina?.trim() || undefined,
+          }];
+        });
+        const rows = (located.data ?? []) as Array<{
+          id: string;
+          lat: unknown;
+          lng: unknown;
+          vessel_name: string;
+          category: string;
+          urgency_level: string;
+          bay_name: string | null;
+          description: string;
+        }>;
+        const esrAlerts = rows.flatMap((row) => {
+            const lat = asCoordinate(row.lat);
+            const lng = asCoordinate(row.lng);
+            if (lat == null || lng == null) return [];
+            const title = row.vessel_name?.trim() || row.bay_name?.trim() || row.category;
+            return [{
+              id: row.id,
+              lat,
+              lng,
+              title,
+              kind: row.urgency_level === "urgent" ? "sos" as const : "fault" as const,
+              detail: row.bay_name?.trim() || undefined,
+            }];
+        });
+        const vesselPins = [...mineAlerts, ...jobAlerts.filter((pin) => !mineAlerts.some((mine) => mine.id === pin.id))];
+        setAlerts([
+          ...vesselPins,
+          ...esrAlerts.filter(
+            (pin) => !vesselPins.some((job) => Math.abs(job.lat - pin.lat) < 0.02 && Math.abs(job.lng - pin.lng) < 0.02),
+          ),
+        ]);
       } catch (e) {
         console.warn("[cockpit] jobs load failed", e);
         setRequests([]);
@@ -246,6 +327,11 @@ function OperatorCockpit({ profile }: { profile: Profile }) {
     const ch = supabase
       .channel(`prov-jobs:${user.id}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "jobs" }, () => buffer.ping())
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "emergency_service_requests" },
+        () => buffer.ping(),
+      )
       .subscribe();
     return () => {
       stopIdle();
@@ -275,6 +361,7 @@ function OperatorCockpit({ profile }: { profile: Profile }) {
     <div className="relative h-full min-h-[500px] w-full">
       <LiveMap
         providers={EMPTY_PINS}
+        alerts={alerts}
         variant="dark"
         fullscreen
         hud
@@ -288,16 +375,21 @@ function OperatorCockpit({ profile }: { profile: Profile }) {
             <span>{t("ops_alerts.pool_title")}</span>
             <ChevronRight className="size-4 shrink-0 text-cyan-200/70" />
           </summary>
+          {alerts[0] && (
+            <div className="px-3 pt-2">
+              <VesselRange lat={alerts[0].lat} lng={alerts[0].lng} />
+            </div>
+          )}
           <div className="max-h-[36vh] space-y-4 overflow-y-auto px-3 pb-3">
             {user && <EmergencyCallRadar userId={user.id} hideChart />}
             {user && <ActiveJobPool userId={user.id} />}
             <section>
-              <SectionTitle icon={<Activity className="size-3.5" />} eyebrow="Your missions">
-                Active jobs
+              <SectionTitle icon={<Activity className="size-3.5" />} eyebrow={t("ops_alerts.your_missions")}>
+                {t("ops_alerts.active_jobs")}
               </SectionTitle>
               {activeJobs.length === 0 ? (
                 <GlassPanel className="text-sm text-muted-foreground">
-                  No active jobs. Watch the feed below.
+                  {t("ops_alerts.no_active_jobs")}
                 </GlassPanel>
               ) : (
                 <ul className="space-y-2">
@@ -313,7 +405,7 @@ function OperatorCockpit({ profile }: { profile: Profile }) {
                           <div className="flex items-center justify-between">
                             <div className="min-w-0">
                               <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40">
-                                Mission opportunity
+                                {t("ops_alerts.mission_opportunity")}
                               </p>
                               <p className="mt-0.5 truncate text-sm font-semibold text-white">
                                 {t(`problems.${j.problem_category}`, {
@@ -337,12 +429,12 @@ function OperatorCockpit({ profile }: { profile: Profile }) {
               )}
             </section>
             <section>
-              <SectionTitle icon={<Radio className="size-3.5" />} eyebrow="Incoming">
-                Request feed
+              <SectionTitle icon={<Radio className="size-3.5" />} eyebrow={t("ops_alerts.incoming")}>
+                {t("ops_alerts.request_feed")}
               </SectionTitle>
               {requests.length === 0 ? (
                 <GlassPanel className="text-sm text-muted-foreground">
-                  No pending requests in your area right now.
+                  {t("ops_alerts.no_requests")}
                 </GlassPanel>
               ) : (
                 <ul className="space-y-2">
@@ -355,34 +447,34 @@ function OperatorCockpit({ profile }: { profile: Profile }) {
             <details className="group rounded-2xl border border-white/10 bg-white/[0.03]">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 select-none">
                 <span className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/60">
-                  <Gauge className="size-3.5" /> Overview details
+                  <Gauge className="size-3.5" /> {t("ops_alerts.overview")}
                 </span>
                 <ChevronRight className="size-4 text-white/40 transition-transform group-open:rotate-90" />
               </summary>
               <div className="space-y-4 px-4 pt-1 pb-4">
                 <div className="grid gap-3 sm:grid-cols-3">
                   <StatCard
-                    label="Active jobs"
+                    label={t("ops_alerts.active_jobs")}
                     value={activeJobs.length}
                     icon={<Activity className="size-4" />}
                     accent="text-sky-300"
                   />
                   <StatCard
-                    label="Open requests"
+                    label={t("ops_alerts.open_requests")}
                     value={requests.length}
                     icon={<Radio className="size-4" />}
                     accent="text-amber-300"
                   />
                   <Link to="/app/reputation" className="block">
                     <StatCard
-                      label="THALVO Trust"
-                      value="Open reputation →"
+                      label={t("ops_alerts.trust_open")}
+                      value={t("ops_alerts.open")}
                       icon={<TrustMark size={18} />}
                       accent="text-emerald-300"
                     />
                   </Link>
                 </div>
-                <AiAdvisor recommendations={recs} title="THALVO AI · Operator brief" />
+                <AiAdvisor recommendations={recs} title={t("ops_alerts.overview")} />
               </div>
             </details>
           </div>
@@ -514,13 +606,13 @@ function RequestCard({
               <span className="absolute inset-0 rounded-full bg-rose-400 animate-ping opacity-70" />
               <span className="relative size-1.5 rounded-full bg-rose-400" />
             </span>
-            Funded mission · Broadcasting
+            {t("ops_alerts.funded")}
           </p>
           <p className="text-sm font-semibold text-white mt-1">
             {t(`problems.${request.problem_category}`, { defaultValue: request.problem_category })}
           </p>
           <p className="text-[11px] text-white/50 mt-0.5">
-            📍 {request.marina} · ⚓ {request.profiles?.boat_name ?? "—"}
+            {request.marina} · {request.profiles?.boat_name ?? "—"}
           </p>
           {request.description && (
             <p className="mt-2 text-[12px] text-white/70 whitespace-pre-wrap">
@@ -528,7 +620,7 @@ function RequestCard({
             </p>
           )}
           <p className="mt-2 text-[10px] text-white/40 uppercase tracking-[0.14em]">
-            Payment held in THALVO escrow · released on completion
+            {t("ops_alerts.escrow_note")}
           </p>
         </div>
       </div>
@@ -586,7 +678,7 @@ function RequestCard({
                   : "bg-white/5 border-white/10 text-white/50")
               }
             >
-              Available now
+              {t("ops_alerts.available_now")}
             </button>
             <button
               type="button"
@@ -598,7 +690,7 @@ function RequestCard({
                   : "bg-white/5 border-white/10 text-white/50")
               }
             >
-              On standby
+              {t("ops_alerts.on_standby")}
             </button>
           </div>
           <div className="flex gap-2">

@@ -7,33 +7,23 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { createPortal, flushSync } from "react-dom";
 import {
   MapContainer,
   Marker,
   Popup,
   Circle,
   Polygon,
-  Polyline,
   useMap,
   useMapEvents,
 } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import "leaflet-rotate";
 import { isNativeWebView } from "@/lib/native-history";
-import { renderToStaticMarkup } from "react-dom/server";
 import { useTranslation } from "react-i18next";
 import {
-  Wrench,
-  Anchor,
-  Fuel,
   Loader2,
   MapPinOff,
   RefreshCw,
-  Lightbulb,
-  Utensils,
-  TriangleAlert,
   X,
 } from "lucide-react";
 import {
@@ -70,7 +60,6 @@ import {
   ChartReadout,
   ChartDrawHint,
   ChartFabStack,
-  ChartFilterChips,
   nextBasemap,
   type ChartLayers,
   type ChartLayerKey,
@@ -85,7 +74,7 @@ import {
   THALVO_MAP_FOCUS_EVENT,
   type MapFocusTarget,
 } from "@/lib/map-focus-bus";
-import { easeMapToNorth, getMapBearing } from "@/lib/chart-north";
+import { CHART_PIN_ANCHOR, CHART_PIN_SIZE, chartPinHtml, type ChartPinKind } from "@/lib/chart-pins";
 import { setMapChromeOverlay } from "@/lib/map-chrome";
 import { publishCockpitContext } from "@/lib/ai-captain-context-bus";
 import { THALVO_LAYER_FILTER_EVENT, type LayerFilterRequest } from "@/lib/map-layers-bus";
@@ -94,11 +83,6 @@ import { AdminZoneDialog } from "@/components/map/AdminZoneDialog";
 import { MetoceanHud } from "@/components/map/MetoceanHud";
 import { MapPlaceholder } from "@/components/ClientOnly";
 import { createRealtimeBuffer, debounce, runWhenIdle } from "@/lib/schedule";
-import { useRouteSession } from "@/hooks/useRouteSession";
-import { RouteInteractionLayer } from "@/components/navigation/RouteInteractionLayer";
-import { RouteDeck } from "@/components/navigation/RouteDeck";
-import { isFiniteLatLng } from "@/lib/sea-route/geometry";
-import { activateKeepAwake, releaseKeepAwake } from "@/lib/keep-awake";
 import {
   AEGEAN_OFFLINE_BOUNDS,
   createCachedTileLayer,
@@ -121,6 +105,16 @@ export interface LivePin {
   kind: "mechanic" | "diver";
 }
 
+/** Captain/sailor SOS or fault call, plotted at the device fix. */
+export interface LiveAlert {
+  id: string;
+  lat: number;
+  lng: number;
+  title: string;
+  kind: "sos" | "fault";
+  detail?: string;
+}
+
 /** Dispatch route line: a responding boat's position to the job it's assigned to. */
 export interface LiveRoute {
   id: string;
@@ -130,6 +124,8 @@ export interface LiveRoute {
 
 interface Props {
   providers: LivePin[];
+  /** Open SOS and fault calls with a real device fix. */
+  alerts?: LiveAlert[];
   /** Active dispatch route lines (see the ETA engine in the admin tower). */
   routes?: LiveRoute[];
   center?: { lat: number; lng: number };
@@ -158,20 +154,9 @@ interface Props {
 const GOCEK = { lat: 36.7525, lng: 28.9428 };
 const DEFAULT_ZOOM = 13;
 
-/** Prefer GPS → map center → Göcek so route never silently no-ops without a fix. */
-function resolveRouteOrigin(
-  fix: { lat: number; lng: number } | null | undefined,
-  mapCenter: { lat: number; lng: number } | null | undefined,
-): { lat: number; lng: number } {
-  if (fix && isFiniteLatLng(fix)) return { lat: fix.lat, lng: fix.lng };
-  if (mapCenter && isFiniteLatLng(mapCenter)) return { lat: mapCenter.lat, lng: mapCenter.lng };
-  return { ...GOCEK };
-}
-
 const REGIONS: Record<ChartRegion, { lat: number; lng: number; zoom: number }> = {
-  gocek: { lat: 36.7525, lng: 28.9428, zoom: 13 },
-  marmaris: { lat: 36.8525, lng: 28.278, zoom: 13 },
-  bozburun: { lat: 36.689, lng: 28.043, zoom: 13 },
+  aegean: { lat: 37.15, lng: 27.2, zoom: 8 },
+  mediterranean: { lat: 36.35, lng: 29.1, zoom: 7 },
 };
 
 /**
@@ -193,72 +178,32 @@ const CLEAR_ERROR_TILE =
   "data:image/svg+xml;charset=UTF-8," +
   encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"/>`);
 
-const MARKER_SIZE = 36;
-const MARKER_ANCHOR = MARKER_SIZE / 2;
-
-type MarkerTone = "emerald" | "amber" | "sky" | "rose" | "slate";
-
-const MARKER_TONES: Record<MarkerTone, { border: string; glyph: string }> = {
-  emerald: { border: "rgba(16,185,129,0.40)", glyph: "#34d399" },
-  amber: { border: "rgba(245,158,11,0.40)", glyph: "#fbbf24" },
-  sky: { border: "rgba(56,189,248,0.40)", glyph: "#38bdf8" },
-  rose: { border: "rgba(244,63,94,0.40)", glyph: "#fb7185" },
-  slate: { border: "rgba(148,163,184,0.35)", glyph: "#e2e8f0" },
-};
-
-function svgIcon(node: React.ReactElement, tone: MarkerTone) {
-  const palette = MARKER_TONES[tone];
-  const svg = renderToStaticMarkup(
-    <div
-      className="thalvo-marker-face"
-      style={{
-        width: MARKER_SIZE,
-        height: MARKER_SIZE,
-        borderRadius: 999,
-        display: "grid",
-        placeItems: "center",
-        background: "rgba(15,23,42,0.92)",
-        border: `1px solid ${palette.border}`,
-        boxShadow: "0 4px 6px -1px rgba(0,0,0,0.5)",
-        color: palette.glyph,
-      }}
-    >
-      {node}
-    </div>,
-  );
+function pinIcon(kind: ChartPinKind) {
   return L.divIcon({
-    html: svg,
+    html: chartPinHtml(kind),
     className: "thalvo-map-marker",
-    iconSize: [MARKER_SIZE, MARKER_SIZE],
-    iconAnchor: [MARKER_ANCHOR, MARKER_ANCHOR],
-    popupAnchor: [0, -20],
+    iconSize: CHART_PIN_SIZE,
+    iconAnchor: CHART_PIN_ANCHOR,
+    popupAnchor: [0, -40],
   });
 }
 
-const mechIcon = svgIcon(<Wrench size={16} />, "slate");
-const diverIcon = svgIcon(<Anchor size={16} />, "sky");
+const mechIcon = pinIcon("marina");
+const diverIcon = pinIcon("anchorage");
+const sosIcon = pinIcon("hazard");
+const faultIcon = pinIcon("fuel");
 
 const ZONE_ICONS: Record<MarineZoneKind, L.DivIcon> = {
-  marina: svgIcon(<Anchor size={16} />, "emerald"),
-  fuel: svgIcon(<Fuel size={16} />, "amber"),
-  lighthouse: svgIcon(<Lightbulb size={16} />, "amber"),
-  restaurant: svgIcon(<Utensils size={16} />, "emerald"),
-  hazard: svgIcon(<TriangleAlert size={16} />, "rose"),
-  anchorage: svgIcon(<Anchor size={16} />, "emerald"),
+  marina: pinIcon("marina"),
+  fuel: pinIcon("fuel"),
+  lighthouse: pinIcon("lighthouse"),
+  restaurant: pinIcon("restaurant"),
+  hazard: pinIcon("hazard"),
+  anchorage: pinIcon("anchorage"),
 };
 
-const meIcon = L.divIcon({
-  className: "thalvo-map-marker",
-  iconSize: [MARKER_SIZE, MARKER_SIZE],
-  iconAnchor: [MARKER_ANCHOR, MARKER_ANCHOR],
-  popupAnchor: [0, -20],
-  html: `<div class="thalvo-marker-face" style="width:36px;height:36px;border-radius:999px;display:grid;place-items:center;background:rgba(15,23,42,0.92);border:1px solid rgba(56,189,248,0.4);box-shadow:0 4px 6px -1px rgba(0,0,0,0.5)">
-      <span style="width:10px;height:10px;border-radius:999px;background:#38bdf8;opacity:.95;animation:thalvoFixPulse 1.8s ease-in-out infinite"></span>
-    </div>
-    <style>@keyframes thalvoFixPulse{0%,100%{opacity:.45}50%{opacity:1}}</style>`,
-});
-
-const reportIcon = svgIcon(<Anchor size={14} />, "sky");
+const meIcon = pinIcon("own");
+const reportIcon = pinIcon("lighthouse");
 
 function Recenter({
   center,
@@ -328,7 +273,7 @@ function MapBridge({
     const west = map.containerPointToLatLng([0, size.y / 2]);
     const east = map.containerPointToLatLng([size.x, size.y / 2]);
     const nm = size.x > 0 ? toNauticalMiles(west.distanceTo(east)) : null;
-    onTelemetry({ lat: c.lat, lng: c.lng }, nm, getMapBearing(map));
+    onTelemetry({ lat: c.lat, lng: c.lng }, nm, 0);
   }, [map, onTelemetry]);
 
   const delayed = useMemo(
@@ -341,13 +286,6 @@ function MapBridge({
   }, [report]);
 
   useEffect(() => () => delayed.cancel(), [delayed]);
-
-  useEffect(() => {
-    map.on("rotate", delayed);
-    return () => {
-      map.off("rotate", delayed);
-    };
-  }, [map, delayed]);
 
   useMapEvents({
     moveend: delayed,
@@ -533,7 +471,7 @@ const ChartOverlays = memo(function ChartOverlays({
   fix,
   stale,
   pins,
-  routes,
+  alerts,
   moorings,
   hazards,
   lights,
@@ -547,6 +485,7 @@ const ChartOverlays = memo(function ChartOverlays({
   fix: GeoFix | null;
   stale: boolean;
   pins: LivePin[];
+  alerts: LiveAlert[];
   routes: LiveRoute[];
   moorings: MarineZone[];
   hazards: MarineZone[];
@@ -580,26 +519,39 @@ const ChartOverlays = memo(function ChartOverlays({
 
       {layers.fleet &&
         poiFilters.service &&
-        routes.map((r) => (
-          <Polyline
-            key={`route-${r.id}`}
-            positions={[
-              [r.from.lat, r.from.lng],
-              [r.to.lat, r.to.lng],
-            ]}
-            pathOptions={{
-              color: "#00F0FF",
-              weight: 2.5,
-              opacity: 0.85,
-              dashArray: "1 10",
-              lineCap: "round",
-            }}
-          />
-        ))}
-
-      {layers.fleet &&
-        poiFilters.service &&
         pins.map((p) => <FleetPinMarker key={p.id} pin={p} />)}
+
+      {alerts.map((alert) => (
+        <Circle
+          key={`${alert.id}-ring`}
+          center={[alert.lat, alert.lng]}
+          radius={45}
+          pathOptions={{
+            color: alert.kind === "sos" ? "#EF4444" : "#F59E0B",
+            fillColor: alert.kind === "sos" ? "#EF4444" : "#F59E0B",
+            fillOpacity: 0.22,
+            weight: 1.6,
+          }}
+        />
+      ))}
+      {alerts.map((alert) => (
+        <Marker
+          key={alert.id}
+          position={[alert.lat, alert.lng]}
+          icon={alert.kind === "sos" ? sosIcon : faultIcon}
+        >
+          <Popup>
+            <div className="text-[12px] leading-snug">
+              <p className="font-semibold">
+                {alert.kind === "sos" ? t("ops_alerts.sos_title") : t("ops_alerts.fault_title")}
+              </p>
+              <p>{alert.title}</p>
+              <p className="mt-1 font-mono">{formatDegrees(alert.lat, alert.lng)}</p>
+              {alert.detail ? <p className="mt-1 opacity-70">{alert.detail}</p> : null}
+            </div>
+          </Popup>
+        </Marker>
+      ))}
 
       {layers.moorings &&
         moorings.map((z) => (
@@ -746,6 +698,7 @@ export const LiveMap = memo(function LiveMap(props: Props) {
 
 function LiveMapCanvas({
   providers,
+  alerts = [],
   routes = [],
   center,
   className = "",
@@ -783,58 +736,6 @@ function LiveMapCanvas({
   const started = useRef(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [selectedPoint, setSelectedPoint] = useState<ChartPoint | null>(null);
-  const {
-    mode: routeMode,
-    origin: routeOrigin,
-    destination: routeDestination,
-    vias: routeVias,
-    waypoints: routeWaypoints,
-    legs: routeLegs,
-    distanceNm: routeDistanceNm,
-    etaMinutes: routeEtaMinutes,
-    speedKts: routeSpeedKts,
-    optimizing: routeOptimizing,
-    startRoute,
-    reset: resetRoute,
-    setSpeed: setRouteSpeed,
-    moveWaypoint,
-    insertVia,
-    removePin,
-    addViaAt,
-    lockActive,
-    unlockEdit,
-  } = useRouteSession();
-  const routeVisible = Boolean(routeDestination && isFiniteLatLng(routeDestination));
-
-  useEffect(() => {
-    if (!routeVisible) return;
-    console.log("[RouteDeck Render State]:", {
-      mode: routeMode,
-      dest: routeDestination,
-      origin: routeOrigin,
-      optimizing: routeOptimizing,
-      waypoints: routeWaypoints.length,
-    });
-  }, [
-    routeVisible,
-    routeMode,
-    routeDestination,
-    routeOrigin,
-    routeOptimizing,
-    routeWaypoints.length,
-  ]);
-
-  // Keep screen awake only while passage is locked ("Seyre Başla").
-  useEffect(() => {
-    if (routeMode === "active") {
-      void activateKeepAwake();
-    } else {
-      void releaseKeepAwake();
-    }
-    return () => {
-      void releaseKeepAwake();
-    };
-  }, [routeMode]);
 
   const [tileProgress, setTileProgress] = useState<DownloadProgress | null>(null);
   const prefetchRef = useRef<PrefetchController | null>(null);
@@ -861,21 +762,11 @@ function LiveMapCanvas({
     });
   }, []);
 
-  const fixRef = useRef(fix);
-  fixRef.current = fix;
-
   useEffect(() => {
     if (!map) return;
     const apply = (target: MapFocusTarget) => {
       if (!isValidCoordinate(target.lat, target.lng)) return;
       map.flyTo([target.lat, target.lng], target.zoom ?? 15, { duration: 1.15 });
-      const center = map.getCenter();
-      const origin = resolveRouteOrigin(fixRef.current, {
-        lat: center.lat,
-        lng: center.lng,
-      });
-      console.log("[LiveMap onFocus→startRoute]", { origin, destination: target });
-      startRoute(origin, { lat: target.lat, lng: target.lng });
     };
     const pending = consumeMapFocus();
     if (pending) apply(pending);
@@ -885,7 +776,7 @@ function LiveMapCanvas({
     };
     window.addEventListener(THALVO_MAP_FOCUS_EVENT, onFocus);
     return () => window.removeEventListener(THALVO_MAP_FOCUS_EVENT, onFocus);
-  }, [map, startRoute]);
+  }, [map]);
 
   const [layers, setLayers] = useState<ChartLayers>({
     // Seamark overlay + CSS filter doubles tile GPU cost — enable after idle.
@@ -1184,14 +1075,6 @@ function LiveMapCanvas({
     [map],
   );
 
-  const onResetNorth = useCallback(() => {
-    if (!map) return;
-    easeMapToNorth(map, 800);
-    if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
-      navigator.vibrate(12);
-    }
-  }, [map]);
-
   // "Go to my location" FAB: fly straight to an already-held fix, or take a
   // fresh one and fly to it as soon as it lands — either path leaves the
   // GEO_OPTIONS/failure handling identical to the initial auto-request.
@@ -1233,32 +1116,11 @@ function LiveMapCanvas({
 
   const onNavigate = useCallback(
     (point: ChartPoint) => {
-      console.log("[LiveMap] FORCE START ROUTE CALLED FOR:", point);
       const coords = chartPointCoords(point);
-      if (!isFiniteLatLng(coords)) {
-        console.error("[LiveMap onNavigate] invalid destination", point);
-        return;
-      }
-      // Force-close detail sheet before route UI mounts (avoid z-fight / overflow clip).
-      flushSync(() => {
-        setSelectedPoint(null);
-      });
+      if (!isValidCoordinate(coords.lat, coords.lng)) return;
       map?.flyTo([coords.lat, coords.lng], 15, { duration: 1 });
-      const mapCenter = map?.getCenter();
-      const origin = resolveRouteOrigin(
-        fix,
-        mapCenter ? { lat: mapCenter.lat, lng: mapCenter.lng } : telemetry.center,
-      );
-      console.log("[LiveMap onNavigate→startRoute]", {
-        origin,
-        destination: coords,
-        hasGps: Boolean(fix),
-      });
-      startRoute(origin, coords);
-      // Still improve GPS in background when missing — route already started with fallback.
-      if (!fix) void request();
     },
-    [map, fix, request, startRoute, telemetry.center],
+    [map],
   );
 
   // Leaflet's container doesn't auto-detect layout changes (sheet
@@ -1362,20 +1224,11 @@ function LiveMapCanvas({
           scrollWheelZoom: Boolean(fullscreen || scrollZoom),
           smoothWheelZoom: true,
         } as Record<string, unknown>)}
-        {...(isNativeWebView()
-          ? {}
-          : ({
-              rotate: true,
-              bearing: 0,
-              touchRotate: false,
-              shiftKeyRotate: true,
-              rotateControl: false,
-            } as Record<string, unknown>))}
       >
         <MapSizeSync />
         <MapInteractionUnlock />
         {validCenter ? (
-          <Recenter center={validCenter} suspend={routeVisible} />
+          <Recenter center={validCenter} />
         ) : (
           <BootstrapGps fix={fix} />
         )}
@@ -1388,6 +1241,7 @@ function LiveMapCanvas({
           fix={fix}
           stale={stale}
           pins={pins}
+          alerts={pickValidCoordinates(alerts)}
           routes={routes}
           moorings={moorings}
           hazards={hazards}
@@ -1399,64 +1253,8 @@ function LiveMapCanvas({
           onSelectZone={onSelectZone}
           onSelectReport={onSelectReport}
         />
-        {routeVisible && (
-          <RouteInteractionLayer
-            waypoints={routeWaypoints}
-            pins={
-              [routeOrigin, ...routeVias, routeDestination].filter(
-                isFiniteLatLng,
-              ) as Array<{ lat: number; lng: number }>
-            }
-            locked={routeMode === "active"}
-            active={routeMode === "active"}
-            optimizing={routeOptimizing}
-            onWaypointDragEnd={moveWaypoint}
-            onInsertVia={insertVia}
-            onRemovePin={removePin}
-          />
-        )}
       </MapContainer>
       </div>
-
-      {/* Route Deck: body portal, destination-gated only (never mode === idle gate). */}
-      {routeDestination &&
-        typeof document !== "undefined" &&
-        createPortal(
-          <div
-            style={{
-              position: "fixed",
-              bottom: 0,
-              left: 0,
-              right: 0,
-              zIndex: 999999,
-              display: "flex",
-              justifyContent: "center",
-              paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 5.5rem)",
-              paddingTop: "0.5rem",
-              paddingLeft: "0.75rem",
-              paddingRight: "0.75rem",
-              pointerEvents: "none",
-            }}
-          >
-            <RouteDeck
-              distanceNm={routeDistanceNm}
-              etaMinutes={routeEtaMinutes}
-              speedKts={routeSpeedKts}
-              legs={routeLegs}
-              optimizing={routeOptimizing}
-              locked={routeMode === "active"}
-              onSpeed={setRouteSpeed}
-              onReset={resetRoute}
-              onAddVia={() => {
-                const c = telemetry.center;
-                if (isFiniteLatLng(c)) addViaAt(c);
-              }}
-              onLock={lockActive}
-              onUnlock={unlockEdit}
-            />
-          </div>,
-          document.body,
-        )}
 
       {/*
        * HUD / search / FAB chrome stays inside the map wrapper so it cannot
@@ -1475,7 +1273,10 @@ function LiveMapCanvas({
                     setLayers((v) => ({ ...v, [key]: !v[key] }))
                   }
                   onJump={onJump}
-                  onResetNorth={onResetNorth}
+                  filters={poiFilters}
+                  onToggleFilter={(key) =>
+                    setPoiFilters((current) => ({ ...current, [key]: !current[key] }))
+                  }
                   isAdmin={isAdmin}
                   drawing={drawing}
                   onToggleDraw={() => {
@@ -1562,12 +1363,6 @@ function LiveMapCanvas({
                       >
                         <MetoceanHud />
                       </div>
-                      <ChartFilterChips
-                        filters={poiFilters}
-                        onToggle={(key) =>
-                          setPoiFilters((current) => ({ ...current, [key]: !current[key] }))
-                        }
-                      />
                       {requesting && !fix && (
                         <span className="pointer-events-auto inline-flex items-center gap-1.5 rounded-full border border-amber-300/40 bg-amber-400/20 px-2.5 py-1 text-[10px] font-bold text-amber-200 shadow backdrop-blur-md">
                           <Loader2 className="size-3 animate-spin" />
@@ -1584,14 +1379,12 @@ function LiveMapCanvas({
                   concealed={false}
                 />
                 <ChartFabStack
-                  onResetNorth={onResetNorth}
                   onCycleBasemap={() => setBasemap((v) => nextBasemap(v))}
                   layersOpen={layersMenuOpen}
                   onLayersOpenChange={setLayersMenuOpen}
                   onLocateMe={() => void onLocateMe()}
                   locating={requesting}
                   concealed={false}
-                  headingDeg={telemetry.bearingDeg}
                   basemap={basemap}
                   onSelectBasemap={setBasemap}
                   layers={layers}
@@ -1599,6 +1392,10 @@ function LiveMapCanvas({
                     setLayers((v) => ({ ...v, [key]: !v[key] }))
                   }
                   onJump={onJump}
+                  filters={poiFilters}
+                  onToggleFilter={(key) =>
+                    setPoiFilters((current) => ({ ...current, [key]: !current[key] }))
+                  }
                   isAdmin={isAdmin}
                   drawing={drawing}
                   onToggleDraw={() => {

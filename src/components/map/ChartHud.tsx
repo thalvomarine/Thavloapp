@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next";
 import {
   Anchor,
   ChevronDown,
-  Compass,
   Crosshair,
   Fuel,
   Globe2,
@@ -12,7 +11,6 @@ import {
   MapPin,
   Moon,
   Navigation,
-  Navigation2,
   Plus,
   Satellite,
   Ship,
@@ -33,7 +31,7 @@ export interface ChartLayers {
 
 export type ChartLayerKey = keyof ChartLayers;
 
-export type ChartRegion = "gocek" | "marmaris" | "bozburun";
+export type ChartRegion = "aegean" | "mediterranean";
 export type BasemapId = "sea" | "sat" | "dark";
 
 export const BASEMAP_CYCLE: BasemapId[] = ["sat", "sea", "dark"];
@@ -47,7 +45,8 @@ interface Props {
   layers: ChartLayers;
   onToggleLayer: (key: ChartLayerKey) => void;
   onJump: (region: ChartRegion) => void;
-  onResetNorth: () => void;
+  filters?: Record<PoiFilterKey, boolean>;
+  onToggleFilter?: (key: PoiFilterKey) => void;
   /** Admin-only draw mode: next map click opens the new-point modal. */
   isAdmin?: boolean;
   drawing?: boolean;
@@ -108,6 +107,8 @@ function ChartHudBody({
   layers,
   onToggleLayer,
   onJump,
+  filters,
+  onToggleFilter,
   isAdmin,
   drawing,
   onToggleDraw,
@@ -123,6 +124,8 @@ function ChartHudBody({
   | "layers"
   | "onToggleLayer"
   | "onJump"
+  | "filters"
+  | "onToggleFilter"
   | "isAdmin"
   | "drawing"
   | "onToggleDraw"
@@ -139,38 +142,58 @@ function ChartHudBody({
     <>
       {/* Region quick-jump pills — horizontally scrollable so adding a 4th/5th
           region never squeezes existing labels into unreadable slivers. */}
-      <div className="-mx-0.5 flex flex-nowrap gap-1.5 overflow-x-auto px-0.5 no-scrollbar">
-        <button
-          type="button"
-          onClick={(e) => {
-            stopMapEvent(e);
-            onJump("gocek");
-          }}
-          className="h-8 shrink-0 whitespace-nowrap rounded-full border border-cyan-300/25 bg-cyan-400/[0.08] px-3.5 text-[11px] font-semibold text-cyan-100/90 transition-colors hover:border-cyan-300/50 hover:bg-cyan-400/20"
-        >
-          {t("chart.jump_gocek")}
-        </button>
-        <button
-          type="button"
-          onClick={(e) => {
-            stopMapEvent(e);
-            onJump("marmaris");
-          }}
-          className="h-8 shrink-0 whitespace-nowrap rounded-full border border-cyan-300/25 bg-cyan-400/[0.08] px-3.5 text-[11px] font-semibold text-cyan-100/90 transition-colors hover:border-cyan-300/50 hover:bg-cyan-400/20"
-        >
-          {t("chart.jump_marmaris")}
-        </button>
-        <button
-          type="button"
-          onClick={(e) => {
-            stopMapEvent(e);
-            onJump("bozburun");
-          }}
-          className="h-8 shrink-0 whitespace-nowrap rounded-full border border-cyan-300/25 bg-cyan-400/[0.08] px-3.5 text-[11px] font-semibold text-cyan-100/90 transition-colors hover:border-cyan-300/50 hover:bg-cyan-400/20"
-        >
-          {t("chart.jump_bozburun")}
-        </button>
+      <div className="grid grid-cols-2 gap-1.5">
+        {(
+          [
+            ["aegean", "chart.jump_aegean"],
+            ["mediterranean", "chart.jump_mediterranean"],
+          ] as const
+        ).map(([id, labelKey]) => (
+          <button
+            key={id}
+            type="button"
+            onClick={(e) => {
+              stopMapEvent(e);
+              onJump(id);
+            }}
+            className="h-9 rounded-lg border border-cyan-300/30 bg-cyan-400/10 text-[12px] font-semibold text-cyan-50 transition-colors hover:bg-cyan-400/20"
+          >
+            {t(labelKey)}
+          </button>
+        ))}
       </div>
+      {filters && onToggleFilter && (
+        <div className="mt-2 grid grid-cols-3 gap-1">
+          {(
+            [
+              ["marinas", "chart.filter_marinas"],
+              ["fuel", "chart.filter_fuel"],
+              ["service", "chart.filter_service"],
+            ] as const
+          ).map(([key, labelKey]) => {
+            const on = filters[key];
+            return (
+              <button
+                key={key}
+                type="button"
+                aria-pressed={on}
+                onClick={(e) => {
+                  stopMapEvent(e);
+                  onToggleFilter(key);
+                }}
+                className={
+                  "h-8 rounded-md border text-[10px] font-semibold " +
+                  (on
+                    ? "border-cyan-300/50 bg-cyan-400/20 text-white"
+                    : "border-white/10 bg-white/[0.03] text-white/40")
+                }
+              >
+                {t(labelKey)}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {onSelectBasemap && (
         <div className="mt-2.5 space-y-1 rounded-lg border border-white/[0.07] p-1">
@@ -330,7 +353,8 @@ export function ChartHud({
   layers,
   onToggleLayer,
   onJump,
-  onResetNorth,
+  filters,
+  onToggleFilter,
   isAdmin = false,
   drawing = false,
   onToggleDraw,
@@ -352,10 +376,8 @@ export function ChartHud({
     onPanelOpenChange?.(next);
     if (panelOpen === undefined) setUncontrolledOpen(next);
   };
-  const [needleSpin, setNeedleSpin] = useState(0);
-
   return (
-    <LeafletPointerGuard className="pointer-events-auto absolute top-[calc(env(safe-area-inset-top)+6.5rem)] right-3 z-[500] hidden w-[min(252px,calc(100vw-5.5rem))] overflow-hidden rounded-xl border border-cyan-500/30 bg-[#0a192f]/90 text-xs shadow-2xl backdrop-blur-md lg:block">
+    <LeafletPointerGuard className="pointer-events-auto absolute top-[calc(env(safe-area-inset-top)+6.5rem)] right-3 z-[500] hidden w-[min(280px,calc(100vw-5.5rem))] overflow-hidden rounded-2xl border border-cyan-400/35 bg-[#071422]/95 text-xs shadow-[0_18px_50px_rgba(0,0,0,0.45)] backdrop-blur-md lg:block">
       <div className="h-px w-full bg-gradient-to-r from-transparent via-cyan-300/60 to-transparent" />
 
       <div className="p-3">
@@ -376,23 +398,6 @@ export function ChartHud({
             </p>
           </button>
           <div className="flex shrink-0 items-center gap-1.5">
-            <button
-              type="button"
-              onPointerDown={stopMapEvent}
-              onClick={(e) => {
-                stopMapEvent(e);
-                onResetNorth();
-                setNeedleSpin((n) => n + 360);
-              }}
-              title={t("chart.compass_hint")}
-              aria-label={t("chart.compass_hint")}
-              className="grid size-7 place-items-center rounded-full border border-cyan-300/30 bg-cyan-400/10 text-cyan-200 transition-colors hover:bg-cyan-400/25 hover:text-cyan-100"
-            >
-              <Compass
-                className="size-3.5 transition-transform duration-700 ease-out"
-                style={{ transform: `rotate(${needleSpin}deg)` }}
-              />
-            </button>
             <button
               type="button"
               onPointerDown={stopMapEvent}
@@ -424,6 +429,8 @@ export function ChartHud({
               layers={layers}
               onToggleLayer={onToggleLayer}
               onJump={onJump}
+              filters={filters}
+              onToggleFilter={onToggleFilter}
               isAdmin={isAdmin}
               drawing={drawing}
               onToggleDraw={onToggleDraw}
@@ -500,19 +507,19 @@ const FAB_BTN =
  * drawer overlay (which was closing on the same pointerup).
  */
 export function ChartFabStack({
-  onResetNorth,
   onCycleBasemap,
   layersOpen = false,
   onLayersOpenChange,
   onLocateMe,
   locating = false,
   concealed = false,
-  headingDeg = 0,
   basemap = "sat",
   onSelectBasemap,
   layers,
   onToggleLayer,
   onJump,
+  filters,
+  onToggleFilter,
   isAdmin = false,
   drawing = false,
   onToggleDraw,
@@ -522,19 +529,19 @@ export function ChartFabStack({
   tileDownloadPercent,
   tileDownloadActive,
 }: {
-  onResetNorth: () => void;
   onCycleBasemap?: () => void;
   layersOpen?: boolean;
   onLayersOpenChange?: (open: boolean) => void;
   onLocateMe: () => void;
   locating?: boolean;
   concealed?: boolean;
-  headingDeg?: number;
   basemap?: BasemapId;
   onSelectBasemap?: (id: BasemapId) => void;
   layers: ChartLayers;
   onToggleLayer: (key: ChartLayerKey) => void;
   onJump: (region: ChartRegion) => void;
+  filters?: Record<PoiFilterKey, boolean>;
+  onToggleFilter?: (key: PoiFilterKey) => void;
   isAdmin?: boolean;
   drawing?: boolean;
   onToggleDraw?: () => void;
@@ -545,8 +552,6 @@ export function ChartFabStack({
   tileDownloadActive?: boolean;
 }) {
   const { t } = useTranslation();
-  const [needleSpin, setNeedleSpin] = useState(0);
-  const heading = ((headingDeg % 360) + 360) % 360;
   const menuRef = useRef<HTMLDivElement>(null);
   const layersBtnRef = useRef<HTMLButtonElement>(null);
   const layersLabel = t("chart.layers_button");
@@ -571,7 +576,7 @@ export function ChartFabStack({
       }
     >
       {layersOpen && (
-        <LeafletPointerGuard className="pointer-events-auto">
+        <LeafletPointerGuard className="pointer-events-auto lg:hidden">
           <div
             ref={menuRef}
             className="w-[min(252px,calc(100vw-5.5rem))] overflow-hidden rounded-xl border border-cyan-500/30 bg-[#0a192f]/95 text-xs shadow-2xl backdrop-blur-md"
@@ -585,6 +590,8 @@ export function ChartFabStack({
                 layers={layers}
                 onToggleLayer={onToggleLayer}
                 onJump={onJump}
+                filters={filters}
+                onToggleFilter={onToggleFilter}
                 isAdmin={isAdmin}
                 drawing={drawing}
                 onToggleDraw={onToggleDraw}
@@ -615,24 +622,8 @@ export function ChartFabStack({
           <CompassMark size={18} />
         </button>
         <button
-          type="button"
-          onPointerDown={stopMapEvent}
-          onClick={(e) => {
-            stopMapEvent(e);
-            onResetNorth();
-            setNeedleSpin((n) => n + 360);
-          }}
-          title={t("chart.compass_hint")}
-          aria-label={t("chart.compass_hint")}
-          className={FAB_BTN}
-        >
-          <Compass
-            className="size-[18px] transition-transform duration-700 ease-out"
-            style={{ transform: `rotate(${needleSpin}deg)` }}
-          />
-        </button>
-        <button
           ref={layersBtnRef}
+          className={FAB_BTN + " lg:hidden"}
           type="button"
           onPointerDown={stopMapEvent}
           onContextMenu={(e) => {
@@ -647,7 +638,6 @@ export function ChartFabStack({
           title={layersLabel}
           aria-label={layersLabel}
           aria-pressed={layersOpen}
-          className={FAB_BTN}
         >
           <Layers className="size-[18px]" />
         </button>
@@ -668,22 +658,6 @@ export function ChartFabStack({
           ) : (
             <Crosshair className="size-[18px]" />
           )}
-        </button>
-        <button
-          type="button"
-          onPointerDown={stopMapEvent}
-          onClick={(e) => {
-            stopMapEvent(e);
-            onResetNorth();
-          }}
-          title={t("chart.heading_hint")}
-          aria-label={t("chart.heading_hint")}
-          className={FAB_BTN}
-        >
-          <Navigation2
-            className="size-[18px]"
-            style={{ transform: `rotate(${heading}deg)` }}
-          />
         </button>
       </LeafletPointerGuard>
     </div>

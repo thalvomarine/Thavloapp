@@ -1515,6 +1515,11 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
       }
+      cancel_own_call: { Args: { _job_id: string }; Returns: undefined }
+      refresh_own_call_position: {
+        Args: { _job_id: string; _lat: number; _lng: number; _accuracy_m?: number }
+        Returns: undefined
+      }
       consume_captain_ai_quota: {
         Args: never
         Returns: undefined

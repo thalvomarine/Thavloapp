@@ -3,14 +3,16 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Loader2, Radio, Ship } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { LiveMap, type LiveRoute } from "@/components/LiveMap";
+import { VesselRange } from "@/components/mission/VesselRange";
 import { GlassPanel } from "@/components/mission/GlassPanel";
 import {
+  asCoordinate,
   EMERGENCY_CATEGORY_LABEL_KEYS,
   type EmergencyServiceRequest,
 } from "@/lib/emergency-service";
 import { calculateMarineEta } from "@/lib/geo-eta";
-import { getFix, isValidCoordinate } from "@/lib/geolocation";
+import { getFix } from "@/lib/geolocation";
+import { formatDegrees } from "@/lib/marine-data";
 import { requestMapFocus } from "@/lib/map-focus-bus";
 import { createRealtimeBuffer } from "@/lib/schedule";
 
@@ -96,16 +98,18 @@ export function EmergencyCallRadar({ userId, hideChart = false }: Props) {
       return;
     }
     if (!origin) await locate();
-    requestMapFocus({ lat: row.lat, lng: row.lng, zoom: 14, label: row.vessel_name || row.bay_name || undefined });
+    const lat = asCoordinate(row.lat);
+    const lng = asCoordinate(row.lng);
+    if (lat != null && lng != null) {
+      requestMapFocus({ lat, lng, zoom: 14, label: row.vessel_name || row.bay_name || undefined });
+    }
     toast.success(t("esvc.accepted"));
     void load();
   };
 
   const active = mine[0] ?? null;
-  const route: LiveRoute[] =
-    active && origin && isValidCoordinate(active.lat, active.lng)
-      ? [{ id: active.id, from: origin, to: { lat: active.lat, lng: active.lng } }]
-      : [];
+  const activeLat = active ? asCoordinate(active.lat) : null;
+  const activeLng = active ? asCoordinate(active.lng) : null;
 
   return (
     <section
@@ -132,17 +136,8 @@ export function EmergencyCallRadar({ userId, hideChart = false }: Props) {
         </span>
       </div>
 
-      {active && route.length > 0 && !hideChart && (
-        <div className="overflow-hidden rounded-xl border border-cyan-400/25">
-          <LiveMap
-            providers={[]}
-            routes={route}
-            center={{ lat: active.lat, lng: active.lng }}
-            height={220}
-            variant="dark"
-            hud={false}
-          />
-        </div>
+      {activeLat != null && activeLng != null && (
+        <VesselRange lat={activeLat} lng={activeLng} />
       )}
 
       {pending.length === 0 && mine.length === 0 ? (
@@ -191,9 +186,12 @@ function CallCard({
   onAccept: () => void;
 }) {
   const { t } = useTranslation();
+  const lat = asCoordinate(row.lat);
+  const lng = asCoordinate(row.lng);
+  const position = lat != null && lng != null ? formatDegrees(lat, lng) : null;
   const eta =
-    origin && isValidCoordinate(row.lat, row.lng)
-      ? calculateMarineEta({ lat: row.lat, lng: row.lng }, origin)
+    origin && lat != null && lng != null
+      ? calculateMarineEta({ lat, lng }, origin)
       : null;
 
   return (
@@ -209,6 +207,23 @@ function CallCard({
           <p className="mt-0.5 truncate text-[11px] text-white/50">
             {row.bay_name ? `⚓ ${row.bay_name}` : t("esvc.open_water")}
           </p>
+          {position ? (
+            <button
+              type="button"
+              className="mt-1 font-mono text-[11px] text-cyan-100 underline-offset-2 hover:underline"
+              onClick={() => {
+                if (lat == null || lng == null) return;
+                requestMapFocus({
+                  lat,
+                  lng,
+                  zoom: 15,
+                  label: row.vessel_name || row.bay_name || undefined,
+                });
+              }}
+            >
+              {position}
+            </button>
+          ) : null}
         </div>
         <span
           className={

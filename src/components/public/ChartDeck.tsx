@@ -13,7 +13,7 @@ import { clearEmailUnconfirmed, isEmailUnconfirmed } from "@/lib/signup-welcome"
 
 export type ChartPanel = "parts" | "services";
 
-const BAYS: CoverageBayId[] = ["gocek", "marmaris", "bodrum"];
+const BAYS: CoverageBayId[] = ["aegean", "mediterranean"];
 const NEXT_SHOP = sanitizeNext("/app/shop");
 const NEXT_SERVICES = sanitizeNext("/app/services");
 
@@ -33,7 +33,7 @@ const LEGEND = [
 
 export function ChartDeck({ panel }: { panel?: ChartPanel }) {
   const { t } = useTranslation();
-  const [bay, setBay] = useState<CoverageBayId>("gocek");
+  const [bay, setBay] = useState<CoverageBayId>("aegean");
   const [own, setOwn] = useState<{ lat: number; lng: number } | null>(null);
   const [locating, setLocating] = useState(false);
   const [locError, setLocError] = useState<string | null>(null);

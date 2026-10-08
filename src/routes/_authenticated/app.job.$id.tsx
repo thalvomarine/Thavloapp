@@ -9,6 +9,8 @@ import { CheckoutModal } from "@/components/CheckoutModal";
 import { JobChat } from "@/components/JobChat";
 import { useProfile, useSessionUser } from "@/lib/session";
 import { formatTL, harborDistanceKm, kmToNm } from "@/lib/filter";
+import { getFix } from "@/lib/geolocation";
+import { VesselRange } from "@/components/mission/VesselRange";
 import { caretAfterGrouping, groupThousands, parseGrouped } from "@/lib/digit-format";
 import {
   AlertOctagon,
@@ -196,6 +198,48 @@ function ClientJob({ job, meId }: { job: Job; meId: string }) {
   const [completing, setCompleting] = useState(false);
   const [trustFor, setTrustFor] = useState<Offer | null>(null);
   const [trustReport, setTrustReport] = useState<TrustReport | null>(null);
+  const [cancelling, setCancelling] = useState(false);
+  const closed = job.status === "Completed" || job.status === "Cancelled";
+
+  useEffect(() => {
+    if (closed) return;
+    let stop = false;
+    const push = async () => {
+      const res = await getFix();
+      if (!res.ok || stop) return;
+      const rpc = await supabase.rpc("refresh_own_call_position", {
+        _job_id: job.id,
+        _lat: res.fix.lat,
+        _lng: res.fix.lng,
+        _accuracy_m: Number.isFinite(res.fix.accuracy) ? Math.round(res.fix.accuracy) : undefined,
+      });
+      if (rpc.error) {
+        await supabase
+          .from("jobs")
+          .update({
+            lat: res.fix.lat,
+            lng: res.fix.lng,
+            location_accuracy_m: Math.round(res.fix.accuracy),
+            location_captured_at: new Date().toISOString(),
+          })
+          .eq("id", job.id);
+      }
+    };
+    void push();
+    const id = window.setInterval(() => void push(), 20000);
+    return () => {
+      stop = true;
+      window.clearInterval(id);
+    };
+  }, [job.id, closed]);
+
+  const cancelCall = async () => {
+    setCancelling(true);
+    const { error } = await supabase.rpc("cancel_own_call", { _job_id: job.id });
+    setCancelling(false);
+    if (error) toast.error(t("ops.cancel_failed"));
+    else toast.success(t("ops.cancel_done"));
+  };
 
   useEffect(() => {
     const providerId = trustFor?.provider_id;
@@ -531,6 +575,19 @@ function ClientJob({ job, meId }: { job: Job; meId: string }) {
         <div className="pt-3 border-t border-white/10">
           <MissionStatusTrack stage={stageFromJob(job.status, offers.length)} />
         </div>
+        {!closed && Number.isFinite(job.lat) && Number.isFinite(job.lng) && (
+          <p className="text-[11px] text-white/50">{t("ops.live_position")}</p>
+        )}
+        {!closed && (
+          <button
+            type="button"
+            onClick={() => void cancelCall()}
+            disabled={cancelling}
+            className="h-11 w-full rounded-xl border border-red-400/40 text-[12px] font-semibold uppercase tracking-[0.12em] text-red-200 disabled:opacity-50"
+          >
+            {cancelling ? t("ops.cancelling") : t("ops.cancel_call")}
+          </button>
+        )}
       </GlassPanel>
       <JobBrief description={job.description} photoPath={job.photo_url} problem={job.problem_category} />
 
@@ -920,6 +977,9 @@ function ProviderJob({ job, meId }: { job: Job; meId: string }) {
         </div>
       </GlassPanel>
       <JobBrief description={job.description} photoPath={job.photo_url} problem={job.problem_category} />
+      {Number.isFinite(job.lat) && Number.isFinite(job.lng) && Math.abs(job.lat) > 1 && (
+        <VesselRange lat={job.lat} lng={job.lng} />
+      )}
 
       <details className="group rounded-2xl border border-white/10 bg-white/[0.02]">
         <summary className="list-none cursor-pointer select-none px-4 py-3 flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.16em] text-white/60 hover:text-white/80">

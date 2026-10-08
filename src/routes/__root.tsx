@@ -101,7 +101,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "description",
         content:
-          "THALVO | Safe Voyage, Instant Response — certified marine mechanics and professional divers on demand across Göcek, Bodrum and Marmaris.",
+          "THALVO | Safe Voyage, Instant Response — certified marine mechanics and professional divers on demand across the Aegean and Mediterranean.",
       },
       { name: "theme-color", content: "#0A192F" },
       { name: "color-scheme", content: "dark" },

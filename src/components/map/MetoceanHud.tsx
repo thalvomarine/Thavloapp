@@ -6,8 +6,8 @@ import { publishCockpitContext } from "@/lib/ai-captain-context-bus";
 import type { ChartRegion } from "@/components/map/ChartHud";
 
 const WEATHER_REGIONS: Array<{ key: ChartRegion; lat: number; lng: number; labelKey: string }> = [
-  { key: "gocek", lat: 36.7525, lng: 28.9428, labelKey: "chart.jump_gocek" },
-  { key: "marmaris", lat: 36.8525, lng: 28.278, labelKey: "chart.jump_marmaris" },
+  { key: "aegean", lat: 37.15, lng: 27.2, labelKey: "chart.jump_aegean" },
+  { key: "mediterranean", lat: 36.35, lng: 29.1, labelKey: "chart.jump_mediterranean" },
 ];
 
 const REFRESH_MS = 10 * 60_000;
@@ -19,7 +19,7 @@ const REFRESH_MS = 10 * 60_000;
  */
 export function MetoceanHud() {
   const { t } = useTranslation();
-  const [region, setRegion] = useState<ChartRegion>("gocek");
+  const [region, setRegion] = useState<ChartRegion>("aegean");
   const [snapshot, setSnapshot] = useState<MetoceanSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
@@ -87,7 +87,7 @@ export function MetoceanHud() {
           <button
             type="button"
             onClick={() => {
-              setRegion((r) => (r === "gocek" ? "marmaris" : "gocek"));
+              setRegion((r) => (r === "aegean" ? "mediterranean" : "aegean"));
             }}
             title={t("chart.metocean_switch_region")}
             className="grid size-5 shrink-0 place-items-center rounded-full border border-cyan-300/30 bg-cyan-400/10 text-cyan-200 hover:bg-cyan-400/25"

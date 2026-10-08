@@ -9,6 +9,7 @@ import { useSessionUser } from "@/lib/session";
 import { PROBLEM_KEYS } from "@/i18n";
 import { Anchor, Loader2, MapPin, Wrench } from "lucide-react";
 import { toast } from "sonner";
+import { publishLocatedCall } from "@/lib/emergency-service";
 import { emitEvent } from "@/lib/events";
 import { sanitizeMultiline } from "@/lib/sanitize";
 import { CockpitHeader } from "@/components/core/CockpitHeader";
@@ -68,8 +69,9 @@ function ReportPage() {
 
     setBusy(true);
     // Auto-append emergency maritime health note from the captain's profile.
-    const { data: p } = await supabase.from("profiles").select("emergency_health_note").eq("id", user.id).maybeSingle();
-    const healthNote = (p as { emergency_health_note: string | null } | null)?.emergency_health_note;
+    const { data: p } = await supabase.from("profiles").select("emergency_health_note, boat_name").eq("id", user.id).maybeSingle();
+    const profileRow = p as { emergency_health_note: string | null; boat_name: string | null } | null;
+    const healthNote = profileRow?.emergency_health_note;
     const finalDescription = [
       sanitizeMultiline(description, 1500),
       healthNote ? `\n🩺 ${t("profile.health_note")}: ${sanitizeMultiline(healthNote, 500)}` : "",
@@ -85,6 +87,22 @@ function ReportPage() {
     }).select("id").single();
     setBusy(false);
     if (!error && data) {
+      const placed = await publishLocatedCall({
+        userId: user.id,
+        category: cat === "diver" ? "diver" : "mechanic",
+        lat: coords.lat,
+        lng: coords.lng,
+        vesselName: profileRow?.boat_name?.trim() || "",
+        bayName: marina,
+        description: finalDescription,
+        urgency: "standard",
+      });
+      if (placed.error) {
+        console.error("[report] located call", placed.error);
+        toast.warning(t("ops_alerts.location_not_shared", {
+          defaultValue: "The report was saved, but the position did not reach provider charts.",
+        }));
+      }
       emitEvent({
         type: "mission.created",
         subject_type: "mission",

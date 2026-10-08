@@ -95,12 +95,8 @@ function angularDelta(a: number, b: number): number {
  * a coarse cockpit cue, not a substitute for a pilot book.
  */
 const REGION_SHELTER: Record<ChartRegion, { openFromDeg: number; openArcDeg: number }> = {
-  // Göcek's bay mouth faces broadly south; the meltemi (NW) is blocked by the peninsula.
-  gocek: { openFromDeg: 180, openArcDeg: 80 },
-  // Marmaris bay opens southwest.
-  marmaris: { openFromDeg: 225, openArcDeg: 90 },
-  // Bozburun/Selimiye opens south-southwest.
-  bozburun: { openFromDeg: 200, openArcDeg: 80 },
+  aegean: { openFromDeg: 200, openArcDeg: 90 },
+  mediterranean: { openFromDeg: 180, openArcDeg: 100 },
 };
 
 export interface ShelterStatus {
@@ -123,14 +119,13 @@ export function shelterStatus(region: ChartRegion, windDirectionDeg: number): Sh
 
 /** Known cruising-region reference points, for the nearest-bay shelter heuristic below. */
 const REGION_COORDS: Record<ChartRegion, { lat: number; lng: number }> = {
-  gocek: { lat: 36.7525, lng: 28.9428 },
-  marmaris: { lat: 36.8525, lng: 28.278 },
-  bozburun: { lat: 36.689, lng: 28.043 },
+  aegean: { lat: 37.15, lng: 27.2 },
+  mediterranean: { lat: 36.35, lng: 29.1 },
 };
 
 /** Which of the three headline bays a clicked chart point is closest to. */
 export function nearestRegion(lat: number, lng: number): ChartRegion {
-  let best: ChartRegion = "gocek";
+  let best: ChartRegion = "aegean";
   let bestNm = Infinity;
   for (const key of Object.keys(REGION_COORDS) as ChartRegion[]) {
     const c = REGION_COORDS[key];
