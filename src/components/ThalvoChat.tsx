@@ -15,6 +15,7 @@ import { resolvePlatformRoute } from "@/lib/thalvo-ai/platform-routes";
 import { openThalvoSos } from "@/lib/sos-bus";
 import { THALVO_AI_OPEN_EVENT } from "@/lib/thalvo-ai-bus";
 import { askThalvoChat, loadThalvoChat } from "@/lib/thalvo-chat.functions";
+import { answerFromTraining } from "@/lib/thalvo-ai/domain";
 
 const SESSION_KEY = "thalvo-ai-session";
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -181,7 +182,19 @@ function ThalvoChatLive({ showLauncher }: { showLauncher: boolean }) {
       ]);
     } catch (error: unknown) {
       const raw = error instanceof Error ? error.message : String(error);
-      setLocalError(friendlyError(raw, lang, t("common.ai_rate_limited")));
+      if (raw.includes("ai_rate_limited") || raw.includes("ai_too_long")) {
+        setLocalError(friendlyError(raw, lang, t("common.ai_rate_limited")));
+      } else {
+        const trained = await answerFromTraining({
+          text: caption,
+          lang,
+          position: getCockpitContext().position,
+        });
+        setMessages((current) => [
+          ...current,
+          { id: crypto.randomUUID(), role: "assistant", content: trained.text },
+        ]);
+      }
     } finally {
       setBusy(false);
     }

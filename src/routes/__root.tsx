@@ -25,6 +25,7 @@ import { stripVendorBadge } from "@/lib/strip-vendor-badge";
 import { NetworkStatusBanner } from "@/components/pwa/NetworkStatusBanner";
 import { initNativeShell } from "@/lib/native";
 import { registerPwa } from "@/lib/pwa-register";
+import { applyThalvoTheme, readThalvoTheme } from "@/lib/theme";
 
 function NotFoundComponent() {
   const { t } = useTranslation();
@@ -183,6 +184,7 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   useEffect(() => {
     applyPreferredLanguage();
+    applyThalvoTheme(readThalvoTheme());
     const showConfirmed = () => {
       try {
         if (sessionStorage.getItem("thalvo:confirmed-shown") === "1") return;

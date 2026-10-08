@@ -46,6 +46,7 @@ export async function fetchPublicParts(opts: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const client = supabase as any;
   void opts.dealerOnly; // the view only contains dealer-listed parts
+  try {
   const banded = await client
     .from("public_parts_catalog")
     .select("id, name, brand, category, sku, image_url, price, stock_band, compatibility, marina")
@@ -76,6 +77,10 @@ export async function fetchPublicParts(opts: {
       marina: row.marina,
     }),
   );
+  } catch (error) {
+    console.warn("[catalog] public_parts_catalog unavailable", error);
+    return [];
+  }
 }
 
 export async function fetchPublicPackages(opts: { limit?: number } = {}): Promise<PackageRow[]> {

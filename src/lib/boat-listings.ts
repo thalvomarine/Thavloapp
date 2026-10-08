@@ -282,12 +282,19 @@ async function importLocalBoatListings(ownerId: string) {
 }
 
 export async function loadSharedBoatListings(ownerId: string): Promise<BoatListing[]> {
-  await importLocalBoatListings(ownerId);
+  try {
+    await importLocalBoatListings(ownerId);
+  } catch (error) {
+    console.warn("[market] local boat import skipped", error);
+  }
   const { data, error } = await supabase
     .from("boat_listings")
     .select("*")
     .order("created_at", { ascending: false });
-  if (error) throw error;
+  if (error) {
+    console.warn("[market] boat_listings unavailable", error.message);
+    return [];
+  }
   return ((data ?? []) as BoatListingRow[]).map(rowToListing);
 }
 

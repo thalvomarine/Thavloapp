@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { MapPlaceholder } from "@/components/ClientOnly";
 import {
   MARINE_DARK_TILE_MAX_NATIVE_ZOOM,
-  MARINE_DARK_TILE_URL,
+  MARINE_PUBLIC_BASE_URL,
   MARINE_SEAMARK_TILE_URL,
 } from "@/lib/chart-tiles";
 import {
@@ -173,11 +173,12 @@ export function CoverageChart({
         zoomControl={!fill}
         scrollWheelZoom={fill}
         className={fill ? "thalvo-ecdis thalvo-chart-frame" : "thalvo-ecdis"}
-        style={{ width: "100%", height: "100%", background: "#0b132b" }}
+        style={{ width: "100%", height: "100%", background: "#06101c" }}
       >
         <FitFrame />
         <TileLayer
-          url={MARINE_DARK_TILE_URL}
+          url={MARINE_PUBLIC_BASE_URL}
+          attribution="&copy; Esri"
           minZoom={4}
           maxZoom={18}
           maxNativeZoom={MARINE_DARK_TILE_MAX_NATIVE_ZOOM}

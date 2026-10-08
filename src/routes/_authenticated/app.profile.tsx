@@ -21,6 +21,7 @@ import { sanitizeMultiline, sanitizePlainText } from "@/lib/sanitize";
 import { ENGINE_BRANDS, FUEL_IDS, VESSEL_TYPES, joinEngine } from "@/lib/marine-catalog";
 import { parseGrouped } from "@/lib/digit-format";
 import { VesselSpecForm, fuelLabel, vesselCategoryLabel, vesselTypeLabel, type VesselSpec } from "@/components/passport/VesselSpecForm";
+import { AccountSettings } from "@/components/profile/AccountSettings";
 
 
 export const Route = createFileRoute("/_authenticated/app/profile")({
@@ -144,6 +145,7 @@ function ProviderProfile({ profile }: { profile: Profile }) {
           </button>
         }
       />
+      <AccountSettings />
 
       <GlassPanel className="space-y-3">
         <SectionHeader label={t("profile.identity")} />
@@ -277,6 +279,7 @@ function SupplierProfile({ profile }: { profile: Profile }) {
         title={business || t("dealer.counter_title")}
         subtitle={marina}
       />
+      <AccountSettings />
       <GlassPanel className="space-y-3">
         <SectionHeader label={t("dealer.profile_company")} />
         <Field label={t("auth.business_name")} value={business} onChange={setBusiness} />
@@ -367,6 +370,7 @@ function ClientProfile({ profile }: { profile: Profile }) {
         title={profile.full_name}
         subtitle={t(`auth.account_${accountType.replace(/\s/g, "_").toLowerCase()}`, accountType)}
       />
+      <AccountSettings />
 
       <GlassPanel className="space-y-3">
         <SectionHeader label={t("profile.identity")} />

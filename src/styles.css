@@ -485,5 +485,70 @@
   display: none !important;
 }
 
+.leaflet-container {
+  background: #06101c;
+}
+.leaflet-control-attribution {
+  max-width: 46vw;
+  overflow: hidden;
+  font-size: 9px !important;
+  white-space: nowrap;
+}
+
+/* Appearance. system keeps the cockpit above. night is black. day is white. */
+html[data-thalvo-theme="night"] body,
+html[data-thalvo-theme="night"] .thalvo-dark,
+html[data-thalvo-theme="night"] .thalvo-cockpit,
+html[data-thalvo-theme="night"] .thalvo-premium {
+  background: #000 !important;
+  color: #f5f7fb;
+}
+html[data-thalvo-theme="night"] .bg-\[\#071422\],
+html[data-thalvo-theme="night"] .bg-\[\#0A192F\],
+html[data-thalvo-theme="night"] .bg-\[\#06101c\] {
+  background-color: #000 !important;
+}
+
+html[data-thalvo-theme="day"] {
+  color-scheme: light;
+  background: #f4f7fb;
+}
+html[data-thalvo-theme="day"] body,
+html[data-thalvo-theme="day"] .thalvo-dark,
+html[data-thalvo-theme="day"] .thalvo-cockpit,
+html[data-thalvo-theme="day"] .thalvo-premium {
+  color-scheme: light;
+  background: #f4f7fb !important;
+  color: #0f172a;
+}
+html[data-thalvo-theme="day"] .text-white {
+  color: #0f172a !important;
+}
+html[data-thalvo-theme="day"] .text-white\/80,
+html[data-thalvo-theme="day"] .text-white\/75,
+html[data-thalvo-theme="day"] .text-white\/70,
+html[data-thalvo-theme="day"] .text-white\/65,
+html[data-thalvo-theme="day"] .text-white\/60,
+html[data-thalvo-theme="day"] .text-white\/55,
+html[data-thalvo-theme="day"] .text-white\/50,
+html[data-thalvo-theme="day"] .text-white\/45,
+html[data-thalvo-theme="day"] .text-white\/40,
+html[data-thalvo-theme="day"] .text-white\/35 {
+  color: #334155 !important;
+}
+html[data-thalvo-theme="day"] .bg-\[\#071422\],
+html[data-thalvo-theme="day"] .bg-\[\#0A192F\],
+html[data-thalvo-theme="day"] .bg-\[\#06101c\],
+html[data-thalvo-theme="day"] .bg-\[\#071422\]\/90,
+html[data-thalvo-theme="day"] .bg-\[\#071422\]\/92,
+html[data-thalvo-theme="day"] .bg-\[\#071422\]\/96 {
+  background-color: #ffffff !important;
+}
+html[data-thalvo-theme="day"] .border-white\/10,
+html[data-thalvo-theme="day"] .border-white\/\[0\.08\],
+html[data-thalvo-theme="day"] .border-white\/15 {
+  border-color: rgb(15 23 42 / 0.12) !important;
+}
+
 
 

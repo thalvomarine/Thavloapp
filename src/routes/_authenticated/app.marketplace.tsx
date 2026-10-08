@@ -79,7 +79,7 @@ function Marketplace({ userId }: { userId: string }) {
       .then((rows) => setUserBoats(rows))
       .catch((error: unknown) => {
         console.warn("[market] boat_listings unavailable", error);
-        toast.error(t("boats.load_failed"));
+        setUserBoats([]);
       });
   };
 

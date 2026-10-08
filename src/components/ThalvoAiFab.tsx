@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { askThalvoAi } from "@/lib/thalvo-ai.functions";
+import { answerFromTraining } from "@/lib/thalvo-ai/domain";
 import { X, Send, Loader2, AlertOctagon } from "lucide-react";
 import { CompassMark } from "@/components/brand/CompassMark";
 import { THALVO_AI_OPEN_EVENT } from "@/lib/thalvo-ai-bus";
@@ -190,6 +191,14 @@ export function ThalvoAiFab({ hideLauncher = false }: { hideLauncher?: boolean }
       const raw = err instanceof Error ? err.message : String(err);
       const limited = raw.includes("ai_rate_limited");
       const tooLong = raw.includes("ai_too_long");
+      const trained =
+        limited || tooLong
+          ? null
+          : await answerFromTraining({
+              text,
+              lang,
+              position: getCockpitContext().position,
+            });
       setMsgs((prev) => [
         ...prev,
         {
@@ -198,9 +207,8 @@ export function ThalvoAiFab({ hideLauncher = false }: { hideLauncher?: boolean }
             ? t("common.ai_rate_limited")
             : tooLong
               ? t("common.ai_too_long")
-              : lang === "en"
-                ? "Compass is momentarily out of range. Please try again."
-                : "Pusula geçici olarak menzil dışında. Lütfen tekrar deneyin.",
+              : (trained?.text ?? ""),
+          emergency: trained?.emergency,
         },
       ]);
     } finally {
