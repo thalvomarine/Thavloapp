@@ -26,7 +26,7 @@ type RoleKey = "captain" | "mechanic" | "diver" | "dealer" | "admin";
  * Never mutates payments/escrow/mission/marketplace state. Persists language via i18n
  * (already backed by localStorage) and remembers role selection in localStorage only.
  *
- * Callable via useFirstRun().restart() so users can replay the tour anytime.
+ * Shown once per account (auth metadata + localStorage). Profile can replay.
  */
 export function OnboardingOverlay({ profile, isAdmin, onComplete }: Props) {
   const { t } = useTranslation();
