@@ -12,7 +12,7 @@ const FILL: Record<ChartPinKind, string> = {
 
 const GLYPH: Record<ChartPinKind, string> = {
   marina:
-    '<path d="M12 3v2.2M8.2 20h7.6M12 5.2l6.2 4.2H5.8L12 5.2zM7 11.2h10v2.2H7z" fill="none" stroke="#041018" stroke-width="1.7" stroke-linejoin="round"/>',
+    '<path d="M5 18.5h14l-1.6 1.8H6.6L5 18.5zM12 4.2v14.3M12 5.2l6.8 10.2H12V5.2zM12 8.2 7.2 14.5H12V8.2z" fill="none" stroke="#041018" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>',
   anchorage:
     '<path d="M12 4v11M8 8.5h8M12 15c-3.2 0-5 1.8-5 4h10c0-2.2-1.8-4-5-4z" fill="none" stroke="#041018" stroke-width="1.7" stroke-linecap="round"/>',
   fuel:

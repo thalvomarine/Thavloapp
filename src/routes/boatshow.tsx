@@ -267,7 +267,7 @@ function PathLink({
 }: {
   to: "/auth";
   search?: { intent?: "captain" | "dealer" | "provider"; next?: string };
-  icon: React.ReactNode;
+  icon: ReactNode;
   title: string;
   body: string;
 }) {
