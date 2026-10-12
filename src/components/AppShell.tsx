@@ -13,9 +13,10 @@ import { ThalvoLoader } from "./ThalvoLoader";
  */
 export function AppShell({ userId, children }: { userId: string; children: ReactNode }) {
   const { profile, loading } = useProfile(userId);
-  // Full-screen ThalvoLoader only while the first profile fetch is in flight.
-  // A null profile after loading (error / missing row) used to spin forever —
-  // that looked like /app/orders "takılıyor" after a hard post-checkout nav.
+  // Warm dock navigations reuse the profile cache — never remount the
+  // MissionShell behind a full-screen loader. Cold first fetch still waits
+  // once; a null profile after loading falls through to the cockpit fallback
+  // so /app/orders cannot hang after a hard post-checkout nav.
   if (loading && !profile) return <ThalvoLoader />;
   const resolved =
     profile ?? cockpitFallbackProfile(userId, recalledCockpitRole(userId) ?? "Client");

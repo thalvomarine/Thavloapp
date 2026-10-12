@@ -2,7 +2,7 @@
  * Pure Web-Mercator helpers for offline tile prefetch (no Leaflet dependency).
  */
 
-export const TILE_CACHE_NAME = "maptiles-v1";
+export const TILE_CACHE_NAME = "maptiles-v2";
 
 /** Göcek – Fethiye – Bozburun operating theatre (south-west Turkish Aegean). */
 export const AEGEAN_OFFLINE_BOUNDS = {

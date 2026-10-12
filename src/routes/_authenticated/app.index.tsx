@@ -21,7 +21,7 @@ import { VesselRange } from "@/components/mission/VesselRange";
 import { MissionStatusTrack, stageFromJob } from "@/components/mission/MissionStatusTrack";
 import { emitEvent } from "@/lib/events";
 import { caretAfterGrouping, groupThousands, parseGrouped } from "@/lib/digit-format";
-import { createRealtimeBuffer, runWhenIdle } from "@/lib/schedule";
+import { createRealtimeBuffer, idleBudget, runWhenIdle } from "@/lib/schedule";
 import { noteSchemaMiss, skipMissing } from "@/lib/schema-gap";
 import { Anchor, Wrench, Radio, Gauge, Activity, Loader2, Send, ChevronRight } from "lucide-react";
 import { TrustMark } from "@/components/brand/ProductMarks";
@@ -35,7 +35,7 @@ const MapHeaderActions = ({ profile }: { profile: Profile }) => {
     if (!user) return;
     return runWhenIdle(() => {
       void ensureAdminAccess(user).then(setIsAdmin);
-    }, 1400);
+    }, idleBudget(500, 100));
   }, [user]);
   return (
     <>
@@ -114,7 +114,7 @@ function CaptainCockpit({ profile }: { profile: Profile }) {
               })),
           );
         });
-    }, 900);
+    }, idleBudget(300, 60));
   }, []);
 
   useEffect(() => {
@@ -136,7 +136,7 @@ function CaptainCockpit({ profile }: { profile: Profile }) {
         });
     const stopIdle = runWhenIdle(() => {
       void load();
-    }, 800);
+    }, idleBudget(250, 50));
     const buffer = createRealtimeBuffer(load, 180);
     const ch = supabase
       .channel(`client-jobs:${user.id}`)
@@ -322,7 +322,7 @@ function OperatorCockpit({ profile }: { profile: Profile }) {
     };
     const stopIdle = runWhenIdle(() => {
       void load();
-    }, 800);
+    }, idleBudget(250, 50));
     const buffer = createRealtimeBuffer(() => {
       void load();
     }, 180);

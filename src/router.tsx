@@ -14,7 +14,9 @@ export const getRouter = () => {
     scrollRestoration: true,
     defaultPreload: "intent",
     defaultPreloadStaleTime: 30_000,
-    defaultPendingMs: 800,
+    // Warm dock navigations should not flash a pending shell — keep the
+    // threshold tight so only truly slow code-splits show a wait state.
+    defaultPendingMs: 120,
     defaultPendingMinMs: 0,
     ...(history ? { history } : {}),
   });

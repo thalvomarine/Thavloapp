@@ -48,10 +48,15 @@ interface Row {
 }
 
 function DealerPage() {
-  const { user, loading } = useSessionUser();
+  const routeUser = Route.useRouteContext().user;
+  const { user: sessionUser, loading: sessionLoading } = useSessionUser();
+  const user = sessionUser ?? routeUser;
   const { profile, loading: pl } = useProfile(user?.id);
-  if (loading || pl) return <ThalvoLoader />;
-  if (!user || !profile) return null;
+  // Session is already in route context; only wait when profile is unknown.
+  if (!user && sessionLoading) return <ThalvoLoader />;
+  if (!user) return null;
+  if (pl && !profile) return <ThalvoLoader />;
+  if (!profile) return null;
   const isDealer = profile.role === "Supplier";
   return (
     <AppShell userId={user.id}>
