@@ -15,6 +15,12 @@ declare global {
  * Capgo live-update handshake — fire as the very first work in the entry
  * module, before React mounts. Capgo rolls the bundle back if this never
  * resolves within `appReadyTimeout` (see capacitor.config.ts).
+ *
+ * With `autoUpdate: false`, a previously downloaded Capgo OTA can still be
+ * the active bundle (stale pins, icons, chrome). After ready, drop any
+ * non-builtin bundle so the WebView runs the native-bundled `dist/`.
+ * `reset()` reloads once onto builtin; the next boot sees `id === "builtin"`
+ * and skips.
  */
 void (async () => {
   try {
@@ -22,6 +28,10 @@ void (async () => {
     if (!Capacitor.isNativePlatform()) return;
     const { CapacitorUpdater } = await import("@capgo/capacitor-updater");
     await CapacitorUpdater.notifyAppReady();
+    const { bundle } = await CapacitorUpdater.current();
+    if (bundle?.id && bundle.id !== "builtin") {
+      await CapacitorUpdater.reset();
+    }
   } catch {
     /* browser / plugin missing */
   }

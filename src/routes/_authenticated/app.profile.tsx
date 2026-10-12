@@ -46,11 +46,17 @@ function blankVessel(): VesselSpec {
 }
 
 function ProfilePage() {
-  const { user, loading: sessionLoading } = useSessionUser();
+  const routeUser = Route.useRouteContext().user;
+  const { user: sessionUser, loading: sessionLoading } = useSessionUser();
+  const user = sessionUser ?? routeUser;
   const { profile, loading } = n(user?.id);
-  if ((!user && sessionLoading) || loading || !profile) return <ThalvoLoader />;
+  if (!user && sessionLoading) return <ThalvoLoader />;
+  if (!user) return null;
+  // Cached profile paints immediately on warm nav; first visit still waits once.
+  if (loading && !profile) return <ThalvoLoader />;
+  if (!profile) return null;
   return (
-    <AppShell userId={user!.id}>
+    <AppShell userId={user.id}>
       {profile.role === "Provider" ? (
         <ProviderProfile profile={profile} />
       ) : profile.role === "Supplier" ? (

@@ -550,5 +550,56 @@ html[data-thalvo-theme="day"] .border-white\/15 {
   border-color: rgb(15 23 42 / 0.12) !important;
 }
 
+/* ---------------------------------------------------------------------------
+ * iOS cockpit polish — chrome / typography only.
+ * Never attach transform transitions to Leaflet panes or markers.
+ * ------------------------------------------------------------------------- */
+.thalvo-chrome-header {
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+}
+
+.thalvo-dock-bar {
+  box-shadow:
+    0 1px 0 0 rgb(255 255 255 / 0.06) inset,
+    0 18px 40px -22px rgb(0 0 0 / 0.75);
+}
+
+.thalvo-dock-active-pip {
+  box-shadow: 0 0 0 1px rgb(0 240 255 / 0.25);
+}
+
+@keyframes thalvo-page-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 6px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.thalvo-page-enter {
+  animation: thalvo-page-in 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thalvo-page-enter {
+    animation: none;
+  }
+  .thalvo-dock-tab span {
+    transition: none !important;
+  }
+}
+
+@supports (-webkit-touch-callout: none) {
+  .thalvo-cockpit {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  .thalvo-dock-tab:active {
+    transform: scale(0.96);
+  }
+}
 
 

@@ -8,7 +8,8 @@ import { fetchPublicPackages, fetchPublicParts, usePublicData } from "@/lib/publ
 import { formatDm, formatMoney } from "@/lib/formatters";
 import { getFix } from "@/lib/geolocation";
 import { sanitizeNext } from "@/lib/nav";
-import { Map as MapIcon, ShoppingBag, Wrench, X } from "lucide-react";
+import { X } from "lucide-react";
+import { AtlasMark, MarketplaceMark, RescueMark } from "@/components/brand/ProductMarks";
 import { clearEmailUnconfirmed, isEmailUnconfirmed } from "@/lib/signup-welcome";
 
 export type ChartPanel = "parts" | "services";
@@ -160,21 +161,25 @@ export function ChartDeck({ panel }: { panel?: ChartPanel }) {
         {panel === "services" && <ServicesPanel />}
       </div>
 
-      <nav className="z-[1200] shrink-0 border-t border-white/[0.08] bg-[#071422] pb-[env(safe-area-inset-bottom)]">
-        <div className="mx-auto grid h-14 max-w-lg grid-cols-3">
-          <DockLink panel={undefined} active={!panel} icon={<MapIcon className="size-4" />} label={t("nav.map")} />
-          <DockLink
-            panel="parts"
-            active={panel === "parts"}
-            icon={<ShoppingBag className="size-4" />}
-            label={t("public.tab_parts")}
-          />
-          <DockLink
-            panel="services"
-            active={panel === "services"}
-            icon={<Wrench className="size-4" />}
-            label={t("public.tab_services")}
-          />
+      <nav
+        className="thalvo-dock pointer-events-none z-[1200] shrink-0 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2"
+      >
+        <div className="pointer-events-auto mx-auto w-full max-w-lg">
+          <div className="thalvo-dock-bar grid h-[58px] grid-cols-3 items-center rounded-[1.35rem] border border-white/[0.12] bg-[oklch(0.13_0.02_250/0.9)] px-1.5 backdrop-blur-2xl">
+            <DockLink panel={undefined} active={!panel} icon={<AtlasMark size={18} />} label={t("nav.map")} />
+            <DockLink
+              panel="parts"
+              active={panel === "parts"}
+              icon={<MarketplaceMark size={18} />}
+              label={t("public.tab_parts")}
+            />
+            <DockLink
+              panel="services"
+              active={panel === "services"}
+              icon={<RescueMark size={18} />}
+              label={t("public.tab_services")}
+            />
+          </div>
         </div>
       </nav>
     </div>
@@ -196,13 +201,17 @@ function DockLink({
     <Link
       to="/"
       search={{ panel }}
+      preload="intent"
       className={
-        "flex h-full min-w-0 flex-col items-center justify-center gap-0.5 border-t-2 px-1 text-[11px] font-semibold " +
-        (active ? "border-cyan-300 text-cyan-100" : "border-transparent text-white/50")
+        "thalvo-dock-tab relative flex min-w-0 flex-col items-center justify-center gap-0.5 overflow-hidden px-0.5 text-[9px] font-semibold uppercase tracking-[0.04em] transition-[color,transform] duration-150 " +
+        (active ? "text-cyan-100" : "text-white/45 active:text-white/75")
       }
     >
-      {icon}
-      <span className="max-w-full truncate">{label}</span>
+      {active && <span className="thalvo-dock-active-pip absolute -top-0.5 h-[3px] w-5 rounded-full bg-[#00F0FF]" />}
+      <span className={active ? "scale-105 transition-transform duration-150" : "transition-transform duration-150"}>
+        {icon}
+      </span>
+      <span className="max-w-full truncate whitespace-nowrap leading-none">{label}</span>
     </Link>
   );
 }
