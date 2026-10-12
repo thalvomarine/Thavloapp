@@ -1013,7 +1013,16 @@
       "sort_newest": "Νεότερα",
       "apply_filters": "Εμφάνιση {{count}} προϊόντων",
       "favorite": "Προσθήκη στα αγαπημένα",
-      "thalvo_price": "Τιμή THALVO"
+      "thalvo_price": "Τιμή THALVO",
+      "showroom_eyebrow": "Εξουσιοδοτημένος αντιπρόσωπος · OEM",
+      "showroom_lede": "Επαγγελματικό γραφείο ανταλλακτικών για μεγάλες μάρκες κινητήρων και σκαφών.",
+      "brand_wall": "Τοίχος μαρκών",
+      "sku_count": "{{count}} SKU",
+      "featured_desk": "Προβεβλημένα",
+      "featured_n": "#{{n}}",
+      "view_grid": "Showroom",
+      "view_desk": "Λίστα",
+      "buy": "Αγορά"
     }
   },
   "shop_cart": {

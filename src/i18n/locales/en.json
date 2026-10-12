@@ -1018,7 +1018,16 @@
       "sort_newest": "Newest",
       "apply_filters": "Show {{count}} products",
       "favorite": "Add to favorites",
-      "thalvo_price": "THALVO price"
+      "thalvo_price": "THALVO price",
+      "showroom_eyebrow": "Authorised dealer · OEM desk",
+      "showroom_lede": "A professional parts desk for major engine and hull brands — stock, OEM codes, and marina delivery.",
+      "brand_wall": "Brand wall",
+      "sku_count": "{{count}} SKUs",
+      "featured_desk": "Featured desk",
+      "featured_n": "#{{n}}",
+      "view_grid": "Showroom",
+      "view_desk": "Desk list",
+      "buy": "Buy"
     }
   },
   "shop_cart": {

@@ -1018,7 +1018,16 @@
       "sort_newest": "En yeni",
       "apply_filters": "{{count}} ürünü göster",
       "favorite": "Favorilere ekle",
-      "thalvo_price": "THALVO fiyatı"
+      "thalvo_price": "THALVO fiyatı",
+      "showroom_eyebrow": "Yetkili bayi · OEM masa",
+      "showroom_lede": "Büyük motor ve tekne markaları için stok, OEM kodu ve marina teslimiyle profesyonel parça masası.",
+      "brand_wall": "Marka duvarı",
+      "sku_count": "{{count}} SKU",
+      "featured_desk": "Öne çıkan masa",
+      "featured_n": "#{{n}}",
+      "view_grid": "Showroom",
+      "view_desk": "Liste",
+      "buy": "Al"
     }
   },
   "shop_cart": {
