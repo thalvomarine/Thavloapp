@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { GlassPanel } from "@/components/mission/GlassPanel";
@@ -8,6 +8,7 @@ import { OrderTimeline } from "@/components/orders/OrderTimeline";
 import { OrderSecurityNotice } from "@/components/orders/OrderSecurityNotice";
 import {
   ctaKeyForNext,
+  dealerQueueGroup,
   labelKeyForDelivery,
   nextDealerState,
   type OrderStatus,
@@ -45,27 +46,43 @@ interface Props {
   onReload: () => void;
 }
 
-const GROUPS: { key: string; labelKey: string; match: OrderStatus[] }[] = [
-  { key: "new", labelKey: "dealer.group_new", match: ["Submitted", "DealerReview", "Paid"] },
-  { key: "active", labelKey: "dealer.group_active", match: ["Confirmed", "Preparing", "OutForDelivery"] },
-  { key: "done", labelKey: "dealer.group_delivered", match: ["Delivered", "Completed"] },
-  { key: "cancelled", labelKey: "dealer.group_cancelled", match: ["Cancelled"] },
+const GROUPS: { key: "new" | "active" | "done" | "cancelled"; labelKey: string }[] = [
+  { key: "new", labelKey: "dealer.group_new" },
+  { key: "active", labelKey: "dealer.group_active" },
+  { key: "done", labelKey: "dealer.group_delivered" },
+  { key: "cancelled", labelKey: "dealer.group_cancelled" },
 ];
+
+function normalizeItems(items: DealerOrderItem[] | null | undefined): DealerOrderItem[] {
+  return Array.isArray(items) ? items : [];
+}
 
 export function DealerOrderQueue({ rows, currency, onReload }: Props) {
   const { t } = useTranslation();
   const [openId, setOpenId] = useState<string | null>(null);
   const [tab, setTab] = useState<string>("new");
 
+  const normalizedRows = useMemo(
+    () => rows.map((r) => ({ ...r, items: normalizeItems(r.items) })),
+    [rows],
+  );
+
   const grouped = useMemo(() => {
     const map: Record<string, DealerOrderRow[]> = {};
     for (const g of GROUPS) map[g.key] = [];
-    for (const r of rows) {
-      const g = GROUPS.find((x) => x.match.includes(r.status));
-      if (g) map[g.key].push(r);
+    for (const r of normalizedRows) {
+      map[dealerQueueGroup(r.status)].push(r);
     }
     return map;
-  }, [rows]);
+  }, [normalizedRows]);
+
+  // Prefer a tab that actually has work — open-order count used to disagree with
+  // an empty "Yeni" pane when status did not match the hard-coded match list.
+  useEffect(() => {
+    if ((grouped[tab] ?? []).length > 0) return;
+    const first = GROUPS.find((g) => (grouped[g.key] ?? []).length > 0);
+    if (first) setTab(first.key);
+  }, [grouped, tab]);
 
   const active = grouped[tab] ?? [];
 
@@ -223,7 +240,7 @@ function DealerRow({
           </p>
           <p className="inline-flex items-center gap-1.5 truncate justify-self-end">
             <Package className="size-3.5 text-white/40" />
-            {t("dealer.parts_x", { count: row.items.length })}
+            {t("dealer.parts_x", { count: normalizeItems(row.items).length })}
           </p>
         </div>
 
@@ -238,7 +255,7 @@ function DealerRow({
           <OrderTimeline status={row.status} cancelled={row.status === "Cancelled"} />
 
           <ul className="rounded-xl border border-white/10 divide-y divide-white/5 text-[12px]">
-            {row.items.map((it) => (
+            {normalizeItems(row.items).map((it) => (
               <li key={it.id} className="flex items-center justify-between p-2.5">
                 <span className="text-white/80 truncate">
                   {it.qty}× {it.name_snapshot}
@@ -248,6 +265,9 @@ function DealerRow({
                 </span>
               </li>
             ))}
+            {normalizeItems(row.items).length === 0 && (
+              <li className="p-2.5 text-white/45">{t("dealer.queue_empty")}</li>
+            )}
           </ul>
 
           {row.delivery_location_label && (

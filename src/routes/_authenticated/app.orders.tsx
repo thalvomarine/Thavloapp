@@ -73,22 +73,55 @@ function CaptainOrders({ userId }: { userId: string }) {
 
     void (async () => {
       try {
-        const { data, error } = await supabase
+        // Prefer a rich embed; if PostgREST rejects a join (FK / RLS), fall back
+        // so captains still see their orders instead of a false empty state.
+        const rich = await supabase
           .from("part_orders")
           .select(
-            "id,status,created_at,total,subtotal,commission,delivery_marina,delivery_method,delivery_eta_minutes,delivery_location_label,notes,dealer_note,vessel_id,dealer:profiles!dealer_id(business_name,full_name),vessel:vessels!vessel_id(boat_name:name),items:part_order_items(id,qty,unit_price,name_snapshot)"
+            "id,status,created_at,total,subtotal,commission,delivery_marina,delivery_method,delivery_eta_minutes,delivery_location_label,notes,dealer_note,vessel_id,dealer:profiles!dealer_id(business_name,full_name),vessel:vessels!vessel_id(name),items:part_order_items(id,qty,unit_price,name_snapshot)"
           )
           .eq("buyer_id", userId)
           .order("created_at", { ascending: false });
 
         if (cancelled) return;
-        if (error) {
-          console.warn("[orders] part_orders unavailable", error.message);
-          setLoadError(error.message);
+
+        if (!rich.error) {
+          const mapped = ((rich.data as never as (OrderRow & { vessel?: { name?: string } | null })[]) ?? []).map(
+            (row) =>
+              normalizeOrder({
+                ...row,
+                vessel: row.vessel ? { boat_name: row.vessel.name ?? null } : null,
+              }),
+          );
+          setRows(mapped);
+          return;
+        }
+
+        console.warn("[orders] rich select failed, retrying plain", rich.error.message);
+        const plain = await supabase
+          .from("part_orders")
+          .select(
+            "id,status,created_at,total,subtotal,commission,delivery_marina,delivery_method,delivery_eta_minutes,delivery_location_label,notes,dealer_note,vessel_id"
+          )
+          .eq("buyer_id", userId)
+          .order("created_at", { ascending: false });
+
+        if (cancelled) return;
+        if (plain.error) {
+          setLoadError(plain.error.message);
           setRows([]);
           return;
         }
-        setRows(((data as never as OrderRow[]) ?? []).map(normalizeOrder));
+        setRows(
+          ((plain.data as never as OrderRow[]) ?? []).map((row) =>
+            normalizeOrder({
+              ...row,
+              dealer: null,
+              vessel: null,
+              items: [],
+            }),
+          ),
+        );
       } catch (e: unknown) {
         if (cancelled) return;
         const message = e instanceof Error ? e.message : String(e);
@@ -120,7 +153,7 @@ function CaptainOrders({ userId }: { userId: string }) {
       {loadError ? (
         <EmptyState
           icon={<PackageIcon className="size-5" />}
-          title={t("orders.no_orders_title")}
+          title={t("shell.auth_error.title")}
           body={loadError}
           action={
             <button

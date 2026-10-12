@@ -67,6 +67,8 @@ export function nextDealerState(status: OrderStatus): OrderStatus | null {
   switch (status) {
     case "Submitted":
     case "DealerReview":
+    case "Paid": // legacy checkout seed
+    case "Draft":
       return "Confirmed";
     case "Confirmed":
       return "Preparing";
@@ -76,6 +78,28 @@ export function nextDealerState(status: OrderStatus): OrderStatus | null {
       return "Delivered";
     default:
       return null;
+  }
+}
+
+/** Map a raw DB status into a dealer queue bucket. Unknown open statuses land in `new`. */
+export function dealerQueueGroup(status: string): "new" | "active" | "done" | "cancelled" {
+  switch (status) {
+    case "Submitted":
+    case "DealerReview":
+    case "Paid":
+    case "Draft":
+      return "new";
+    case "Confirmed":
+    case "Preparing":
+    case "OutForDelivery":
+      return "active";
+    case "Delivered":
+    case "Completed":
+      return "done";
+    case "Cancelled":
+      return "cancelled";
+    default:
+      return "new";
   }
 }
 

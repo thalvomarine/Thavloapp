@@ -81,7 +81,7 @@ function DealerConsole({ userId, businessName, marina }: { userId: string; busin
   const { t } = useTranslation();
   const [rows, setRows] = useState<Row[]>([]);
   const [orders, setOrders] = useState<DealerOrderRow[]>([]);
-  const [tab, setTab] = useState<"orders" | "inventory">("inventory");
+  const [tab, setTab] = useState<"orders" | "inventory">("orders");
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Row | null>(null);
   const [busy, setBusy] = useState(false);
@@ -91,21 +91,50 @@ function DealerConsole({ userId, businessName, marina }: { userId: string; busin
 
   const load = () => supabase.from("parts_catalog").select("*").eq("supplier_id", userId).order("created_at", { ascending: false })
     .then(({ data }) => setRows((data as never) ?? []));
-  const loadOrders = () =>
-    supabase
+  const loadOrders = async () => {
+    const { data, error } = await supabase
       .from("part_orders")
       .select(
         "id,status,created_at,total,subtotal,commission,delivery_marina,delivery_method,delivery_eta_minutes,delivery_location_label,notes,dealer_note,items:part_order_items(id,qty,unit_price,name_snapshot)"
       )
       .eq("dealer_id", userId)
-      .order("created_at", { ascending: false })
-      .then(({ data }) => {
-        const mapped = ((data as never as (DealerOrderRow & { status: string })[]) ?? []).map((o) => ({
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.warn("[dealer] part_orders", error.message);
+      // Embed can fail on older schemas — retry without line items so the queue still paints.
+      const plain = await supabase
+        .from("part_orders")
+        .select(
+          "id,status,created_at,total,subtotal,commission,delivery_marina,delivery_method,delivery_eta_minutes,delivery_location_label,notes,dealer_note"
+        )
+        .eq("dealer_id", userId)
+        .order("created_at", { ascending: false });
+      if (plain.error) {
+        toast.error(plain.error.message);
+        setOrders([]);
+        return;
+      }
+      setOrders(
+        ((plain.data as never as DealerOrderRow[]) ?? []).map((o) => ({
           ...o,
           status: o.status as OrderStatus,
-        }));
-        setOrders(mapped);
-      });
+          items: [],
+        })),
+      );
+      return;
+    }
+
+    setOrders(
+      ((data as never as (DealerOrderRow & { status: string; items?: DealerOrderRow["items"] | null })[]) ?? []).map(
+        (o) => ({
+          ...o,
+          status: o.status as OrderStatus,
+          items: Array.isArray(o.items) ? o.items : [],
+        }),
+      ),
+    );
+  };
   useEffect(() => { void load(); void loadOrders(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [userId]);
 
   // Realtime — new orders for this dealer surface a toast + badge without reload.
@@ -120,6 +149,7 @@ function DealerConsole({ userId, businessName, marina }: { userId: string; busin
             description: t("dealer.new_order_toast_body"),
           });
           setUnread((n) => n + 1);
+          setTab("orders");
           void loadOrders();
         }
       )
