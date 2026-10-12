@@ -996,6 +996,29 @@
       "no_image": "Görsel yok",
       "delivery_pickup": "Marinadan teslim",
       "delivery_service_boat": "Servis botu"
+    },
+    "catalog": {
+      "product_groups": "Ürün grupları",
+      "all_brands": "Tüm markalar",
+      "no_brands": "Bu grupta marka yok.",
+      "clear_brands": "Marka filtresini temizle",
+      "quick_search": "Hızlı arama",
+      "quick_search_placeholder": "Hızlı ürün arama",
+      "search_btn": "Ara",
+      "clear_search": "Aramayı temizle",
+      "most_popular": "En popüler olanlar",
+      "filters": "Filtreler",
+      "in_stock_only": "Stoktakiler",
+      "total_products": "Toplam {{count}} ürün",
+      "sort_label": "Sıralama",
+      "sort_recommended": "Önerilen sıralama",
+      "sort_price_asc": "Fiyat (düşük → yüksek)",
+      "sort_price_desc": "Fiyat (yüksek → düşük)",
+      "sort_name": "İsme göre",
+      "sort_newest": "En yeni",
+      "apply_filters": "{{count}} ürünü göster",
+      "favorite": "Favorilere ekle",
+      "thalvo_price": "THALVO fiyatı"
     }
   },
   "shop_cart": {

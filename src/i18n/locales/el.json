@@ -991,6 +991,29 @@
       "no_image": "No image",
       "delivery_pickup": "Marina pickup",
       "delivery_service_boat": "Service boat"
+    },
+    "catalog": {
+      "product_groups": "Ομάδες προϊόντων",
+      "all_brands": "Όλες οι μάρκες",
+      "no_brands": "Δεν υπάρχουν μάρκες σε αυτή την ομάδα.",
+      "clear_brands": "Καθαρισμός φίλτρων μάρκας",
+      "quick_search": "Γρήγορη αναζήτηση",
+      "quick_search_placeholder": "Γρήγορη αναζήτηση προϊόντος",
+      "search_btn": "Αναζήτηση",
+      "clear_search": "Καθαρισμός αναζήτησης",
+      "most_popular": "Δημοφιλέστερα",
+      "filters": "Φίλτρα",
+      "in_stock_only": "Διαθέσιμα",
+      "total_products": "{{count}} προϊόντα συνολικά",
+      "sort_label": "Ταξινόμηση",
+      "sort_recommended": "Προτεινόμενη",
+      "sort_price_asc": "Τιμή (χαμηλή → υψηλή)",
+      "sort_price_desc": "Τιμή (υψηλή → χαμηλή)",
+      "sort_name": "Όνομα",
+      "sort_newest": "Νεότερα",
+      "apply_filters": "Εμφάνιση {{count}} προϊόντων",
+      "favorite": "Προσθήκη στα αγαπημένα",
+      "thalvo_price": "Τιμή THALVO"
     }
   },
   "shop_cart": {

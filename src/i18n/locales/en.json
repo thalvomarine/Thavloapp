@@ -996,6 +996,29 @@
       "no_image": "No image",
       "delivery_pickup": "Marina pickup",
       "delivery_service_boat": "Service boat"
+    },
+    "catalog": {
+      "product_groups": "Product groups",
+      "all_brands": "All brands",
+      "no_brands": "No brands in this group.",
+      "clear_brands": "Clear brand filters",
+      "quick_search": "Quick search",
+      "quick_search_placeholder": "Quick product search",
+      "search_btn": "Search",
+      "clear_search": "Clear search",
+      "most_popular": "Most popular",
+      "filters": "Filters",
+      "in_stock_only": "In stock",
+      "total_products": "{{count}} products total",
+      "sort_label": "Sort",
+      "sort_recommended": "Recommended",
+      "sort_price_asc": "Price (low → high)",
+      "sort_price_desc": "Price (high → low)",
+      "sort_name": "Name",
+      "sort_newest": "Newest",
+      "apply_filters": "Show {{count}} products",
+      "favorite": "Add to favorites",
+      "thalvo_price": "THALVO price"
     }
   },
   "shop_cart": {

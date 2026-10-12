@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BoatshowRouteImport } from './routes/boatshow'
 import { Route as CoverageRouteImport } from './routes/coverage'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
+import { Route as MarketplacePreviewRouteImport } from './routes/marketplace-preview'
 import { Route as OfflineRouteImport } from './routes/offline'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ServicesRouteImport } from './routes/services'
@@ -61,6 +62,11 @@ const CoverageRoute = CoverageRouteImport.update({
 const MarketplaceRoute = MarketplaceRouteImport.update({
   id: '/marketplace',
   path: '/marketplace',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarketplacePreviewRoute = MarketplacePreviewRouteImport.update({
+  id: '/marketplace-preview',
+  path: '/marketplace-preview',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OfflineRoute = OfflineRouteImport.update({
@@ -165,6 +171,7 @@ export interface FileRoutesByFullPath {
   '/boatshow': typeof BoatshowRoute
   '/coverage': typeof CoverageRoute
   '/marketplace': typeof MarketplaceRoute
+  '/marketplace-preview': typeof MarketplacePreviewRoute
   '/offline': typeof OfflineRoute
   '/privacy': typeof PrivacyRoute
   '/services': typeof ServicesRoute
@@ -190,6 +197,7 @@ export interface FileRoutesByTo {
   '/boatshow': typeof BoatshowRoute
   '/coverage': typeof CoverageRoute
   '/marketplace': typeof MarketplaceRoute
+  '/marketplace-preview': typeof MarketplacePreviewRoute
   '/offline': typeof OfflineRoute
   '/privacy': typeof PrivacyRoute
   '/services': typeof ServicesRoute
@@ -217,6 +225,7 @@ export interface FileRoutesById {
   '/boatshow': typeof BoatshowRoute
   '/coverage': typeof CoverageRoute
   '/marketplace': typeof MarketplaceRoute
+  '/marketplace-preview': typeof MarketplacePreviewRoute
   '/offline': typeof OfflineRoute
   '/privacy': typeof PrivacyRoute
   '/services': typeof ServicesRoute
@@ -244,6 +253,7 @@ export interface FileRouteTypes {
     | '/boatshow'
     | '/coverage'
     | '/marketplace'
+    | '/marketplace-preview'
     | '/offline'
     | '/privacy'
     | '/services'
@@ -269,6 +279,7 @@ export interface FileRouteTypes {
     | '/boatshow'
     | '/coverage'
     | '/marketplace'
+    | '/marketplace-preview'
     | '/offline'
     | '/privacy'
     | '/services'
@@ -295,6 +306,7 @@ export interface FileRouteTypes {
     | '/boatshow'
     | '/coverage'
     | '/marketplace'
+    | '/marketplace-preview'
     | '/offline'
     | '/privacy'
     | '/services'
@@ -322,6 +334,7 @@ export interface RootRouteChildren {
   BoatshowRoute: typeof BoatshowRoute
   CoverageRoute: typeof CoverageRoute
   MarketplaceRoute: typeof MarketplaceRoute
+  MarketplacePreviewRoute: typeof MarketplacePreviewRoute
   OfflineRoute: typeof OfflineRoute
   PrivacyRoute: typeof PrivacyRoute
   ServicesRoute: typeof ServicesRoute
@@ -370,6 +383,13 @@ declare module '@tanstack/react-router' {
       path: '/marketplace'
       fullPath: '/marketplace'
       preLoaderRoute: typeof MarketplaceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marketplace-preview': {
+      id: '/marketplace-preview'
+      path: '/marketplace-preview'
+      fullPath: '/marketplace-preview'
+      preLoaderRoute: typeof MarketplacePreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/offline': {
@@ -545,6 +565,7 @@ const rootRouteChildren: RootRouteChildren = {
   BoatshowRoute: BoatshowRoute,
   CoverageRoute: CoverageRoute,
   MarketplaceRoute: MarketplaceRoute,
+  MarketplacePreviewRoute: MarketplacePreviewRoute,
   OfflineRoute: OfflineRoute,
   PrivacyRoute: PrivacyRoute,
   ServicesRoute: ServicesRoute,
