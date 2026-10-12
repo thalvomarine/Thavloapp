@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as BoatshowRouteImport } from './routes/boatshow'
 import { Route as CoverageRouteImport } from './routes/coverage'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as OfflineRouteImport } from './routes/offline'
@@ -45,6 +46,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BoatshowRoute = BoatshowRouteImport.update({
+  id: '/boatshow',
+  path: '/boatshow',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CoverageRoute = CoverageRouteImport.update({
@@ -156,6 +162,7 @@ const AuthenticatedAppJobIdRoute = AuthenticatedAppJobIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/boatshow': typeof BoatshowRoute
   '/coverage': typeof CoverageRoute
   '/marketplace': typeof MarketplaceRoute
   '/offline': typeof OfflineRoute
@@ -180,6 +187,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/boatshow': typeof BoatshowRoute
   '/coverage': typeof CoverageRoute
   '/marketplace': typeof MarketplaceRoute
   '/offline': typeof OfflineRoute
@@ -206,6 +214,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/boatshow': typeof BoatshowRoute
   '/coverage': typeof CoverageRoute
   '/marketplace': typeof MarketplaceRoute
   '/offline': typeof OfflineRoute
@@ -232,6 +241,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/boatshow'
     | '/coverage'
     | '/marketplace'
     | '/offline'
@@ -256,6 +266,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/boatshow'
     | '/coverage'
     | '/marketplace'
     | '/offline'
@@ -281,6 +292,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/boatshow'
     | '/coverage'
     | '/marketplace'
     | '/offline'
@@ -307,6 +319,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  BoatshowRoute: typeof BoatshowRoute
   CoverageRoute: typeof CoverageRoute
   MarketplaceRoute: typeof MarketplaceRoute
   OfflineRoute: typeof OfflineRoute
@@ -336,6 +349,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/boatshow': {
+      id: '/boatshow'
+      path: '/boatshow'
+      fullPath: '/boatshow'
+      preLoaderRoute: typeof BoatshowRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/coverage': {
@@ -522,6 +542,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  BoatshowRoute: BoatshowRoute,
   CoverageRoute: CoverageRoute,
   MarketplaceRoute: MarketplaceRoute,
   OfflineRoute: OfflineRoute,

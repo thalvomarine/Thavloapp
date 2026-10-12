@@ -20,12 +20,28 @@ import { normalizeAppLng } from "@/i18n";
 import { SeaBackdrop } from "@/components/brand/SeaBackdrop";
 import { ENGINE_BRANDS } from "@/lib/marine-catalog";
 
+type AuthIntent = "captain" | "dealer" | "provider";
+
+function parseIntent(raw: unknown): AuthIntent | undefined {
+  if (raw === "captain" || raw === "dealer" || raw === "provider") return raw;
+  if (raw === "supplier") return "dealer";
+  if (raw === "client") return "captain";
+  return undefined;
+}
+
 export const Route = createFileRoute("/auth")({
   ssr: false,
-  validateSearch: (s: Record<string, unknown>): { next?: string; confirmed?: "1" } => {
+  validateSearch: (
+    s: Record<string, unknown>,
+  ): { next?: string; confirmed?: "1"; intent?: AuthIntent } => {
     const n = sanitizeNext(s.next);
     const confirmed = s.confirmed === "1" || s.confirmed === 1 || s.confirmed === true;
-    return { ...(n ? { next: n } : {}), ...(confirmed ? { confirmed: "1" as const } : {}) };
+    const intent = parseIntent(s.intent);
+    return {
+      ...(n ? { next: n } : {}),
+      ...(confirmed ? { confirmed: "1" as const } : {}),
+      ...(intent ? { intent } : {}),
+    };
   },
   beforeLoad: async ({ search }) => {
     if (search.confirmed === "1") armEmailConfirmedNotice();
@@ -55,11 +71,15 @@ function isInvalidCredentialsError(message: string): boolean {
 function AuthPage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { next, confirmed } = Route.useSearch();
+  const { next, confirmed, intent } = Route.useSearch();
   const goNext = () => (next ? navigate({ href: next }) : navigate({ to: "/app" }));
   const [mode, setMode] = useState<"signin" | "signup">("signup");
-  const [role, setRole] = useState<"Client" | "Provider" | "Supplier">("Client");
-  const [roleReady, setRoleReady] = useState(false);
+  const [role, setRole] = useState<"Client" | "Provider" | "Supplier">(() => {
+    if (intent === "dealer") return "Supplier";
+    if (intent === "provider") return "Provider";
+    return "Client";
+  });
+  const [roleReady, setRoleReady] = useState(() => Boolean(intent));
   const [serviceType, setServiceType] = useState<"Marine Mechanic" | "Underwater Diver">(
     "Marine Mechanic",
   );
