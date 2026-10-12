@@ -35,6 +35,7 @@ import {
   type AdminPayoutRow,
   type AdminCommissionRow,
 } from "@/components/admin/AdminPaymentOpsPanel";
+import { PilotReadinessPanel } from "@/components/admin/PilotReadinessPanel";
 import { EVENT_LABEL_KEYS, type EventType, emitEvent } from "@/lib/events";
 import { PanelLoadState } from "@/components/admin/PanelLoadState";
 import { PendingRoleRequests, type RoleRequestRow } from "@/components/admin/PendingRoleRequests";
@@ -1088,6 +1089,24 @@ function ControlTower() {
       }
       center={
         <>
+          {gate(
+            "jobs",
+            () => {
+              void loadJobs();
+              void loadParts();
+              void loadZones();
+              loadProviderBlock();
+            },
+            <PilotReadinessPanel
+              activeParts={activeParts}
+              providersTotal={providers.length}
+              providersLive={providersOnline}
+              activeSos={activeSos}
+              liveMissions={missions.length}
+              activeZones={zones.filter((z) => z.active).length}
+              paymentProviderConnected={false}
+            />,
+          )}
           <AdminOpsTabs
             pendingCount={pendingReports.length}
             activeMissionCount={missions.length}

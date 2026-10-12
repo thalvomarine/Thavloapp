@@ -255,7 +255,7 @@ export function OnboardingOverlay({ profile, isAdmin, onComplete }: Props) {
               <TourItem icon={<MapPin className="size-4 text-sky-300" />} title="Map" body="See responders live around you." />
               <TourItem icon={<RescueMark size={18} />} title="SOS" body="One tap dispatches the nearest help." />
               <TourItem icon={<Compass className="size-4 text-amber-300" />} title="Compass" body="Your THALVO AI copilot, anywhere." />
-              <TourItem icon={<MarketplaceMark size={18} />} title="Marketplace" body="Certified parts & escrow-secured orders." />
+              <TourItem icon={<MarketplaceMark size={18} />} title="Marketplace" body="Dealer parts and in-app order flow." />
               <TourItem icon={<PassportMark size={18} />} title="Passport" body="Your vessel's dossier and history." />
             </ul>
             <PrimaryCta onClick={finish}>

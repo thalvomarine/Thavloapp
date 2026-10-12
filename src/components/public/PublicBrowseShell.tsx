@@ -75,7 +75,7 @@ export function PublicBrowseShell({
           <p className="mt-1">
             {t("public.cta_body", {
               defaultValue:
-                "Browsing is open to everyone. Ordering parts, booking a service and escrow protection require an account.",
+                "Browsing is open to everyone. Ordering parts or booking a service requires an account.",
             })}
           </p>
           <Link

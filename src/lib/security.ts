@@ -134,7 +134,7 @@ export function riskCopy(risk: LeakRisk): { title: string; body: string } {
     case "medium":
       return {
         title: "Please review your message",
-        body: "This looks like it may contain contact or payment details. Keep the conversation inside THALVO so escrow and dispute protection stay active.",
+        body: "This looks like it may contain contact or payment details. Keep the conversation inside THALVO so the job record and dispute trail stay intact.",
       };
     case "low":
       return {
