@@ -184,7 +184,7 @@ function pinIcon(kind: ChartPinKind) {
     className: "thalvo-map-marker",
     iconSize: CHART_PIN_SIZE,
     iconAnchor: CHART_PIN_ANCHOR,
-    popupAnchor: [0, -40],
+    popupAnchor: [0, -42],
   });
 }
 

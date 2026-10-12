@@ -26,16 +26,19 @@ const GLYPH: Record<ChartPinKind, string> = {
   own: '<circle cx="12" cy="12" r="3.2" fill="#041018"/>',
 };
 
-/** Map pin markup. Anchor sits on the tip. */
+/**
+ * V4 Soft capsule pin — rounded body + tip disc.
+ * Anchor sits on the tip so Leaflet places the point on the chart coordinate.
+ */
 export function chartPinHtml(kind: ChartPinKind): string {
   const fill = FILL[kind];
-  return `<div style="width:36px;height:46px;filter:drop-shadow(0 6px 8px rgba(0,0,0,.45))">
-    <div style="width:36px;height:36px;border-radius:18px;background:${fill};border:2px solid #fff;box-shadow:0 0 0 4px ${fill}55;display:grid;place-items:center">
-      <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">${GLYPH[kind]}</svg>
+  return `<div style="width:30px;height:46px;filter:drop-shadow(0 6px 8px rgba(0,0,0,.45))">
+    <div style="width:30px;height:38px;border-radius:15px 15px 12px 12px;background:${fill};border:2px solid #fff;box-shadow:0 0 0 3px ${fill}55;display:grid;place-items:center;box-sizing:border-box">
+      <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">${GLYPH[kind]}</svg>
     </div>
-    <div style="width:0;height:0;margin:-3px auto 0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:11px solid ${fill}"></div>
+    <div style="width:10px;height:10px;margin:-5px auto 0;background:${fill};border-radius:50%;border:2px solid #fff;box-sizing:border-box"></div>
   </div>`;
 }
 
-export const CHART_PIN_SIZE: [number, number] = [36, 46];
-export const CHART_PIN_ANCHOR: [number, number] = [18, 46];
+export const CHART_PIN_SIZE: [number, number] = [30, 46];
+export const CHART_PIN_ANCHOR: [number, number] = [15, 46];
