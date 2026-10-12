@@ -51,25 +51,59 @@ function OrdersPage() {
   );
 }
 
+function normalizeOrder(row: OrderRow): OrderRow {
+  return {
+    ...row,
+    items: Array.isArray(row.items) ? row.items : [],
+  };
+}
+
 function CaptainOrders({ userId }: { userId: string }) {
   const { t } = useTranslation();
   const [rows, setRows] = useState<OrderRow[]>([]);
   const [openId, setOpenId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadToken, setReloadToken] = useState(0);
 
   useEffect(() => {
-    supabase
-      .from("part_orders")
-      .select(
-        "id,status,created_at,total,subtotal,commission,delivery_marina,delivery_method,delivery_eta_minutes,delivery_location_label,notes,dealer_note,vessel_id,dealer:profiles!dealer_id(business_name,full_name),vessel:vessels!vessel_id(boat_name:name),items:part_order_items(id,qty,unit_price,name_snapshot)"
-      )
-      .eq("buyer_id", userId)
-      .order("created_at", { ascending: false })
-      .then(({ data }) => {
-        setRows((data as never as OrderRow[]) ?? []);
-        setLoading(false);
-      });
-  }, [userId]);
+    let cancelled = false;
+    setLoading(true);
+    setLoadError(null);
+
+    void (async () => {
+      try {
+        const { data, error } = await supabase
+          .from("part_orders")
+          .select(
+            "id,status,created_at,total,subtotal,commission,delivery_marina,delivery_method,delivery_eta_minutes,delivery_location_label,notes,dealer_note,vessel_id,dealer:profiles!dealer_id(business_name,full_name),vessel:vessels!vessel_id(boat_name:name),items:part_order_items(id,qty,unit_price,name_snapshot)"
+          )
+          .eq("buyer_id", userId)
+          .order("created_at", { ascending: false });
+
+        if (cancelled) return;
+        if (error) {
+          console.warn("[orders] part_orders unavailable", error.message);
+          setLoadError(error.message);
+          setRows([]);
+          return;
+        }
+        setRows(((data as never as OrderRow[]) ?? []).map(normalizeOrder));
+      } catch (e: unknown) {
+        if (cancelled) return;
+        const message = e instanceof Error ? e.message : String(e);
+        console.warn("[orders] part_orders fetch failed", message);
+        setLoadError(message);
+        setRows([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, reloadToken]);
 
   if (loading) return <ThalvoLoader />;
 
@@ -83,7 +117,22 @@ function CaptainOrders({ userId }: { userId: string }) {
     >
       <OrderSecurityNotice />
 
-      {rows.length === 0 ? (
+      {loadError ? (
+        <EmptyState
+          icon={<PackageIcon className="size-5" />}
+          title={t("orders.no_orders_title")}
+          body={loadError}
+          action={
+            <button
+              type="button"
+              onClick={() => setReloadToken((n) => n + 1)}
+              className="inline-block h-10 px-4 rounded-2xl bg-sky-500 hover:bg-sky-400 text-slate-900 font-semibold text-[12px] uppercase tracking-[0.14em] leading-10"
+            >
+              {t("shell.auth_error.retry")}
+            </button>
+          }
+        />
+      ) : rows.length === 0 ? (
         <EmptyState
           icon={<PackageIcon className="size-5" />}
           title={t("orders.no_orders_title")}

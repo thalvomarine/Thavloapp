@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { CheckoutModal } from "@/components/CheckoutModal";
@@ -97,9 +98,13 @@ export function CartSheet({ onClose, onCatalogReload }: Props) {
         <div className="thalvo-dark w-full max-w-md rounded-3xl bg-[oklch(0.18_0.02_250)] border border-white/10 shadow-2xl p-6 space-y-4 text-center" onClick={(e) => e.stopPropagation()}>
           <p className="text-lg font-semibold text-white tracking-tight">{t("shop_cart.order_submitted")}</p>
           <p className="text-sm text-white/60 leading-relaxed">{t("shop_cart.order_submitted_body")}</p>
-          <a href="/app/orders" className="block w-full h-12 rounded-2xl bg-sky-500 hover:bg-sky-400 text-slate-900 text-sm font-semibold tracking-tight grid place-items-center transition-colors">
+          <Link
+            to="/app/orders"
+            onClick={onClose}
+            className="block w-full h-12 rounded-2xl bg-sky-500 hover:bg-sky-400 text-slate-900 text-sm font-semibold tracking-tight grid place-items-center transition-colors"
+          >
             {t("shop_cart.open_order_tracking")}
-          </a>
+          </Link>
           <button onClick={onClose} className="text-xs text-white/50 hover:text-white/70">{t("common.close")}</button>
         </div>
       </div>

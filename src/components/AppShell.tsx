@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { useProfile } from "@/lib/session";
+import { cockpitFallbackProfile, recalledCockpitRole, useProfile } from "@/lib/session";
 import { MissionShell } from "@/components/mission/MissionShell";
 import { ThalvoLoader } from "./ThalvoLoader";
 
@@ -12,7 +12,12 @@ import { ThalvoLoader } from "./ThalvoLoader";
  * to compile — it resolves the profile and delegates to MissionShell.
  */
 export function AppShell({ userId, children }: { userId: string; children: ReactNode }) {
-  const { profile } = useProfile(userId);
-  if (!profile) return <ThalvoLoader />;
-  return <MissionShell profile={profile}>{children}</MissionShell>;
+  const { profile, loading } = useProfile(userId);
+  // Full-screen ThalvoLoader only while the first profile fetch is in flight.
+  // A null profile after loading (error / missing row) used to spin forever —
+  // that looked like /app/orders "takılıyor" after a hard post-checkout nav.
+  if (loading && !profile) return <ThalvoLoader />;
+  const resolved =
+    profile ?? cockpitFallbackProfile(userId, recalledCockpitRole(userId) ?? "Client");
+  return <MissionShell profile={resolved}>{children}</MissionShell>;
 }
