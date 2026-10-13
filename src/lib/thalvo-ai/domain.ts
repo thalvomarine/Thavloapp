@@ -1,6 +1,30 @@
-export type MarineDomain = "weather" | "machinery" | "seamanship" | "outside";
+import { appraisalReply, detectBrokerIntent, sellReply } from "./brokerage.ts";
 
-const LEXICON: Record<Exclude<MarineDomain, "outside">, string[]> = {
+export type MarineDomain = "weather" | "machinery" | "seamanship" | "brokerage" | "general" | "outside";
+
+const LEXICON: Record<"weather" | "machinery" | "seamanship" | "brokerage", string[]> = {
+  brokerage: [
+    "hızlı sat",
+    "hizli sat",
+    "tekne sat",
+    "ilan ver",
+    "fiyat biç",
+    "fiyat bic",
+    "ekspertiz",
+    "değer biç",
+    "deger bic",
+    "ne eder",
+    "broker",
+    "alım satım",
+    "alim satim",
+    "second hand",
+    "secondhand",
+    "appraisal",
+    "valuation",
+    "quick sell",
+    "sell my boat",
+    "market value",
+  ],
   weather: [
     "hava",
     "rüzgar",
@@ -259,11 +283,16 @@ const WATERS = [
   { keys: ["bodrum"], name: "Bodrum", lat: 37.034, lng: 27.43 },
 ];
 
+const HARD_REFUSE =
+  /kart\s*numar|card\s*number|cvv|şifre\s*nedir|password\s*is|api[_-]?key|private\s*key|bitcoin\s*wallet|silah\s*yap|how\s*to\s*make\s*a\s*bomb/i;
+
 export function classifyMarineDomain(text: string): MarineDomain {
+  if (HARD_REFUSE.test(text)) return "outside";
+  if (detectBrokerIntent(text)) return "brokerage";
   const q = text.toLocaleLowerCase("tr");
-  let best: MarineDomain = "outside";
+  let best: MarineDomain = "general";
   let score = 0;
-  for (const domain of ["weather", "machinery", "seamanship"] as const) {
+  for (const domain of ["weather", "machinery", "seamanship", "brokerage"] as const) {
     const hits = LEXICON[domain].reduce((sum, word) => sum + (q.includes(word) ? word.length : 0), 0);
     if (hits > score) {
       score = hits;
@@ -275,8 +304,14 @@ export function classifyMarineDomain(text: string): MarineDomain {
 
 export function offTopicReply(lang: "tr" | "en"): string {
   return lang === "tr"
-    ? "THALVO AI yalnız üç konuda cevap verir: deniz ve seyir, makine, hava durumu. Bu soru o alanın dışında."
-    : "THALVO AI answers only three subjects: seamanship, machinery, and weather. That question is outside those subjects.";
+    ? "Bu isteği güvenlik nedeniyle yerine getiremem (kart, şifre veya zararlı talimat). Deniz, makine, hava, broker/ekspertiz veya THALVO sayfaları için sorabilirsin."
+    : "I cannot help with that for safety reasons (cards, passwords, or harmful instructions). Ask about seamanship, machinery, weather, brokerage/appraisal, or THALVO pages.";
+}
+
+export function generalFallbackReply(lang: "tr" | "en"): string {
+  return lang === "tr"
+    ? "Kısa cevap için bulut modeli şu an bağlı değil. Deniz, makine, hava, tekne satışı/ekspertiz veya THALVO menüsü hakkında sor; net soruya göre yönlendireyim. Hızlı sat için «hızlı sat» yaz."
+    : "The cloud model is not connected for a free-form answer right now. Ask about seamanship, machinery, weather, boat sale/appraisal, or a THALVO page. For a listing say “quick sell”.";
 }
 
 export function retrieveMarineNotes(text: string, lang: "tr" | "en"): string {
@@ -299,6 +334,20 @@ export async function answerFromTraining(input: {
   const domain = classifyMarineDomain(input.text);
   if (domain === "outside") {
     return { text: offTopicReply(input.lang), domain, emergency: false, confident: true, weather: null };
+  }
+  if (domain === "brokerage") {
+    const intent = detectBrokerIntent(input.text);
+    const text = intent === "sell" ? sellReply(input.lang) : appraisalReply(input.text, input.lang);
+    return { text, domain, emergency: false, confident: true, weather: null };
+  }
+  if (domain === "general") {
+    return {
+      text: generalFallbackReply(input.lang),
+      domain,
+      emergency: false,
+      confident: false,
+      weather: null,
+    };
   }
   if (domain === "weather") {
     const place = namedWater(input.text) ?? input.position;

@@ -35,6 +35,10 @@ const ALIASES: Record<string, AppPath> = {
   "/orders": "/app/orders",
   "/profile": "/app/profile",
   "/services/book": "/app/services",
+  "/sell": "/app/marketplace",
+  "/quick-sell": "/app/marketplace",
+  "/boats": "/app/marketplace",
+  "/broker": "/app/marketplace",
 };
 
 export function resolvePlatformRoute(raw: string): AppPath | null {
