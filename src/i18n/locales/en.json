@@ -1869,6 +1869,7 @@
     "partner_point_1": "Leave a lead without creating an account",
     "partner_point_2": "Brand, marina, dealer or technician",
     "partner_point_3": "Pilot team replies within 24 hours",
-    "partner_thanks_title": "Thank you"
+    "partner_thanks_title": "Thank you",
+    "partner_kind_hint": "Choose your role — the lead is tagged accordingly."
   }
 }

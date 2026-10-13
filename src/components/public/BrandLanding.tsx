@@ -3,10 +3,10 @@ import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { ArrowUpRight, LayoutGrid, X } from "lucide-react";
 import { toast } from "sonner";
-import heroUrl from "@/assets/marine-hero.jpg";
 import { Wordmark } from "@/components/Wordmark";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { PublicFooter } from "@/components/public/PublicFooter";
+import { PiriChartBackdrop } from "@/components/brand/PiriChartBackdrop";
 import { OPS_CONTACT_EMAIL } from "@/lib/superadmin";
 import { submitBoatshowLead, type BoatshowLeadKind } from "@/lib/boatshow-leads";
 
@@ -14,7 +14,7 @@ const KINDS: BoatshowLeadKind[] = ["brand", "dealer", "marina", "captain", "tech
 
 /**
  * Concept B — brand-first public home.
- * Full-bleed sea hero + professional partner desk. Partner ol → #partner.
+ * Piri Reis–inspired chart hero + partner desk. Partner ol → #partner.
  */
 export function BrandLanding() {
   const { t } = useTranslation();
@@ -72,23 +72,7 @@ export function BrandLanding() {
     <div className="thalvo-dark min-h-dvh overflow-x-hidden bg-[#06101c] text-white">
       {/* ——— HERO ——— */}
       <section className="relative flex min-h-svh flex-col">
-        <div className="absolute inset-0 overflow-hidden">
-          <img
-            src={heroUrl}
-            alt=""
-            className="landing-hero-img absolute inset-0 size-full object-cover object-[center_40%]"
-          />
-          <div className="absolute inset-0 bg-[#06101c]/55" />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#06101c]/70 via-[#0A192F]/45 to-[#06101c]" />
-          <div
-            className="absolute inset-0 opacity-[0.14]"
-            style={{
-              backgroundImage:
-                "linear-gradient(rgba(0,240,255,0.35) 1px, transparent 1px), linear-gradient(90deg, rgba(0,240,255,0.35) 1px, transparent 1px)",
-              backgroundSize: "64px 64px",
-            }}
-          />
-        </div>
+        <PiriChartBackdrop />
 
         <header className="relative z-20 flex items-center gap-3 px-5 pt-[max(1.25rem,env(safe-area-inset-top))] sm:px-8 lg:px-12">
           <Link to="/" className="flex min-w-0 items-center gap-2.5">
@@ -196,54 +180,74 @@ export function BrandLanding() {
       </section>
 
       {/* ——— PARTNER DESK ——— */}
-      <section
-        id="partner"
-        className="scroll-mt-24 border-t border-white/[0.07] bg-[#081422] px-5 py-20 sm:px-8 lg:px-12"
-      >
-        <div className="mx-auto grid max-w-5xl gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16 lg:items-start">
-          <div className="lg:sticky lg:top-24">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#F5B942]/90">
-              {t("landing.partner_kicker")}
-            </p>
-            <h2 className="thalvo-display mt-3 text-[clamp(1.9rem,4vw,2.75rem)] leading-tight tracking-wide text-white">
-              {t("landing.partner_title")}
-            </h2>
-            <p className="mt-4 max-w-sm text-[15px] leading-relaxed text-white/60">
-              {t("landing.partner_lede")}
-            </p>
-            <ul className="mt-8 space-y-3 text-[13px] text-white/50">
-              <li className="flex gap-3">
-                <span className="mt-1.5 size-1 shrink-0 rounded-full bg-[#00F0FF]" />
-                {t("landing.partner_point_1")}
-              </li>
-              <li className="flex gap-3">
-                <span className="mt-1.5 size-1 shrink-0 rounded-full bg-[#00F0FF]" />
-                {t("landing.partner_point_2")}
-              </li>
-              <li className="flex gap-3">
-                <span className="mt-1.5 size-1 shrink-0 rounded-full bg-[#00F0FF]" />
-                {t("landing.partner_point_3")}
-              </li>
-            </ul>
+      <section id="partner" className="relative scroll-mt-24 overflow-hidden border-t border-[#D4AF37]/15">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.07]"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 12% 20%, #F5B942 0.6px, transparent 0.7px), radial-gradient(circle at 88% 70%, #00F0FF 0.5px, transparent 0.6px)",
+            backgroundSize: "28px 28px, 36px 36px",
+          }}
+        />
+        <div className="pointer-events-none absolute -right-24 top-10 size-[28rem] rounded-full bg-[#F5B942]/[0.04] blur-3xl" />
+        <div className="pointer-events-none absolute -left-16 bottom-0 size-[22rem] rounded-full bg-[#00F0FF]/[0.04] blur-3xl" />
+
+        <div className="relative mx-auto max-w-6xl px-5 py-20 sm:px-8 lg:px-12 lg:py-24">
+          <div className="mb-12 flex flex-col gap-4 border-b border-white/[0.08] pb-10 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-xl">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#F5B942]">
+                {t("landing.partner_kicker")}
+              </p>
+              <h2 className="thalvo-display mt-3 text-[clamp(2rem,4.2vw,3rem)] leading-[1.05] tracking-wide text-white">
+                {t("landing.partner_title")}
+              </h2>
+              <p className="mt-4 max-w-md text-[15px] leading-relaxed text-white/58">
+                {t("landing.partner_lede")}
+              </p>
+            </div>
+            <ol className="grid gap-3 sm:grid-cols-3 lg:max-w-md lg:gap-4">
+              {[
+                t("landing.partner_point_1"),
+                t("landing.partner_point_2"),
+                t("landing.partner_point_3"),
+              ].map((line, i) => (
+                <li
+                  key={line}
+                  className="border-l border-[#D4AF37]/35 pl-3 text-[12px] leading-snug text-white/55"
+                >
+                  <span className="thalvo-num block text-[10px] tracking-[0.2em] text-[#00F0FF]/70">
+                    0{i + 1}
+                  </span>
+                  <span className="mt-1 block">{line}</span>
+                </li>
+              ))}
+            </ol>
           </div>
 
-          <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#0c1a2e]/90 p-6 sm:p-8">
-            <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#00F0FF]/50 to-transparent" />
+          <div className="relative overflow-hidden rounded-[1.25rem] border border-[#D4AF37]/20 bg-[#0a1628]/95 shadow-[inset_0_1px_0_rgba(212,175,55,0.12)]">
+            <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-[#F5B942]/55 to-transparent" />
+            <div className="pointer-events-none absolute left-0 top-0 h-full w-px bg-gradient-to-b from-[#F5B942]/35 via-transparent to-[#00F0FF]/20" />
 
             {sent ? (
-              <div className="flex min-h-[280px] flex-col justify-center">
-                <p className="thalvo-display text-2xl text-white">{t("landing.partner_thanks_title")}</p>
-                <p className="mt-3 max-w-md text-sm leading-relaxed text-white/65">
+              <div className="flex min-h-[320px] flex-col justify-center px-6 py-14 sm:px-10">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#00F0FF]/80">
+                  {t("landing.partner_kicker")}
+                </p>
+                <p className="thalvo-display mt-3 text-3xl text-white">
+                  {t("landing.partner_thanks_title")}
+                </p>
+                <p className="mt-3 max-w-lg text-sm leading-relaxed text-white/65">
                   {t("boatshow.lead_thanks")}
                 </p>
               </div>
             ) : (
-              <form onSubmit={onSubmit} className="grid gap-5">
-                <fieldset>
-                  <legend className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/45">
+              <form onSubmit={onSubmit} className="grid gap-0 lg:grid-cols-[0.85fr_1.15fr]">
+                <div className="border-b border-white/[0.07] px-6 py-8 sm:px-8 lg:border-b-0 lg:border-r lg:border-white/[0.07] lg:py-10">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/40">
                     {t("boatshow.field_kind")}
-                  </legend>
-                  <div className="mt-3 flex flex-wrap gap-2">
+                  </p>
+                  <p className="mt-2 text-sm text-white/55">{t("landing.partner_kind_hint")}</p>
+                  <div className="mt-6 grid gap-2">
                     {KINDS.map((k) => {
                       const on = kind === k;
                       return (
@@ -252,45 +256,71 @@ export function BrandLanding() {
                           type="button"
                           onClick={() => setKind(k)}
                           className={
-                            "rounded-md px-3 py-2 text-[12px] font-semibold transition " +
+                            "flex items-center justify-between rounded-lg px-3.5 py-3 text-left text-[13px] font-semibold transition " +
                             (on
-                              ? "bg-[#00F0FF] text-slate-950"
-                              : "border border-white/12 bg-white/[0.03] text-white/70 hover:border-white/25 hover:text-white")
+                              ? "bg-[#F5B942] text-[#1A1406]"
+                              : "border border-white/[0.08] bg-white/[0.02] text-white/70 hover:border-[#D4AF37]/35 hover:text-white")
                           }
                         >
-                          {t(`boatshow.kind_${k}`)}
+                          <span>{t(`boatshow.kind_${k}`)}</span>
+                          <span
+                            className={
+                              "size-1.5 rounded-full " + (on ? "bg-[#06101c]" : "bg-white/25")
+                            }
+                          />
                         </button>
                       );
                     })}
                   </div>
-                </fieldset>
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Field label={t("boatshow.field_name")} value={name} onChange={setName} required />
-                  <Field label={t("boatshow.field_company")} value={company} onChange={setCompany} />
-                  <Field label={t("boatshow.field_phone")} value={phone} onChange={setPhone} required />
-                  <Field label={t("boatshow.field_email")} value={email} onChange={setEmail} type="email" />
                 </div>
 
-                <label className="grid gap-1.5">
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/45">
-                    {t("boatshow.field_note")}
-                  </span>
-                  <textarea
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                    rows={3}
-                    className="landing-field min-h-[5.5rem] resize-none py-3"
-                  />
-                </label>
+                <div className="grid gap-5 px-6 py-8 sm:px-8 lg:py-10">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <Field label={t("boatshow.field_name")} value={name} onChange={setName} required />
+                    <Field
+                      label={t("boatshow.field_company")}
+                      value={company}
+                      onChange={setCompany}
+                    />
+                    <Field
+                      label={t("boatshow.field_phone")}
+                      value={phone}
+                      onChange={setPhone}
+                      required
+                    />
+                    <Field
+                      label={t("boatshow.field_email")}
+                      value={email}
+                      onChange={setEmail}
+                      type="email"
+                    />
+                  </div>
 
-                <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center sm:justify-between">
-                  <button type="submit" disabled={busy} className="landing-cta-primary sm:min-w-[12rem]">
-                    {busy ? t("common.loading") : t("boatshow.lead_submit")}
-                  </button>
-                  <p className="text-[11px] leading-snug text-white/40 sm:max-w-[16rem] sm:text-right">
-                    {t("boatshow.lead_privacy", { email: OPS_CONTACT_EMAIL })}
-                  </p>
+                  <label className="grid gap-1.5">
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/45">
+                      {t("boatshow.field_note")}
+                    </span>
+                    <textarea
+                      value={note}
+                      onChange={(e) => setNote(e.target.value)}
+                      rows={4}
+                      className="landing-field min-h-[6.5rem] resize-none py-3"
+                    />
+                  </label>
+
+                  <div className="mt-1 flex flex-col gap-4 border-t border-white/[0.07] pt-6 sm:flex-row sm:items-center sm:justify-between">
+                    <button
+                      type="submit"
+                      disabled={busy}
+                      className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-[#F5B942] px-8 text-sm font-bold text-[#1A1406] transition hover:bg-[#ffc857] disabled:opacity-55 sm:min-w-[14rem]"
+                    >
+                      {busy ? t("common.loading") : t("boatshow.lead_submit")}
+                      <ArrowUpRight className="size-4 opacity-80" aria-hidden />
+                    </button>
+                    <p className="text-[11px] leading-snug text-white/38 sm:max-w-[18rem] sm:text-right">
+                      {t("boatshow.lead_privacy", { email: OPS_CONTACT_EMAIL })}
+                    </p>
+                  </div>
                 </div>
               </form>
             )}

@@ -1870,6 +1870,7 @@
     "partner_point_1": "Αφήστε lead χωρίς λογαριασμό",
     "partner_point_2": "Μάρκα, μαρίνα, έμπορος ή τεχνικός",
     "partner_point_3": "Απάντηση εντός 24 ωρών",
-    "partner_thanks_title": "Ευχαριστούμε"
+    "partner_thanks_title": "Ευχαριστούμε",
+    "partner_kind_hint": "Επιλέξτε ρόλο — το lead καταγράφεται ανάλογα."
   }
 }
