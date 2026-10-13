@@ -7,18 +7,15 @@ import {
   EMERGENCY_CATEGORY_LABEL_KEYS,
   type EmergencyServiceRequest,
 } from "@/lib/emergency-service";
-import {
-  Activity,
-  Clock,
-  Crosshair,
-  MapPin,
-  Radio,
-  Ship,
-  X,
-} from "lucide-react";
+import { Activity, Clock, Crosshair, MapPin, Radio, Ship, UserRound, X } from "lucide-react";
 import { CockpitHeader, MetricCard, StatusBadge } from "@/components/core";
 import { GlassPanel } from "@/components/mission/GlassPanel";
-import { SEED_MISSIONS, SEED_OPS_STATS, type OpsMission, type OpsMissionStatus } from "@/lib/live-ops";
+import {
+  SEED_MISSIONS,
+  SEED_OPS_STATS,
+  type OpsMission,
+  type OpsMissionStatus,
+} from "@/lib/live-ops";
 import { requestMapFocus } from "@/lib/map-focus-bus";
 import { toast } from "sonner";
 import { noteSchemaMiss, skipMissing } from "@/lib/schema-gap";
@@ -68,6 +65,26 @@ export function LiveOpsPanel() {
 
       <CaptainEmergencyCalls />
 
+      <Link
+        to="/app/transfer-captain"
+        className="block overflow-hidden rounded-2xl border border-rose-400/30 bg-rose-500/[0.08] px-4 py-3 transition-colors hover:border-rose-300/50"
+      >
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-xl border border-rose-400/30 bg-rose-500/15 text-rose-200">
+            <UserRound className="size-4" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-rose-300/80">
+              {t("transfer.entry_eyebrow")}
+            </p>
+            <p className="mt-1 text-[14px] font-semibold text-white">{t("transfer.entry_title")}</p>
+            <p className="mt-1 text-[12px] leading-snug text-white/60">
+              {t("transfer.entry_body")}
+            </p>
+          </div>
+        </div>
+      </Link>
+
       <div className="flex items-center justify-between gap-2">
         <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-amber-300/80">
           {t("ops.live_feed")}
@@ -109,7 +126,9 @@ function OpsMissionCard({ mission, onDetails }: { mission: OpsMission; onDetails
           <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-300/80">
             {t("ops.unit_label")} · {mission.vessel}
           </p>
-          <h2 className="mt-1 text-[15px] font-semibold leading-snug text-white">{t(mission.titleKey)}</h2>
+          <h2 className="mt-1 text-[15px] font-semibold leading-snug text-white">
+            {t(mission.titleKey)}
+          </h2>
         </div>
         <StatusBadge tone={STATUS_TONE[mission.status]}>{t(mission.statusKey)}</StatusBadge>
       </div>
@@ -130,9 +149,17 @@ function OpsMissionCard({ mission, onDetails }: { mission: OpsMission; onDetails
       </div>
 
       <div className="grid grid-cols-3 gap-1.5 border-t border-white/[0.06] bg-black/20 p-2">
-        <OpsAction onClick={focusMap} icon={<Crosshair className="size-3.5" />} label={t("ops.focus_map")} />
+        <OpsAction
+          onClick={focusMap}
+          icon={<Crosshair className="size-3.5" />}
+          label={t("ops.focus_map")}
+        />
         <OpsAction onClick={onDetails} icon={<Radio className="size-3.5" />} label={t("ops.vhf")} />
-        <OpsAction onClick={onDetails} icon={<Ship className="size-3.5" />} label={t("ops.details")} />
+        <OpsAction
+          onClick={onDetails}
+          icon={<Ship className="size-3.5" />}
+          label={t("ops.details")}
+        />
       </div>
     </article>
   );
@@ -164,14 +191,19 @@ function OpsMissionSheet({ mission, onClose }: { mission: OpsMission; onClose: (
   const navigate = useNavigate();
 
   return (
-    <div className="fixed inset-0 z-[700] flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-[700] flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center"
+      onClick={onClose}
+    >
       <div
         className="thalvo-dark w-full max-w-md overflow-hidden rounded-t-3xl border border-cyan-500/25 bg-[#0a192f] shadow-2xl sm:rounded-3xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-3 border-b border-white/10 px-4 py-3">
           <div className="min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-300">{t("ops.details")}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-300">
+              {t("ops.details")}
+            </p>
             <h3 className="mt-1 text-sm font-semibold text-white">{t(mission.titleKey)}</h3>
           </div>
           <button
@@ -190,10 +222,14 @@ function OpsMissionSheet({ mission, onClose }: { mission: OpsMission; onClose: (
           {mission.distanceNm != null && (
             <SpecRow label={t("ops.distance")} value={`${mission.distanceNm.toFixed(1)} NM`} />
           )}
-          {mission.etaMin != null && <SpecRow label={t("ops.eta")} value={`${mission.etaMin} min`} />}
+          {mission.etaMin != null && (
+            <SpecRow label={t("ops.eta")} value={`${mission.etaMin} min`} />
+          )}
           <p className="text-[12px] leading-relaxed text-white/60">{t(mission.notesKey)}</p>
           <div className="rounded-2xl border border-amber-400/25 bg-amber-400/10 p-3">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-200">{t("ops.vhf")}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-200">
+              {t("ops.vhf")}
+            </p>
             <p className="mt-1 font-semibold text-white">
               VHF Ch {mission.vhfChannel} · {mission.callsign}
             </p>
@@ -203,7 +239,12 @@ function OpsMissionSheet({ mission, onClose }: { mission: OpsMission; onClose: (
           <button
             type="button"
             onClick={() => {
-              requestMapFocus({ lat: mission.lat, lng: mission.lng, zoom: 15, label: mission.marina });
+              requestMapFocus({
+                lat: mission.lat,
+                lng: mission.lng,
+                zoom: 15,
+                label: mission.marina,
+              });
               onClose();
               void navigate({ to: "/app" });
             }}
