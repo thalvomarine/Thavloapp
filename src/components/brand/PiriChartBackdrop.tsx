@@ -20,22 +20,13 @@ export function PiriChartBackdrop({ className = "" }: { className?: string }) {
       <div className="absolute inset-0 bg-gradient-to-b from-[#06101c]/75 via-transparent to-[#06101c]/92" />
       <div className="absolute inset-0 bg-gradient-to-r from-[#06101c]/35 via-transparent to-[#06101c]/25" />
 
-      {/* Sharp vector rhumb + rose layer (THALVO ink) */}
+      {/* Sharp vector rhumb + rose layer (THALVO ink) — no radial sun glow */}
       <svg
         className="absolute inset-0 size-full opacity-[0.55]"
         viewBox="0 0 1600 900"
         preserveAspectRatio="xMidYMid slice"
         focusable="false"
       >
-        <defs>
-          <radialGradient id="piri-rose" cx="78%" cy="72%" r="42%">
-            <stop offset="0%" stopColor="#F5B942" stopOpacity="0.28" />
-            <stop offset="55%" stopColor="#C9A227" stopOpacity="0.08" />
-            <stop offset="100%" stopColor="#00F0FF" stopOpacity="0" />
-          </radialGradient>
-        </defs>
-        <rect width="1600" height="900" fill="url(#piri-rose)" />
-
         {/* Rhumb rays from a portolan rose (lower-right) */}
         <g
           stroke="#D4AF37"
