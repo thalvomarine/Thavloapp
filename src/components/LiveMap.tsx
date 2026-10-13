@@ -38,7 +38,11 @@ import {
   type GeoFix,
 } from "@/lib/geolocation";
 import { supabase } from "@/integrations/supabase/client";
-import { MARINE_DARK_TILE_URL as SAT_TILE, MARINE_SEAMARK_TILE_URL as SEAMARK_TILE } from "@/lib/chart-tiles";
+import {
+  MARINE_DARK_TILE_URL as SAT_TILE,
+  MARINE_PUBLIC_BASE_URL as DARK_BASE_TILE,
+  MARINE_SEAMARK_TILE_URL as SEAMARK_TILE,
+} from "@/lib/chart-tiles";
 import {
   fetchCommunityReports,
   fetchMarineZones,
@@ -160,9 +164,9 @@ const REGIONS: Record<ChartRegion, { lat: number; lng: number; zoom: number }> =
 };
 
 /**
- * Cockpit rasters. Default is Esri World Imagery (real bays/coast) plus an
- * OpenSeaMap seamark overlay. Nautical = OSM Mapnik + seamarks. Night =
- * OSM inverted (Carto's public Dark Matter URL watermarks without a key).
+ * Cockpit rasters. Default night chart = Esri World Dark Gray + OpenSeaMap
+ * seamarks. Satellite = Esri World Imagery. Nautical = OSM Mapnik + seamarks.
+ * Do not invert OSM with CSS filters — iOS WebKit blanks the map under seamarks.
  */
 const OSM_RASTER_TILE = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 const CHART_VOID = "#0b132b";
@@ -377,22 +381,24 @@ function ChartRasterLayers({
       maxNativeZoom: 19,
       attribution: "© OpenStreetMap",
     });
-    const dark = createCachedTileLayer(OSM_RASTER_TILE, {
+    const dark = createCachedTileLayer(DARK_BASE_TILE, {
       ...raster,
-      maxNativeZoom: 19,
-      className: "thalvo-dark-tiles",
-      attribution: "© OpenStreetMap",
+      maxNativeZoom: 16,
+      attribution: "Tiles © Esri",
     });
     const seamark = createCachedTileLayer(SEAMARK_TILE, {
       minZoom: CHART_MIN_ZOOM,
       maxZoom: CHART_MAX_ZOOM,
       maxNativeZoom: 18,
       zIndex: 400,
+      opacity: 1,
       errorTileUrl: CLEAR_ERROR_TILE,
       keepBuffer,
       updateWhenZooming: false,
       updateWhenIdle: true,
       className: "thalvo-seamark-tiles",
+      // Transparent PNGs — never paint an opaque void over the basemap.
+      crossOrigin: true,
     });
 
     satelliteLayerRef.current = satellite;
@@ -452,6 +458,17 @@ function ChartRasterLayers({
 
     if (showSeamarks) show(seamark);
     else hide(seamark);
+
+    // iOS WebKit sometimes leaves the tile pane blank after a layer swap;
+    // a deferred invalidateSize forces the active basemap to repaint.
+    const redraw = window.setTimeout(() => {
+      try {
+        map.invalidateSize({ pan: false });
+      } catch {
+        /* map may already be torn down */
+      }
+    }, 0);
+    return () => window.clearTimeout(redraw);
   }, [map, basemap, showSeamarks]);
 
   return null;
@@ -798,9 +815,11 @@ function LiveMapCanvas({
   const lastPublishedCenter = useRef({ lat: GOCEK.lat, lng: GOCEK.lng });
 
   useEffect(() => {
+    // Paint the basemap first; enable seamarks only after idle so mobile
+    // browsers are not asked to decode two full tile sets on first paint.
     return runWhenIdle(() => {
       setLayers((v) => (v.seamarks ? v : { ...v, seamarks: true }));
-    }, 1400);
+    }, 1800);
   }, []);
 
   const [zones, setZones] = useState<MarineZone[]>([]);
@@ -1264,7 +1283,7 @@ function LiveMapCanvas({
        */}
       {(() => {
         const overlayContent = (
-          <div className="pointer-events-none absolute inset-0 z-[400]">
+          <div className="thalvo-on-dark pointer-events-none absolute inset-0 z-[400]">
             {hud && (
               <>
                 <ChartHud

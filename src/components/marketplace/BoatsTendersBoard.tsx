@@ -660,7 +660,7 @@ function BoatDeskCard({
           ) : (
             <div className={`absolute inset-0 bg-gradient-to-br ${HUE[boat.hue]}`} />
           )}
-          <div className="absolute left-2 top-2 flex flex-col gap-1">
+          <div className="thalvo-on-dark absolute left-2 top-2 flex flex-col gap-1">
             <span className="rounded border border-white/20 bg-black/45 px-2 py-0.5 text-[10px] font-bold text-white">
               {listingClassLabel(boat, t)}
             </span>
@@ -670,7 +670,7 @@ function BoatDeskCard({
               </span>
             ) : null}
           </div>
-          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/55 to-transparent px-3 py-2">
+          <div className="thalvo-on-dark absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/55 to-transparent px-3 py-2">
             <p className="truncate text-[12px] font-medium text-white">{boat.marina}</p>
           </div>
         </div>

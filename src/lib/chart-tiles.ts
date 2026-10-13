@@ -1,11 +1,15 @@
 /**
  * Cockpit rasters shared with the public coverage chart.
- * Esri World Imagery plus an OpenSeaMap seamark overlay.
+ * Esri World Imagery / Dark Gray Base plus an OpenSeaMap seamark overlay.
+ *
+ * Night/dark mode must use a real dark basemap — never CSS `filter: invert()`
+ * on OSM. WebKit (iOS Safari / Chrome) fails to composite filtered tiles under
+ * the seamark overlay and paints only the chart void (solid navy).
  */
 export const MARINE_DARK_TILE_URL =
   "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
 
-/** Public chart base. Dark gray keeps the sea from rendering as a bright blue tile. */
+/** Cockpit + public dark chart base. Dark gray keeps the sea from flashing bright blue. */
 export const MARINE_PUBLIC_BASE_URL =
   "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}";
 
