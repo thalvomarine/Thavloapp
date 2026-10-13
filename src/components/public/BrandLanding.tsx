@@ -75,9 +75,13 @@ export function BrandLanding() {
         <PiriChartBackdrop />
 
         <header className="relative z-20 flex items-center gap-3 px-5 pt-[max(1.25rem,env(safe-area-inset-top))] sm:px-8 lg:px-12">
-          <Link to="/" className="flex min-w-0 items-center gap-3">
-            <Wordmark size="md" className="text-white drop-shadow-[0_1px_8px_rgba(0,0,0,0.55)]" decorative />
-            <span className="thalvo-display text-[18px] tracking-[0.22em] text-white sm:text-[20px]">
+          <Link to="/" className="flex min-w-0 items-center gap-3.5">
+            <Wordmark
+              size="nav"
+              className="text-white drop-shadow-[0_1px_10px_rgba(0,0,0,0.65)]"
+              decorative
+            />
+            <span className="thalvo-display text-[20px] tracking-[0.2em] text-white sm:text-[22px]">
               THALVO
             </span>
           </Link>

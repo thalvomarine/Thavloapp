@@ -41,18 +41,18 @@ export function PiriChartBackdrop({ className = "" }: { className?: string }) {
             const y2 = Math.sin(a) * 520;
             return <line key={i} x1="0" y1="0" x2={x2} y2={y2} />;
           })}
-          <circle r="56" stroke="#F5B942" strokeOpacity="0.35" />
-          <circle r="34" stroke="#00F0FF" strokeOpacity="0.18" />
-          <circle r="8" fill="#F5B942" fillOpacity="0.35" stroke="none" />
-          {/* 8-point rose tips */}
+          <circle r="56" stroke="#F5B942" strokeOpacity="0.32" />
+          <circle r="34" stroke="#00F0FF" strokeOpacity="0.16" />
+          <circle r="6" stroke="#F5B942" strokeOpacity="0.28" />
+          {/* 8-point rose tips — stroke only, no filled sun disk */}
           {[0, 45, 90, 135, 180, 225, 270, 315].map((deg) => (
             <path
               key={deg}
               d="M0 -58 L6 -28 L0 -34 L-6 -28 Z"
-              fill="#F5B942"
-              fillOpacity="0.28"
+              fill="none"
+              stroke="#F5B942"
+              strokeOpacity="0.3"
               transform={`rotate(${deg})`}
-              stroke="none"
             />
           ))}
         </g>
