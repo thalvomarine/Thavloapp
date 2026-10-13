@@ -1843,5 +1843,27 @@
     "accept_failed": "Could not save selection.",
     "captains_only_title": "Captain accounts only",
     "captains_only_body": "The transfer captain desk is for captain (Client) accounts."
+  },
+  "landing": {
+    "nav_solutions": "Solutions",
+    "nav_about": "About",
+    "nav_menu": "Menu",
+    "slogan": "Marine Operating System",
+    "lede": "The operating system for safe passage at sea.",
+    "coverage": "Aegean and Mediterranean · SOS, technicians, spare parts",
+    "cta_chart": "Open live chart",
+    "cta_partner": "Become a partner",
+    "solutions_title": "Solutions",
+    "solutions_body": "Emergency call, spare parts and the coast chart in one place — for captains, dealers and technicians.",
+    "feat_sos_title": "SOS and technicians",
+    "feat_sos_body": "Location-based emergency call; verified techs take the job.",
+    "feat_parts_title": "Spare parts",
+    "feat_parts_body": "Browse dealer stock; sign in only to order.",
+    "feat_chart_title": "Coast chart",
+    "feat_chart_body": "Aegean and Mediterranean coverage — no live boat pins.",
+    "about_title": "About",
+    "about_body": "THALVO is the marine operating system for the Turkish coast and Mediterranean. In the pilot, payments stay in demo mode.",
+    "partner_title": "Partner lead",
+    "partner_lede": "Brand, marina, dealer or technician — no account needed. Short form, quick reply."
   }
 }
