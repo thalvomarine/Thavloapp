@@ -228,7 +228,8 @@ export function MissionShell({ profile, children, fullBleed = false }: Props) {
                     active={
                       path.startsWith("/app/services") ||
                       path.startsWith("/app/job") ||
-                      path.startsWith("/app/report")
+                      path.startsWith("/app/report") ||
+                      path.startsWith("/app/transfer-captain")
                     }
                     icon={<RescueMark size={18} />}
                     label={t("nav.missions")}
@@ -264,7 +265,8 @@ export function MissionShell({ profile, children, fullBleed = false }: Props) {
                     active={
                       path.startsWith("/app/services") ||
                       path.startsWith("/app/job") ||
-                      path.startsWith("/app/report")
+                      path.startsWith("/app/report") ||
+                      path.startsWith("/app/transfer-captain")
                     }
                     icon={<RescueMark size={18} />}
                     label={t("nav.missions")}

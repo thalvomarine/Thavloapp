@@ -32,6 +32,7 @@ import { Route as AuthenticatedAppReputationRouteImport } from './routes/_authen
 import { Route as AuthenticatedAppServicesRouteImport } from './routes/_authenticated/app.services'
 import { Route as AuthenticatedAppShopRouteImport } from './routes/_authenticated/app.shop'
 import { Route as AuthenticatedAppSupplierRouteImport } from './routes/_authenticated/app.supplier'
+import { Route as AuthenticatedAppTransferCaptainRouteImport } from './routes/_authenticated/app.transfer-captain'
 import { Route as AuthenticatedAppJobIdRouteImport } from './routes/_authenticated/app.job.$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -153,6 +154,12 @@ const AuthenticatedAppSupplierRoute =
     path: '/app/supplier',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAppTransferCaptainRoute =
+  AuthenticatedAppTransferCaptainRouteImport.update({
+    id: '/app/transfer-captain',
+    path: '/app/transfer-captain',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAppJobIdRoute = AuthenticatedAppJobIdRouteImport.update({
   id: '/app/job/$id',
   path: '/app/job/$id',
@@ -181,6 +188,7 @@ export interface FileRoutesByFullPath {
   '/app/services': typeof AuthenticatedAppServicesRoute
   '/app/shop': typeof AuthenticatedAppShopRoute
   '/app/supplier': typeof AuthenticatedAppSupplierRoute
+  '/app/transfer-captain': typeof AuthenticatedAppTransferCaptainRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/app/job/$id': typeof AuthenticatedAppJobIdRoute
 }
@@ -206,6 +214,7 @@ export interface FileRoutesByTo {
   '/app/services': typeof AuthenticatedAppServicesRoute
   '/app/shop': typeof AuthenticatedAppShopRoute
   '/app/supplier': typeof AuthenticatedAppSupplierRoute
+  '/app/transfer-captain': typeof AuthenticatedAppTransferCaptainRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/app/job/$id': typeof AuthenticatedAppJobIdRoute
 }
@@ -233,6 +242,7 @@ export interface FileRoutesById {
   '/_authenticated/app/services': typeof AuthenticatedAppServicesRoute
   '/_authenticated/app/shop': typeof AuthenticatedAppShopRoute
   '/_authenticated/app/supplier': typeof AuthenticatedAppSupplierRoute
+  '/_authenticated/app/transfer-captain': typeof AuthenticatedAppTransferCaptainRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/_authenticated/app/job/$id': typeof AuthenticatedAppJobIdRoute
 }
@@ -260,6 +270,7 @@ export interface FileRouteTypes {
     | '/app/services'
     | '/app/shop'
     | '/app/supplier'
+    | '/app/transfer-captain'
     | '/app/'
     | '/app/job/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -285,6 +296,7 @@ export interface FileRouteTypes {
     | '/app/services'
     | '/app/shop'
     | '/app/supplier'
+    | '/app/transfer-captain'
     | '/app'
     | '/app/job/$id'
   id:
@@ -311,6 +323,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/services'
     | '/_authenticated/app/shop'
     | '/_authenticated/app/supplier'
+    | '/_authenticated/app/transfer-captain'
     | '/_authenticated/app/'
     | '/_authenticated/app/job/$id'
   fileRoutesById: FileRoutesById
@@ -491,6 +504,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppSupplierRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/app/transfer-captain': {
+      id: '/_authenticated/app/transfer-captain'
+      path: '/app/transfer-captain'
+      fullPath: '/app/transfer-captain'
+      preLoaderRoute: typeof AuthenticatedAppTransferCaptainRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/app/job/$id': {
       id: '/_authenticated/app/job/$id'
       path: '/app/job/$id'
@@ -514,6 +534,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAppServicesRoute: typeof AuthenticatedAppServicesRoute
   AuthenticatedAppShopRoute: typeof AuthenticatedAppShopRoute
   AuthenticatedAppSupplierRoute: typeof AuthenticatedAppSupplierRoute
+  AuthenticatedAppTransferCaptainRoute: typeof AuthenticatedAppTransferCaptainRoute
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
   AuthenticatedAppJobIdRoute: typeof AuthenticatedAppJobIdRoute
 }
@@ -531,6 +552,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAppServicesRoute: AuthenticatedAppServicesRoute,
   AuthenticatedAppShopRoute: AuthenticatedAppShopRoute,
   AuthenticatedAppSupplierRoute: AuthenticatedAppSupplierRoute,
+  AuthenticatedAppTransferCaptainRoute: AuthenticatedAppTransferCaptainRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
   AuthenticatedAppJobIdRoute: AuthenticatedAppJobIdRoute,
 }
@@ -553,13 +575,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
