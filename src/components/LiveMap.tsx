@@ -89,7 +89,6 @@ import { MapPlaceholder } from "@/components/ClientOnly";
 import { createRealtimeBuffer, debounce, runWhenIdle } from "@/lib/schedule";
 import {
   AEGEAN_OFFLINE_BOUNDS,
-  createCachedTileLayer,
   downloadAreaTiles,
   type DownloadProgress,
   type PrefetchController,
@@ -346,6 +345,21 @@ function MapSizeSync() {
   return null;
 }
 
+function isCoarsePointer(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.matchMedia("(pointer: coarse)").matches || window.innerWidth < 768;
+  } catch {
+    return window.innerWidth < 768;
+  }
+}
+
+/**
+ * Online cockpit rasters use stock Leaflet TileLayer (same path as the public
+ * chart). createCachedTileLayer is only for offline prefetch — its custom
+ * createTile path plus a second overlay has blanked the tile pane on iOS
+ * WebKit when Fenerler/seamarks were stacked.
+ */
 function ChartRasterLayers({
   basemap,
   showSeamarks,
@@ -358,47 +372,47 @@ function ChartRasterLayers({
   const seaLayerRef = useRef<L.TileLayer | null>(null);
   const darkLayerRef = useRef<L.TileLayer | null>(null);
   const seamarkLayerRef = useRef<L.TileLayer | null>(null);
+  const activeBasemapRef = useRef<L.TileLayer | null>(null);
 
   useEffect(() => {
-    // Low keepBuffer on WebView — satellite + seamark tiles otherwise pin
-    // dozens of decoded bitmaps and OOM mid-range devices.
     const keepBuffer = 1;
-    const raster = {
+    const raster: L.TileLayerOptions = {
       minZoom: CHART_MIN_ZOOM,
       maxZoom: CHART_MAX_ZOOM,
       errorTileUrl: DARK_ERROR_TILE,
       keepBuffer,
       updateWhenZooming: false,
       updateWhenIdle: true,
+      // Retina doubles tile requests and has blanked iOS under seamarks.
+      detectRetina: false,
     };
-    const satellite = createCachedTileLayer(SAT_TILE, {
+    const satellite = L.tileLayer(SAT_TILE, {
       ...raster,
       maxNativeZoom: 18,
       attribution: "Tiles © Esri",
     });
-    const sea = createCachedTileLayer(OSM_RASTER_TILE, {
+    const sea = L.tileLayer(OSM_RASTER_TILE, {
       ...raster,
       maxNativeZoom: 19,
       attribution: "© OpenStreetMap",
     });
-    const dark = createCachedTileLayer(DARK_BASE_TILE, {
+    const dark = L.tileLayer(DARK_BASE_TILE, {
       ...raster,
       maxNativeZoom: 16,
       attribution: "Tiles © Esri",
     });
-    const seamark = createCachedTileLayer(SEAMARK_TILE, {
-      minZoom: CHART_MIN_ZOOM,
+    const seamark = L.tileLayer(SEAMARK_TILE, {
+      minZoom: 11,
       maxZoom: CHART_MAX_ZOOM,
       maxNativeZoom: 18,
-      zIndex: 400,
-      opacity: 1,
+      zIndex: 450,
+      opacity: 0.95,
       errorTileUrl: CLEAR_ERROR_TILE,
       keepBuffer,
       updateWhenZooming: false,
       updateWhenIdle: true,
+      detectRetina: false,
       className: "thalvo-seamark-tiles",
-      // Transparent PNGs — never paint an opaque void over the basemap.
-      crossOrigin: true,
     });
 
     satelliteLayerRef.current = satellite;
@@ -415,6 +429,7 @@ function ChartRasterLayers({
       seaLayerRef.current = null;
       darkLayerRef.current = null;
       seamarkLayerRef.current = null;
+      activeBasemapRef.current = null;
     };
   }, [map]);
 
@@ -425,51 +440,80 @@ function ChartRasterLayers({
     const seamark = seamarkLayerRef.current;
     if (!satellite || !sea || !dark || !seamark) return;
 
-    const show = (layer: L.TileLayer) => {
-      if (!map.hasLayer(layer)) map.addLayer(layer);
-    };
-    const hide = (layer: L.TileLayer) => {
-      if (!map.hasLayer(layer)) return;
-      map.removeLayer(layer);
-      // Purge decoded bitmaps from inactive basemaps (WebView OOM guard).
+    const purge = (layer: L.TileLayer) => {
       const tiles = (layer as unknown as { _tiles?: Record<string, { el?: HTMLElement }> })._tiles;
-      if (tiles) {
-        for (const key of Object.keys(tiles)) {
-          const el = tiles[key]?.el;
-          if (el?.parentNode) el.parentNode.removeChild(el);
-          delete tiles[key];
-        }
+      if (!tiles) return;
+      for (const key of Object.keys(tiles)) {
+        const el = tiles[key]?.el;
+        if (el?.parentNode) el.parentNode.removeChild(el);
+        delete tiles[key];
       }
     };
 
-    if (basemap === "sat") {
-      show(satellite);
-      hide(sea);
-      hide(dark);
-    } else if (basemap === "dark") {
-      show(dark);
-      hide(satellite);
-      hide(sea);
-    } else {
-      show(sea);
-      hide(satellite);
-      hide(dark);
+    const hide = (layer: L.TileLayer) => {
+      if (!map.hasLayer(layer)) return;
+      map.removeLayer(layer);
+      purge(layer);
+    };
+
+    const next =
+      basemap === "sat" ? satellite : basemap === "dark" ? dark : sea;
+
+    // Always remount the active basemap when the stack changes so WebKit
+    // cannot keep a blank composited tile pane under seamarks.
+    if (activeBasemapRef.current && activeBasemapRef.current !== next) {
+      hide(activeBasemapRef.current);
+    }
+    if (map.hasLayer(next)) {
+      map.removeLayer(next);
+    }
+    map.addLayer(next);
+    activeBasemapRef.current = next;
+
+    if (basemap !== "sat") hide(satellite);
+    if (basemap !== "sea") hide(sea);
+    if (basemap !== "dark") hide(dark);
+
+    hide(seamark);
+    if (showSeamarks && map.getZoom() >= 11) {
+      map.addLayer(seamark);
     }
 
-    if (showSeamarks) show(seamark);
-    else hide(seamark);
-
-    // iOS WebKit sometimes leaves the tile pane blank after a layer swap;
-    // a deferred invalidateSize forces the active basemap to repaint.
-    const redraw = window.setTimeout(() => {
+    const kick = () => {
       try {
+        next.redraw();
         map.invalidateSize({ pan: false });
       } catch {
         /* map may already be torn down */
       }
-    }, 0);
-    return () => window.clearTimeout(redraw);
+    };
+    kick();
+    const frame = requestAnimationFrame(kick);
+    const later = window.setTimeout(kick, 120);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.clearTimeout(later);
+    };
   }, [map, basemap, showSeamarks]);
+
+  // If the captain zooms past the seamark min zoom while the layer is on,
+  // attach/detach without waiting for a React toggle.
+  useEffect(() => {
+    if (!showSeamarks) return;
+    const seamark = seamarkLayerRef.current;
+    if (!seamark) return;
+    const sync = () => {
+      const want = map.getZoom() >= 11;
+      const on = map.hasLayer(seamark);
+      if (want && !on) map.addLayer(seamark);
+      if (!want && on) map.removeLayer(seamark);
+    };
+    map.on("zoomend", sync);
+    sync();
+    return () => {
+      map.off("zoomend", sync);
+    };
+  }, [map, showSeamarks]);
 
   return null;
 }
@@ -738,7 +782,6 @@ function LiveMapCanvas({
   // the way while it's open instead of letting the two fight for space.
   const [layersMenuOpen, setLayersMenuOpen] = useState(false);
   const [hudOpen, setHudOpen] = useState(true);
-  const [basemap, setBasemap] = useState<BasemapId>("dark");
   const [poiFilters, setPoiFilters] = useState<Record<PoiFilterKey, boolean>>({
     marinas: true,
     fuel: true,
@@ -796,7 +839,8 @@ function LiveMapCanvas({
   }, [map]);
 
   const [layers, setLayers] = useState<ChartLayers>({
-    // Seamark overlay doubles tile work — paint the basemap first.
+    // Never auto-enable OpenSeaMap on load — stacking seamarks blanked the
+    // basemap on iOS Safari/Chrome. Captains turn Fenerler on from layers.
     seamarks: false,
     hazards: true,
     moorings: true,
@@ -813,14 +857,11 @@ function LiveMapCanvas({
     bearingDeg: 0,
   });
   const lastPublishedCenter = useRef({ lat: GOCEK.lat, lng: GOCEK.lng });
-
-  useEffect(() => {
-    // Paint the basemap first; enable seamarks only after idle so mobile
-    // browsers are not asked to decode two full tile sets on first paint.
-    return runWhenIdle(() => {
-      setLayers((v) => (v.seamarks ? v : { ...v, seamarks: true }));
-    }, 1800);
-  }, []);
+  // Mobile defaults to satellite so coastline is obvious even if a dark
+  // canvas void would otherwise look like a broken blue screen.
+  const [basemap, setBasemap] = useState<BasemapId>(() =>
+    isCoarsePointer() ? "sat" : "dark",
+  );
 
   const [zones, setZones] = useState<MarineZone[]>([]);
   const [reports, setReports] = useState<CommunityReport[]>([]);
@@ -1222,7 +1263,9 @@ function LiveMapCanvas({
         keyboard
         zoomControl={false}
         attributionControl={false}
-        preferCanvas
+        // Canvas renderer + stacked tile overlays has blanked the basemap on
+        // iOS WebKit; SVG keeps markers/vectors while tiles stay as <img>.
+        preferCanvas={!isCoarsePointer()}
         fadeAnimation={false}
         zoomAnimation={false}
         markerZoomAnimation={false}
