@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Wordmark } from "@/components/Wordmark";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
-import { Loader2, Ship, Wrench, Anchor, Store, Eye, EyeOff, AlertCircle } from "lucide-react";
+import { Loader2, Ship, Wrench, Anchor, Store, Eye, EyeOff, AlertCircle, ChevronRight } from "lucide-react";
 import { getValidUser } from "@/lib/auth-guard";
 import { sanitizeNext } from "@/lib/nav";
 import {
@@ -203,311 +203,332 @@ function AuthPage() {
     }
   };
 
+  const switchMode = (nextMode: "signin" | "signup") => {
+    setMode(nextMode);
+    setErr(null);
+    if (nextMode === "signin") setRoleReady(true);
+    if (nextMode === "signup" && !intent) setRoleReady(false);
+  };
+
+  const roleLabel =
+    role === "Client"
+      ? t("auth.role_client")
+      : role === "Provider"
+        ? t("auth.role_provider")
+        : t("auth.role_supplier");
+
   return (
-    <div className="thalvo-premium thalvo-dark relative min-h-dvh flex flex-col overflow-hidden">
+    <div className="thalvo-premium thalvo-dark relative flex min-h-dvh flex-col overflow-hidden">
       <SeaBackdrop subtle />
-      {/* iOS Dynamic Island / status bar clearance — the logo and language
-          switcher are the only interactive chrome above the fold, so they
-          (not the sea backdrop behind them) need the safe-area inset. */}
-      <header className="relative z-50 flex items-center justify-between px-4 pt-[calc(env(safe-area-inset-top)+1rem)]">
-        <a href="/" className="thalvo-brand-mark opacity-90">
-          <Wordmark size="sm" />
+
+      <header className="relative z-50 flex items-center justify-between px-5 pt-[calc(env(safe-area-inset-top)+1rem)]">
+        <a href="/" className="thalvo-brand-mark" aria-label="THALVO">
+          <Wordmark size="sm" decorative />
         </a>
         <LanguageSwitcher tone="dark" />
       </header>
 
-      <main className="relative z-10 flex-1 flex items-center justify-center px-5 py-8">
-        <div className="w-full max-w-md">
-          <div className="mb-6 text-center">
-            <p className="thalvo-display text-4xl tracking-[0.18em] text-white">THALVO</p>
-            <p className="mt-2 text-sm text-white/60">{t("auth.welcome")}</p>
-          </div>
+      <main className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col justify-center gap-8 px-5 py-8 lg:grid lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-14 lg:py-12">
+        {/* Brand plane — hero signal, not a dashboard strip */}
+        <section className="auth-rise text-center lg:text-left">
+          <p className="text-[11px] font-semibold tracking-[0.28em] text-[color:var(--pm-gold)]">
+            {t("auth.brand_kicker", { defaultValue: "MarineOS" })}
+          </p>
+          <h1 className="thalvo-display mt-3 text-[3.25rem] leading-none tracking-[0.18em] text-white sm:text-6xl lg:text-[4.5rem]">
+            THALVO
+          </h1>
+          <p className="mx-auto mt-4 max-w-md text-[15px] leading-relaxed text-white/65 lg:mx-0">
+            {t("auth.subtitle")}
+          </p>
+          <p className="mt-5 hidden text-[11px] font-semibold tracking-[0.18em] text-white/35 lg:block">
+            {t("auth.coverage_ports", { defaultValue: "Göcek · Marmaris · Bodrum" })}
+          </p>
+        </section>
 
-          <div className="overflow-hidden rounded-[28px] border border-white/10 bg-[#071422]/90 text-white shadow-2xl backdrop-blur-xl">
-            {mode === "signup" && !roleReady ? (
-              <div className="space-y-2 p-4">
-                <p className="thalvo-display px-1 text-2xl">{t("auth.pick_role")}</p>
-                <RoleDoor
-                  title={t("auth.role_client")}
-                  line={t("auth.role_client_line")}
-                  icon={<Ship className="size-4" />}
-                  onPick={() => {
-                    setRole("Client");
-                    setRoleReady(true);
-                  }}
-                />
-                <RoleDoor
-                  title={t("auth.role_provider")}
-                  line={t("auth.role_provider_line")}
-                  icon={<Wrench className="size-4" />}
-                  onPick={() => {
-                    setRole("Provider");
-                    setRoleReady(true);
-                  }}
-                />
-                <RoleDoor
-                  title={t("auth.role_supplier")}
-                  line={t("auth.role_supplier_line")}
-                  icon={<Store className="size-4" />}
-                  onPick={() => {
-                    setRole("Supplier");
-                    setRoleReady(true);
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setMode("signin")}
-                  className="w-full pt-3 text-[15px] font-semibold tracking-wide text-[#F5B942] hover:text-amber-200"
-                >
-                  {t("auth.have_account")}
-                </button>
-              </div>
-            ) : (
-            <form onSubmit={submit} className="space-y-3 p-5">
-              {mode === "signup" && (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => setRoleReady(false)}
-                    className="text-left text-[12px] text-cyan-100/80"
-                  >
-                    {role === "Client"
-                      ? t("auth.role_client")
-                      : role === "Provider"
-                        ? t("auth.role_provider")
-                        : t("auth.role_supplier")}
-                    {" · "}
-                    {t("auth.change_role")}
-                  </button>
-
-                  {role !== "Supplier" && (
-                    <Field
-                      label={t("auth.full_name")}
-                      value={fullName}
-                      onChange={setFullName}
-                      required
-                    />
-                  )}
-
-                  {role === "Client" && (
-                    <>
-                      <Field
-                        label={t("auth.boat_name")}
-                        value={boatName}
-                        onChange={setBoatName}
-                        required
-                      />
-                      <div>
-                        <label className="text-xs font-bold text-muted-foreground">
-                          {t("auth.account_type")}
-                        </label>
-                        <select
-                          value={accountType}
-                          onChange={(e) => setAccountType(e.target.value)}
-                          className="mt-1 w-full h-11 rounded-xl border border-input bg-background px-3 text-sm"
-                        >
-                          {ACCOUNT_TYPES.map((a) => (
-                            <option key={a} value={a}>
-                              {t(`auth.account_${a.replace(/\s/g, "_").toLowerCase()}`, a)}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </>
-                  )}
-
-                  {role === "Provider" && (
-                    <>
-                      <div>
-                        <label className="text-xs font-bold text-muted-foreground">
-                          {t("auth.service_type")}
-                        </label>
-                        <div className="mt-1 grid grid-cols-2 gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setServiceType("Marine Mechanic")}
-                            className={
-                              "rounded-xl border p-2.5 text-xs font-semibold inline-flex items-center gap-1.5 " +
-                              (serviceType === "Marine Mechanic"
-                                ? "border-[color:var(--pm-gold)] bg-[color:var(--pm-gold)]/20 text-[color:var(--pm-text)]"
-                                : "border-border")
-                            }
-                          >
-                            <Wrench className="size-3.5" /> {t("auth.sm_mechanic")}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setServiceType("Underwater Diver")}
-                            className={
-                              "rounded-xl border p-2.5 text-xs font-semibold inline-flex items-center gap-1.5 " +
-                              (serviceType === "Underwater Diver"
-                                ? "border-[color:var(--pm-gold)] bg-[color:var(--pm-gold)]/20 text-[color:var(--pm-text)]"
-                                : "border-border")
-                            }
-                          >
-                            <Anchor className="size-3.5" /> {t("auth.sm_diver")}
-                          </button>
-                        </div>
-                      </div>
-                      {serviceType === "Marine Mechanic" ? (
-                        <div>
-                          <label className="text-xs font-bold text-muted-foreground">
-                            {t("auth.specialties")}
-                          </label>
-                          <div className="mt-1 flex max-h-36 flex-wrap gap-1.5 overflow-y-auto">
-                            {ENGINE_BRANDS.map((b) => (
-                              <button
-                                type="button"
-                                key={b}
-                                onClick={() => toggleBrand(b)}
-                                className={
-                                  "px-2.5 py-1 text-xs rounded-full border " +
-                                  (brands.includes(b)
-                                    ? "bg-[color:var(--pm-gold)]/20 text-[color:var(--pm-text)] border-[color:var(--pm-gold)]"
-                                    : "border-border")
-                                }
-                              >
-                                {b}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      ) : (
-                        <Field
-                          label={t("auth.cert_url")}
-                          value={certUrl}
-                          onChange={setCertUrl}
-                          placeholder="https://…"
-                        />
-                      )}
-                    </>
-                  )}
-
-                  {role === "Supplier" && (
-                    <>
-                      <p className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-[12px] leading-snug text-white/70">
-                        {t("auth.supplier_kicker")}
-                      </p>
-                      <Field
-                        label={t("auth.contact_name")}
-                        value={fullName}
-                        onChange={setFullName}
-                        required
-                        autoComplete="name"
-                      />
-                      <Field
-                        label={t("auth.business_name")}
-                        value={businessName}
-                        onChange={setBusinessName}
-                        required
-                        autoComplete="organization"
-                        placeholder={t("auth.business_placeholder")}
-                      />
-                      <div>
-                        <label className="text-xs font-bold text-muted-foreground">
-                          {t("auth.home_marina")}
-                        </label>
-                        <select
-                          value={homeMarina}
-                          onChange={(e) => setHomeMarina(e.target.value)}
-                          className="mt-1 h-11 w-full rounded-xl border border-input bg-background px-3 text-sm"
-                        >
-                          {["Göcek", "Marmaris", "Bodrum", "Fethiye", "Kaş"].map((m) => (
-                            <option key={m}>{m}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </>
-                  )}
-
-                  <Field
-                    label={role === "Supplier" ? t("auth.phone") : `${t("auth.phone")} (${t("common.optional")})`}
-                    value={phone}
-                    onChange={setPhone}
-                    type="tel"
-                    autoComplete="tel"
-                    required={role === "Supplier"}
-                    placeholder="+90…"
-                  />
-                  <p className="text-[10px] text-muted-foreground -mt-1">
-                    {t("auth.phone_private_notice")}
-                  </p>
-                </>
-              )}
-
-              <Field
-                label={t("auth.email")}
-                type="email"
-                value={email}
-                onChange={setEmail}
-                required
-                autoComplete="email"
-              />
-              <Field
-                label={t("auth.password")}
-                type="password"
-                value={password}
-                onChange={setPassword}
-                required
-                minLength={mode === "signup" ? 10 : undefined}
-                autoComplete={mode === "signup" ? "new-password" : "current-password"}
-              />
-              {mode === "signup" && (
-                <p className="text-[10px] text-muted-foreground -mt-1">{t("auth.password_hint")}</p>
-              )}
-
-              {err && (
-                <div className="rounded-xl border border-destructive/40 bg-destructive/10 px-3.5 py-3 text-xs leading-relaxed">
-                  <div className="flex items-start gap-2.5">
-                    <AlertCircle className="size-4 shrink-0 text-destructive mt-0.5" />
-                    <div className="min-w-0 space-y-1.5">
-                      <p className="font-bold text-destructive">
-                        {isInvalidCredentialsError(err)
-                          ? t("auth.error_invalid_credentials_title")
-                          : t("auth.error_generic_title")}
-                      </p>
-                      <p className="text-foreground/80">
-                        {isInvalidCredentialsError(err)
-                          ? t("auth.error_invalid_credentials_body")
-                          : err}
-                      </p>
-                      {isInvalidCredentialsError(err) && mode === "signin" && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setMode("signup");
-                            setErr(null);
-                          }}
-                          className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-[color:var(--pm-gold)] underline underline-offset-2"
-                        >
-                          {t("auth.sign_up")} →
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={busy}
-                className="pm-gold-cta w-full h-12 rounded-xl font-bold inline-flex items-center justify-center gap-2 disabled:opacity-60"
-              >
-                {busy && <Loader2 className="size-4 animate-spin" />}
-                {mode === "signup" ? t("auth.submit_signup") : t("auth.submit_signin")}
-              </button>
-
+        <section className="auth-rise auth-desk w-full max-w-md justify-self-center overflow-hidden rounded-[28px] text-white lg:justify-self-end" style={{ animationDelay: "80ms" }}>
+          <div className="space-y-5 p-5 sm:p-6">
+            <div className="auth-mode" role="tablist" aria-label={t("auth.welcome")}>
               <button
                 type="button"
-                onClick={() => setMode(mode === "signup" ? "signin" : "signup")}
-                className="w-full pt-1 text-[15px] font-semibold tracking-wide text-[#F5B942] hover:text-amber-200"
+                role="tab"
+                aria-pressed={mode === "signin"}
+                onClick={() => switchMode("signin")}
               >
-                {mode === "signup" ? t("auth.have_account") : t("auth.no_account")}
+                {t("auth.sign_in")}
               </button>
-            </form>
+              <button
+                type="button"
+                role="tab"
+                aria-pressed={mode === "signup"}
+                onClick={() => switchMode("signup")}
+              >
+                {t("auth.sign_up")}
+              </button>
+            </div>
+
+            {mode === "signup" && !roleReady ? (
+              <div className="space-y-3">
+                <div>
+                  <p className="thalvo-display text-[1.65rem] leading-none tracking-wide">
+                    {t("auth.pick_role")}
+                  </p>
+                  <p className="mt-2 text-[13px] leading-snug text-white/50">
+                    {t("auth.pick_role_hint", {
+                      defaultValue: "Choose your desk. You can change this later.",
+                    })}
+                  </p>
+                </div>
+                <div className="space-y-2.5">
+                  <RoleDoor
+                    title={t("auth.role_client")}
+                    line={t("auth.role_client_line")}
+                    icon={<Ship className="size-4" />}
+                    onPick={() => {
+                      setRole("Client");
+                      setRoleReady(true);
+                    }}
+                  />
+                  <RoleDoor
+                    title={t("auth.role_provider")}
+                    line={t("auth.role_provider_line")}
+                    icon={<Wrench className="size-4" />}
+                    onPick={() => {
+                      setRole("Provider");
+                      setRoleReady(true);
+                    }}
+                  />
+                  <RoleDoor
+                    title={t("auth.role_supplier")}
+                    line={t("auth.role_supplier_line")}
+                    icon={<Store className="size-4" />}
+                    onPick={() => {
+                      setRole("Supplier");
+                      setRoleReady(true);
+                    }}
+                  />
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={submit} className="space-y-3.5">
+                {mode === "signup" && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setRoleReady(false)}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-cyan-300/25 bg-cyan-400/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-cyan-100"
+                    >
+                      {roleLabel}
+                      <span className="text-cyan-100/50">·</span>
+                      {t("auth.change_role")}
+                    </button>
+
+                    {role !== "Supplier" && (
+                      <Field label={t("auth.full_name")} value={fullName} onChange={setFullName} required />
+                    )}
+
+                    {role === "Client" && (
+                      <>
+                        <Field label={t("auth.boat_name")} value={boatName} onChange={setBoatName} required />
+                        <div>
+                          <label className="auth-label">{t("auth.account_type")}</label>
+                          <select
+                            value={accountType}
+                            onChange={(e) => setAccountType(e.target.value)}
+                            className="auth-field"
+                          >
+                            {ACCOUNT_TYPES.map((a) => (
+                              <option key={a} value={a}>
+                                {t(`auth.account_${a.replace(/\s/g, "_").toLowerCase()}`, a)}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </>
+                    )}
+
+                    {role === "Provider" && (
+                      <>
+                        <div>
+                          <label className="auth-label">{t("auth.service_type")}</label>
+                          <div className="grid grid-cols-2 gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setServiceType("Marine Mechanic")}
+                              className={
+                                "inline-flex items-center justify-center gap-1.5 rounded-xl border px-2.5 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] " +
+                                (serviceType === "Marine Mechanic"
+                                  ? "border-[color:var(--pm-gold)] bg-[color:var(--pm-gold)]/20 text-[color:var(--pm-text)]"
+                                  : "border-white/10 bg-white/[0.03] text-white/65")
+                              }
+                            >
+                              <Wrench className="size-3.5" /> {t("auth.sm_mechanic")}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setServiceType("Underwater Diver")}
+                              className={
+                                "inline-flex items-center justify-center gap-1.5 rounded-xl border px-2.5 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] " +
+                                (serviceType === "Underwater Diver"
+                                  ? "border-[color:var(--pm-gold)] bg-[color:var(--pm-gold)]/20 text-[color:var(--pm-text)]"
+                                  : "border-white/10 bg-white/[0.03] text-white/65")
+                              }
+                            >
+                              <Anchor className="size-3.5" /> {t("auth.sm_diver")}
+                            </button>
+                          </div>
+                        </div>
+                        {serviceType === "Marine Mechanic" ? (
+                          <div>
+                            <label className="auth-label">{t("auth.specialties")}</label>
+                            <div className="flex max-h-36 flex-wrap gap-1.5 overflow-y-auto">
+                              {ENGINE_BRANDS.map((b) => (
+                                <button
+                                  type="button"
+                                  key={b}
+                                  onClick={() => toggleBrand(b)}
+                                  className={
+                                    "rounded-full border px-2.5 py-1 text-xs " +
+                                    (brands.includes(b)
+                                      ? "border-[color:var(--pm-gold)] bg-[color:var(--pm-gold)]/20 text-[color:var(--pm-text)]"
+                                      : "border-white/10 text-white/60")
+                                  }
+                                >
+                                  {b}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        ) : (
+                          <Field
+                            label={t("auth.cert_url")}
+                            value={certUrl}
+                            onChange={setCertUrl}
+                            placeholder="https://…"
+                          />
+                        )}
+                      </>
+                    )}
+
+                    {role === "Supplier" && (
+                      <>
+                        <p className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-[12px] leading-snug text-white/70">
+                          {t("auth.supplier_kicker")}
+                        </p>
+                        <Field
+                          label={t("auth.contact_name")}
+                          value={fullName}
+                          onChange={setFullName}
+                          required
+                          autoComplete="name"
+                        />
+                        <Field
+                          label={t("auth.business_name")}
+                          value={businessName}
+                          onChange={setBusinessName}
+                          required
+                          autoComplete="organization"
+                          placeholder={t("auth.business_placeholder")}
+                        />
+                        <div>
+                          <label className="auth-label">{t("auth.home_marina")}</label>
+                          <select
+                            value={homeMarina}
+                            onChange={(e) => setHomeMarina(e.target.value)}
+                            className="auth-field"
+                          >
+                            {["Göcek", "Marmaris", "Bodrum", "Fethiye", "Kaş"].map((m) => (
+                              <option key={m}>{m}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </>
+                    )}
+
+                    <Field
+                      label={
+                        role === "Supplier"
+                          ? t("auth.phone")
+                          : `${t("auth.phone")} (${t("common.optional")})`
+                      }
+                      value={phone}
+                      onChange={setPhone}
+                      type="tel"
+                      autoComplete="tel"
+                      required={role === "Supplier"}
+                      placeholder="+90…"
+                    />
+                    <p className="-mt-1 text-[11px] leading-snug text-white/40">
+                      {t("auth.phone_private_notice")}
+                    </p>
+                  </>
+                )}
+
+                <Field
+                  label={t("auth.email")}
+                  type="email"
+                  value={email}
+                  onChange={setEmail}
+                  required
+                  autoComplete="email"
+                />
+                <Field
+                  label={t("auth.password")}
+                  type="password"
+                  value={password}
+                  onChange={setPassword}
+                  required
+                  minLength={mode === "signup" ? 10 : undefined}
+                  autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                />
+                {mode === "signup" && (
+                  <p className="-mt-1 text-[11px] text-white/40">{t("auth.password_hint")}</p>
+                )}
+
+                {err && (
+                  <div className="rounded-xl border border-destructive/40 bg-destructive/10 px-3.5 py-3 text-xs leading-relaxed">
+                    <div className="flex items-start gap-2.5">
+                      <AlertCircle className="mt-0.5 size-4 shrink-0 text-destructive" />
+                      <div className="min-w-0 space-y-1.5">
+                        <p className="font-bold text-destructive">
+                          {isInvalidCredentialsError(err)
+                            ? t("auth.error_invalid_credentials_title")
+                            : t("auth.error_generic_title")}
+                        </p>
+                        <p className="text-foreground/80">
+                          {isInvalidCredentialsError(err)
+                            ? t("auth.error_invalid_credentials_body")
+                            : err}
+                        </p>
+                        {isInvalidCredentialsError(err) && mode === "signin" && (
+                          <button
+                            type="button"
+                            onClick={() => switchMode("signup")}
+                            className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-[color:var(--pm-gold)] underline underline-offset-2"
+                          >
+                            {t("auth.sign_up")} →
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={busy}
+                  className="pm-gold-cta mt-1 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl text-[14px] font-bold tracking-wide disabled:opacity-60"
+                >
+                  {busy && <Loader2 className="size-4 animate-spin" />}
+                  {mode === "signup" ? t("auth.submit_signup") : t("auth.submit_signin")}
+                </button>
+              </form>
             )}
           </div>
-        </div>
+        </section>
+
+        <p className="auth-rise text-center text-[11px] font-semibold tracking-[0.18em] text-white/35 lg:hidden" style={{ animationDelay: "120ms" }}>
+          {t("auth.coverage_ports", { defaultValue: "Göcek · Marmaris · Bodrum" })}
+        </p>
       </main>
     </div>
   );
@@ -525,18 +546,17 @@ function RoleDoor({
   onPick: () => void;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onPick}
-      className="flex w-full items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-3.5 py-3 text-left hover:border-cyan-300/40 hover:bg-white/[0.06]"
-    >
-      <span className="grid size-9 shrink-0 place-items-center rounded-full border border-cyan-300/30 text-cyan-100">
+    <button type="button" onClick={onPick} className="auth-role">
+      <span className="auth-role-icon" aria-hidden>
         {icon}
       </span>
-      <span>
-        <span className="thalvo-display block text-[20px] leading-none text-white">{title}</span>
-        <span className="mt-1 block text-[12px] text-white/55">{line}</span>
+      <span className="min-w-0 flex-1">
+        <span className="thalvo-display block text-[1.35rem] leading-none tracking-wide text-white">
+          {title}
+        </span>
+        <span className="mt-1.5 block text-[12.5px] leading-snug text-white/55">{line}</span>
       </span>
+      <ChevronRight className="size-4 shrink-0 text-white/35" aria-hidden />
     </button>
   );
 }
@@ -566,8 +586,8 @@ function Field({
 
   return (
     <div>
-      <label className="text-xs font-bold text-muted-foreground">{label}</label>
-      <div className="relative mt-1">
+      <label className="auth-label">{label}</label>
+      <div className="relative">
         <input
           type={isPassword ? (reveal ? "text" : "password") : type}
           value={value}
@@ -576,10 +596,7 @@ function Field({
           minLength={minLength}
           placeholder={placeholder}
           autoComplete={autoComplete}
-          className={
-            "w-full h-11 rounded-xl border border-input bg-background px-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring " +
-            (isPassword ? "pr-11" : "")
-          }
+          className={"auth-field " + (isPassword ? "pr-12" : "")}
         />
         {isPassword && (
           <button
@@ -587,7 +604,7 @@ function Field({
             onClick={() => setReveal((r) => !r)}
             tabIndex={-1}
             aria-label={reveal ? t("auth.hide_password") : t("auth.show_password")}
-            className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-muted-foreground hover:text-foreground"
+            className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-white/45 hover:text-white/80"
           >
             {reveal ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
           </button>

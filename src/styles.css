@@ -867,6 +867,173 @@ html[data-thalvo-theme="day"] .thalvo-brand-mark {
   box-shadow: 0 1px 6px rgb(15 23 42 / 0.22);
 }
 
+/* ----- Auth desk (signup / sign-in) -------------------------------------- */
+@keyframes auth-rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.auth-rise {
+  animation: auth-rise 480ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.auth-desk {
+  border: 1px solid rgb(255 255 255 / 0.12);
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.05) 0%, transparent 42%),
+    rgb(7 20 34 / 0.88);
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+  box-shadow:
+    0 1px 0 0 rgb(255 255 255 / 0.06) inset,
+    0 28px 80px -36px rgb(0 0 0 / 0.75);
+}
+.auth-mode {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 14px;
+  background: rgb(255 255 255 / 0.04);
+  border: 1px solid rgb(255 255 255 / 0.08);
+}
+.auth-mode button {
+  height: 40px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  /* No CSS uppercase — tr locale turns Latin "i" into "İ". */
+  color: rgb(255 255 255 / 0.55);
+  transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease;
+}
+.auth-mode button[aria-pressed="true"] {
+  background: rgb(245 185 66 / 0.18);
+  color: #f8e7b0;
+  box-shadow: 0 0 0 1px rgb(245 185 66 / 0.35) inset;
+}
+.auth-mode button:hover:not([aria-pressed="true"]) {
+  color: rgb(255 255 255 / 0.85);
+  background: rgb(255 255 255 / 0.04);
+}
+.auth-field {
+  width: 100%;
+  height: 48px;
+  border-radius: 14px;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  background: rgb(255 255 255 / 0.035);
+  padding: 0 14px;
+  font-size: 14px;
+  color: #f2f6f8;
+  outline: none;
+  transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+}
+.auth-field:focus {
+  border-color: rgb(245 185 66 / 0.55);
+  background: rgb(255 255 255 / 0.055);
+  box-shadow: 0 0 0 3px rgb(245 185 66 / 0.12);
+}
+.auth-field::placeholder {
+  color: rgb(255 255 255 / 0.35);
+}
+.auth-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 0.45);
+}
+.auth-role {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 14px;
+  border-radius: 18px;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  background: rgb(255 255 255 / 0.03);
+  padding: 14px 14px;
+  text-align: left;
+  transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
+}
+.auth-role:hover {
+  border-color: rgb(0 240 255 / 0.35);
+  background: rgb(0 240 255 / 0.06);
+  transform: translateY(-1px);
+}
+.auth-role:focus-visible {
+  outline: 2px solid rgb(245 185 66 / 0.55);
+  outline-offset: 2px;
+}
+.auth-role-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border-radius: 14px;
+  border: 1px solid rgb(0 240 255 / 0.28);
+  background: rgb(0 240 255 / 0.08);
+  color: #a5f3fc;
+}
+@media (prefers-reduced-motion: reduce) {
+  .auth-rise,
+  .auth-role {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+html[data-thalvo-theme="day"] .auth-desk {
+  background: #ffffff !important;
+  border-color: rgb(15 23 42 / 0.12) !important;
+  box-shadow:
+    0 1px 0 0 rgb(15 23 42 / 0.04) inset,
+    0 24px 60px -32px rgb(15 23 42 / 0.28) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+html[data-thalvo-theme="day"] .auth-mode {
+  background: rgb(15 23 42 / 0.04) !important;
+  border-color: rgb(15 23 42 / 0.1) !important;
+}
+html[data-thalvo-theme="day"] .auth-mode button {
+  color: #64748b !important;
+}
+html[data-thalvo-theme="day"] .auth-mode button[aria-pressed="true"] {
+  background: rgb(180 83 9 / 0.12) !important;
+  color: #92400e !important;
+  box-shadow: 0 0 0 1px rgb(180 83 9 / 0.28) inset !important;
+}
+html[data-thalvo-theme="day"] .auth-field {
+  color: #0f172a !important;
+  background: #f8fafc !important;
+  border-color: rgb(15 23 42 / 0.16) !important;
+}
+html[data-thalvo-theme="day"] .auth-field:focus {
+  border-color: rgb(180 83 9 / 0.45) !important;
+  background: #ffffff !important;
+  box-shadow: 0 0 0 3px rgb(180 83 9 / 0.12) !important;
+}
+html[data-thalvo-theme="day"] .auth-field::placeholder {
+  color: #94a3b8 !important;
+}
+html[data-thalvo-theme="day"] .auth-label {
+  color: #64748b !important;
+}
+html[data-thalvo-theme="day"] .auth-role {
+  background: rgb(15 23 42 / 0.03) !important;
+  border-color: rgb(15 23 42 / 0.12) !important;
+}
+html[data-thalvo-theme="day"] .auth-role:hover {
+  background: rgb(8 145 178 / 0.08) !important;
+  border-color: rgb(8 145 178 / 0.35) !important;
+}
+html[data-thalvo-theme="day"] .auth-role-icon {
+  background: rgb(8 145 178 / 0.1) !important;
+  border-color: rgb(8 145 178 / 0.3) !important;
+  color: #0e7490 !important;
+}
+
 /* Risk / health banners: dark ink on tinted paper (never pale-on-pale). */
 html[data-thalvo-theme="day"] .thalvo-risk-medium {
   color: #92400e !important;
