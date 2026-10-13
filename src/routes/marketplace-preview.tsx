@@ -192,10 +192,10 @@ function MarketplacePreviewPage() {
       <div className="mx-auto w-full max-w-6xl space-y-4">
         <div className="rounded-xl border border-amber-400/35 bg-amber-400/10 px-4 py-3 text-[12px] leading-relaxed text-amber-100">
           <p className="font-semibold uppercase tracking-[0.14em] text-amber-200">
-            Önizleme B · Showroom + sol filtre · canlı siteye yazılmaz
+            Önizleme B · Web: sol filtre · Mobil: alttan sheet · canlıya yazılmaz
           </p>
           <p className="mt-1 text-amber-100/85">
-            Soldan açılır filtre paneli, mobil uyumlu showroom. Onayınızdan sonra gerçek{" "}
+            Masaüstünde soldan, dar ekran / native uygulamada alttan açılır filtre. Onayınızdan sonra{" "}
             <code className="rounded bg-black/30 px-1">/app/marketplace</code> yedek parça sekmesine taşınır.
           </p>
           <Link to="/" className="mt-2 inline-block text-[11px] font-semibold text-cyan-300 hover:text-cyan-200">

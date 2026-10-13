@@ -9,11 +9,36 @@ import {
   Search,
   ShoppingCart,
   Ship,
+  SlidersHorizontal,
   Sparkles,
   X,
 } from "lucide-react";
 import type { PartCardData } from "@/components/marketplace/PartCard";
 import { PART_CATEGORIES } from "@/lib/marine-catalog";
+import { isNativeWebView } from "@/lib/native-history";
+
+/** Web desktop: side drawer. Native app / narrow viewports: bottom sheet. */
+function useFilterPresentation(): "side" | "bottom" {
+  const [mode, setMode] = useState<"side" | "bottom">(() => {
+    if (typeof window === "undefined") return "side";
+    if (isNativeWebView()) return "bottom";
+    return window.matchMedia("(max-width: 1023px)").matches ? "bottom" : "side";
+  });
+
+  useEffect(() => {
+    if (isNativeWebView()) {
+      setMode("bottom");
+      return;
+    }
+    const mq = window.matchMedia("(max-width: 1023px)");
+    const apply = () => setMode(mq.matches ? "bottom" : "side");
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+
+  return mode;
+}
 
 export type PartsSortId = "recommended" | "price_asc" | "price_desc" | "name" | "newest";
 
@@ -86,6 +111,7 @@ export function PartsCatalogBoard({
   const [sort, setSort] = useState<PartsSortId>("recommended");
   const [view, setView] = useState<"grid" | "desk">("grid");
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const filterPresentation = useFilterPresentation();
   const [favorites, setFavorites] = useState<Set<string>>(() =>
     typeof window === "undefined" ? new Set() : readFavorites(),
   );
@@ -103,6 +129,9 @@ export function PartsCatalogBoard({
       window.removeEventListener("keydown", onKey);
     };
   }, [filtersOpen]);
+
+  const closeFilters = () => setFiltersOpen(false);
+  const openFilters = () => setFiltersOpen(true);
 
   const createdAtById = useMemo(() => {
     const map = new Map<string, string>();
@@ -229,11 +258,11 @@ export function PartsCatalogBoard({
     <div className="relative space-y-4 sm:space-y-5">
       {banner}
 
-      {/* Left edge open tab (visible when drawer closed) */}
-      {!filtersOpen && (
+      {/* Web desktop: left edge tab. Mobile / native: header Filters only. */}
+      {!filtersOpen && filterPresentation === "side" && (
         <button
           type="button"
-          onClick={() => setFiltersOpen(true)}
+          onClick={openFilters}
           className="fixed left-0 top-[38%] z-40 flex -translate-y-1/2 items-center gap-1.5 rounded-r-xl border border-l-0 border-cyan-400/35 bg-[#0A192F]/95 py-3 pl-2 pr-2.5 text-cyan-200 shadow-lg shadow-cyan-950/40 backdrop-blur-md sm:top-[32%]"
           aria-expanded={false}
           aria-controls="marketplace-filter-drawer"
@@ -250,7 +279,7 @@ export function PartsCatalogBoard({
         </button>
       )}
 
-      {/* Backdrop + left drawer */}
+      {/* Backdrop + side drawer (web) or bottom sheet (mobile app / narrow) */}
       <div
         className={
           "fixed inset-0 z-50 transition-[visibility] duration-200 " +
@@ -260,7 +289,7 @@ export function PartsCatalogBoard({
         <button
           type="button"
           aria-label={t("marketplace.catalog.close_filters")}
-          onClick={() => setFiltersOpen(false)}
+          onClick={closeFilters}
           className={
             "absolute inset-0 bg-black/60 backdrop-blur-[2px] transition-opacity duration-300 " +
             (filtersOpen ? "opacity-100" : "opacity-0")
@@ -272,10 +301,18 @@ export function PartsCatalogBoard({
           aria-modal="true"
           aria-label={t("marketplace.catalog.filters")}
           className={
-            "absolute inset-y-0 left-0 flex w-[min(100vw-2.5rem,20rem)] flex-col border-r border-white/10 bg-[#071422] shadow-2xl transition-transform duration-300 ease-out sm:w-[22rem] " +
-            (filtersOpen ? "translate-x-0" : "-translate-x-full")
+            filterPresentation === "bottom"
+              ? "absolute inset-x-0 bottom-0 flex max-h-[min(88dvh,40rem)] flex-col rounded-t-3xl border border-b-0 border-white/10 bg-[#071422] shadow-2xl transition-transform duration-300 ease-out pb-[env(safe-area-inset-bottom)] " +
+                (filtersOpen ? "translate-y-0" : "translate-y-full")
+              : "absolute inset-y-0 left-0 flex w-[min(100vw-2.5rem,20rem)] flex-col border-r border-white/10 bg-[#071422] shadow-2xl transition-transform duration-300 ease-out sm:w-[22rem] " +
+                (filtersOpen ? "translate-x-0" : "-translate-x-full")
           }
         >
+          {filterPresentation === "bottom" ? (
+            <div className="flex flex-col items-center pt-2">
+              <span aria-hidden className="mb-1 h-1 w-10 rounded-full bg-white/25" />
+            </div>
+          ) : null}
           <div className="flex items-center justify-between gap-2 border-b border-white/10 px-4 py-3">
             <div className="min-w-0">
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-300/85">
@@ -285,11 +322,11 @@ export function PartsCatalogBoard({
             </div>
             <button
               type="button"
-              onClick={() => setFiltersOpen(false)}
+              onClick={closeFilters}
               className="grid size-9 place-items-center rounded-xl border border-white/10 text-white/70 hover:bg-white/10"
               aria-label={t("marketplace.catalog.close_filters")}
             >
-              <PanelLeftClose className="size-4" />
+              {filterPresentation === "bottom" ? <X className="size-4" /> : <PanelLeftClose className="size-4" />}
             </button>
           </div>
 
@@ -387,7 +424,7 @@ export function PartsCatalogBoard({
               {brandCounts.length === 0 ? (
                 <p className="text-[12px] text-white/45">{t("marketplace.catalog.no_brands")}</p>
               ) : (
-                <ul className="max-h-56 space-y-1 overflow-y-auto overscroll-contain pr-1">
+                <ul className="max-h-56 space-y-1 overflow-y-auto overscroll-contain pr-1 sm:max-h-64">
                   {brandCounts.map(({ brand, count }) => {
                     const checked = brands.includes(brand);
                     return (
@@ -424,7 +461,7 @@ export function PartsCatalogBoard({
             ) : null}
             <button
               type="button"
-              onClick={() => setFiltersOpen(false)}
+              onClick={closeFilters}
               className="flex h-11 w-full items-center justify-center rounded-xl bg-cyan-400 text-sm font-bold text-slate-950"
             >
               {t("marketplace.catalog.apply_filters", { count: visible.length })}
@@ -481,10 +518,14 @@ export function PartsCatalogBoard({
               </div>
               <button
                 type="button"
-                onClick={() => setFiltersOpen(true)}
+                onClick={openFilters}
                 className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-3 text-[11px] font-bold uppercase tracking-wide text-cyan-100 sm:h-11"
               >
-                <PanelLeft className="size-3.5" />
+                {filterPresentation === "bottom" ? (
+                  <SlidersHorizontal className="size-3.5" />
+                ) : (
+                  <PanelLeft className="size-3.5" />
+                )}
                 {t("marketplace.catalog.filters")}
                 {activeFilterCount > 0 ? (
                   <span className="rounded-md bg-cyan-400 px-1.5 py-0.5 text-[10px] text-slate-950">
