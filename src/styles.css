@@ -622,6 +622,12 @@ html[data-thalvo-theme="day"] .text-amber-300,
 html[data-thalvo-theme="day"] .text-amber-300\/80 {
   color: #92400e !important;
 }
+html[data-thalvo-theme="day"] .text-\[\#F5B942\] {
+  color: #b45309 !important;
+}
+html[data-thalvo-theme="day"] .hover\:text-amber-200:hover {
+  color: #92400e !important;
+}
 
 /* Navy / ECDIS surfaces → paper white (every casing + opacity used in the shell). */
 html[data-thalvo-theme="day"] .bg-\[\#071422\],
@@ -723,6 +729,19 @@ html[data-thalvo-theme="day"] .border-cyan-500\/20,
 html[data-thalvo-theme="day"] .border-cyan-500\/25,
 html[data-thalvo-theme="day"] .border-cyan-500\/30 {
   border-color: rgb(8 145 178 / 0.45) !important;
+}
+
+/* Chart chrome written outside Tailwind utilities. */
+html[data-thalvo-theme="day"] .thalvo-ecdis .leaflet-control-attribution,
+html[data-thalvo-theme="day"] .leaflet-control-attribution {
+  color: rgb(15 23 42 / 0.55) !important;
+}
+html[data-thalvo-theme="day"] .thalvo-ecdis .leaflet-control-attribution a,
+html[data-thalvo-theme="day"] .leaflet-control-attribution a {
+  color: rgb(15 23 42 / 0.7) !important;
+}
+html[data-thalvo-theme="day"] .bg-deep {
+  background-color: #f4f7fb !important;
 }
 
 
