@@ -302,6 +302,68 @@
   --mos-amber: #f5b942;
 }
 
+/*
+ * Shared marketplace desk (parts + boats).
+ * system / default = ECDIS navy; day = paper; night = black.
+ */
+.thalvo-desk {
+  --desk-canvas: #0c1829;
+  --desk-paper: #12233a;
+  --desk-ink: #e8f4ff;
+  --desk-muted: rgb(230 246 255 / 0.58);
+  --desk-subtle: rgb(230 246 255 / 0.4);
+  --desk-border: rgb(230 246 255 / 0.12);
+  --desk-input: #071422;
+  --desk-chip: rgb(230 246 255 / 0.06);
+  --desk-price: #f5b942;
+  --desk-accent: #0a192f;
+  --desk-accent-fg: #ffffff;
+  --desk-active: #00f0ff;
+  --desk-active-ink: #0a192f;
+  --desk-shadow: 0 14px 36px -22px rgb(0 0 0 / 0.55);
+  --desk-overlay: rgb(0 0 0 / 0.55);
+  color: var(--desk-ink);
+}
+html[data-thalvo-theme="day"] .thalvo-desk {
+  --desk-canvas: #eef2f6;
+  --desk-paper: #ffffff;
+  --desk-ink: #0a192f;
+  --desk-muted: #64748b;
+  --desk-subtle: #94a3b8;
+  --desk-border: #e2e8f0;
+  --desk-input: #f8fafc;
+  --desk-chip: #ffffff;
+  --desk-price: #d97706;
+  --desk-accent: #0a192f;
+  --desk-accent-fg: #ffffff;
+  --desk-active: #00f0ff;
+  --desk-active-ink: #0a192f;
+  --desk-shadow: 0 14px 36px -22px rgb(15 23 42 / 0.18);
+  --desk-overlay: rgb(15 23 42 / 0.4);
+}
+html[data-thalvo-theme="night"] .thalvo-desk {
+  --desk-canvas: #050505;
+  --desk-paper: #0c0c0c;
+  --desk-ink: #f5f7fb;
+  --desk-muted: rgb(245 247 251 / 0.58);
+  --desk-subtle: rgb(245 247 251 / 0.4);
+  --desk-border: rgb(245 247 251 / 0.14);
+  --desk-input: #000000;
+  --desk-chip: rgb(245 247 251 / 0.06);
+  --desk-price: #f5b942;
+  --desk-accent: #111111;
+  --desk-accent-fg: #f5f7fb;
+  --desk-active: #00f0ff;
+  --desk-active-ink: #000000;
+  --desk-shadow: 0 14px 36px -22px rgb(0 0 0 / 0.8);
+  --desk-overlay: rgb(0 0 0 / 0.7);
+}
+.thalvo-desk-title {
+  font-family: "Barlow Condensed", "Avenir Next Condensed", "Barlow", ui-sans-serif, system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
 @keyframes thalvo-catalog-rise {
   from {
     opacity: 0;
