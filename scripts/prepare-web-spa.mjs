@@ -102,8 +102,12 @@ if (!entry) {
   process.exit(1);
 }
 
+// Absolute /assets/… paths are required on the web SPA: a deep link like
+// /app/marketplace would otherwise resolve ./assets/foo.js to
+// /app/assets/foo.js, get the HTML rewrite, and hang on the blue boot screen.
+// Capacitor serves the same files from the app origin root, so /assets works there too.
 const cssLinks = cssFiles
-  .map((f) => `    <link rel="stylesheet" href="./assets/${f}" />`)
+  .map((f) => `    <link rel="stylesheet" href="/assets/${f}" />`)
   .join("\n");
 
 const indexHtml = `<!doctype html>
@@ -114,8 +118,8 @@ const indexHtml = `<!doctype html>
     <title>THALVO MarineOS</title>
     <meta name="theme-color" content="#0A192F" />
     <meta name="color-scheme" content="dark" />
-    <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
 ${cssLinks}
     <style>
       html, body { margin: 0; height: 100%; background: #0A192F; }
@@ -189,7 +193,7 @@ ${cssLinks}
         </div>
       </div>
     </div>
-    <script type="module" src="./assets/${entry}"></script>
+    <script type="module" src="/assets/${entry}"></script>
   </body>
 </html>
 `;
@@ -197,4 +201,4 @@ ${cssLinks}
 writeFileSync(join(distDir, "index.html"), indexHtml);
 console.log(`[spa] dist ready at ${distDir}`);
 console.log(`[spa] assets from ${sourceDir}`);
-console.log(`[spa] client entry ./assets/${entry}`);
+console.log(`[spa] client entry /assets/${entry}`);
