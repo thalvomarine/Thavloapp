@@ -15,7 +15,7 @@ description: >-
 - Coverage copy is Aegean and Mediterranean. Marina names stay as real places.
 - An open SOS stays on Görevler until the captain cancels it or it is completed. Cancel and live position use `cancel_own_call` and `refresh_own_call_position` in `20261008143000_cancel_and_live_call.sql`.
 - Appearance: `system` keeps this cockpit, `day` is white, `night` is black. Stored in `thalvo-theme`.
-- Captain signup stays the boat flow. Dealer signup is a company desk (contact, legal name, home marina, phone) and opens `/app/dealer`, not the vessel passport.
+- Captain signup stays the boat flow. Dealer/provider signup is a company or technician form (contact, legal name, home marina, phone) that stores `requested_role` and stays `Client` until an admin approves via `approve_role_request` — then the dealer desk (`/app/dealer`) or provider cockpit opens. Never auto-insert into `verified_dealers` / `verified_providers` on signup.
 - Supabase email confirmation stays on. After signup the visitor enters the public chart with an unverified-email warning. The cockpit opens after the confirmation link.
 - An empty catalogue is an empty state, not a load error.
 - THALVO AI answers seamanship, machinery, and weather without inventing wave heights. If the server function fails, the client still answers from `answerFromTraining`.

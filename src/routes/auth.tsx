@@ -175,7 +175,14 @@ function AuthPage() {
         }
 
         markSignupWelcome();
-        toast.success(t("auth.signup_welcome_toast"), { duration: 7000 });
+        if (role === "Provider" || role === "Supplier") {
+          toast.message(t("auth.verification_pending_title"), {
+            description: t("auth.verification_pending_body"),
+            duration: 10000,
+          });
+        } else {
+          toast.success(t("auth.signup_welcome_toast"), { duration: 7000 });
+        }
         goNext();
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });

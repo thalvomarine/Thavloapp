@@ -1550,6 +1550,7 @@ export type Database = {
       }
       admin_close_job: { Args: { _job_id: string }; Returns: undefined }
       admin_delete_job: { Args: { _job_id: string }; Returns: undefined }
+      /** Revoked from authenticated — service_role only; returns has_role admin. */
       ensure_superadmin: { Args: never; Returns: boolean }
       claim_open_job: { Args: { _job_id: string }; Returns: undefined }
       approve_part: { Args: { _part_id: string }; Returns: undefined }

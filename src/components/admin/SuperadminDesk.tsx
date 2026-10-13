@@ -73,7 +73,6 @@ export function SuperadminDesk() {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    await supabase.rpc("ensure_superadmin");
     const [dir, prof, contacts, jobRes, sosRes, details] = await Promise.all([
       supabase.rpc("admin_list_users"),
       supabase
