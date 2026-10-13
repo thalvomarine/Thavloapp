@@ -97,7 +97,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "viewport-fit=cover, width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no",
       },
-      { title: "THALVO | Güvenli Seyir, Anında Müdahale" },
+      { title: "Thalvo Marine OS" },
       {
         name: "description",
         content:
