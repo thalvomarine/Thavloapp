@@ -720,7 +720,7 @@ function LiveMapCanvas({
   // Mobile "Layers" drawer (see ChartHud) — fades the Metocean widget out of
   // the way while it's open instead of letting the two fight for space.
   const [layersMenuOpen, setLayersMenuOpen] = useState(false);
-  const [hudOpen, setHudOpen] = useState(true);
+  const [hudOpen, setHudOpen] = useState(false);
   const [basemap, setBasemap] = useState<BasemapId>("dark");
   const [poiFilters, setPoiFilters] = useState<Record<PoiFilterKey, boolean>>({
     marinas: true,
@@ -1373,7 +1373,8 @@ function LiveMapCanvas({
                   }
                 />
                 <ChartReadout
-                  coords={formatDegrees(telemetry.center.lat, telemetry.center.lng)}
+                  lat={telemetry.center.lat}
+                  lng={telemetry.center.lng}
                   scaleNm={telemetry.scaleNm}
                   viewportPinned={fullscreen}
                   concealed={false}
