@@ -8,6 +8,7 @@ import {
   Globe2,
   Layers,
   Loader2,
+  Map,
   MapPin,
   Menu,
   Moon,
@@ -382,8 +383,6 @@ export function ChartHud({
     if (panelOpen === undefined) setUncontrolledOpen(next);
   };
 
-  const BasemapIcon = basemap === "sat" ? Satellite : basemap === "sea" ? Globe2 : Moon;
-
   return (
     <LeafletPointerGuard className="pointer-events-auto absolute top-[calc(env(safe-area-inset-top)+4.75rem)] right-3 z-[500] hidden items-start gap-2 lg:flex">
       {open ? (
@@ -440,27 +439,33 @@ export function ChartHud({
             className={
               RAIL_BTN +
               " " +
-              (basemap === "dark" ? RAIL_BTN_ACTIVE : RAIL_BTN_IDLE)
+              (basemap !== "dark" ? RAIL_BTN_ACTIVE : RAIL_BTN_IDLE)
             }
           >
-            <BasemapIcon className="size-3.5" />
+            {basemap === "sea" ? (
+              <Globe2 className="size-3.5" />
+            ) : (
+              <Map className="size-3.5" />
+            )}
           </button>
         ) : null}
 
-        <button
-          type="button"
-          onPointerDown={stopMapEvent}
-          onClick={(e) => {
-            stopMapEvent(e);
-            onSelectBasemap?.("dark");
-          }}
-          title={t("chart.basemap_dark")}
-          aria-label={t("chart.basemap_dark")}
-          aria-pressed={basemap === "dark"}
-          className={RAIL_BTN + " " + (basemap === "dark" ? RAIL_BTN_ACTIVE : RAIL_BTN_IDLE)}
-        >
-          <Moon className="size-3.5" />
-        </button>
+        {onSelectBasemap ? (
+          <button
+            type="button"
+            onPointerDown={stopMapEvent}
+            onClick={(e) => {
+              stopMapEvent(e);
+              onSelectBasemap("dark");
+            }}
+            title={t("chart.basemap_dark")}
+            aria-label={t("chart.basemap_dark")}
+            aria-pressed={basemap === "dark"}
+            className={RAIL_BTN + " " + (basemap === "dark" ? RAIL_BTN_ACTIVE : RAIL_BTN_IDLE)}
+          >
+            <Moon className="size-3.5" />
+          </button>
+        ) : null}
 
         {canContribute ? (
           <button
@@ -681,11 +686,10 @@ export function ChartFabStack({
         <LeafletPointerGuard className="pointer-events-auto lg:hidden">
           <div
             ref={menuRef}
-            className="w-[min(252px,calc(100vw-5.5rem))] overflow-hidden rounded-xl border border-cyan-500/30 bg-[#0a192f]/95 text-xs shadow-2xl backdrop-blur-md"
+            className="w-[min(252px,calc(100vw-5.5rem))] overflow-hidden rounded-2xl border border-white/12 bg-[#0a192f]/95 text-xs shadow-2xl backdrop-blur-md"
           >
-            <div className="h-px w-full bg-gradient-to-r from-transparent via-cyan-300/60 to-transparent" />
             <div className="p-3">
-              <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.22em] text-cyan-200/90">
+              <p className="mb-2.5 text-[12px] font-semibold text-white">
                 {t("chart.hud_title")}
               </p>
               <ChartHudBody
