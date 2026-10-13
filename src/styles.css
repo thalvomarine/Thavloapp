@@ -516,11 +516,17 @@ html[data-thalvo-theme="night"] .thalvo-desk {
 .thalvo-map-gpu {
   /* Avoid will-change:transform — it allocates a full-screen compositor
      layer and multiplies tile GPU memory on mobile WebViews. */
-  transform: translateZ(0);
   backface-visibility: hidden;
 }
+/* Desktop only: promote the chart. translateZ on iOS WebKit + seamark
+   overlays has blanked the Leaflet tile pane to the navy void. */
+@media (pointer: fine) {
+  .thalvo-map-gpu,
+  .thalvo-map-gpu .leaflet-container {
+    transform: translateZ(0);
+  }
+}
 .thalvo-map-gpu .leaflet-container {
-  transform: translateZ(0);
   backface-visibility: hidden;
 }
 .thalvo-display {
@@ -687,6 +693,8 @@ html[data-thalvo-theme="night"] .thalvo-desk {
   background: transparent !important;
   /* No CSS filter here — filter forces an offscreen bitmap per tile and
      blanks the basemap under seamarks on iOS Safari / Chrome. */
+  isolation: isolate;
+  mix-blend-mode: normal;
 }
 .leaflet-marker-pane,
 .leaflet-tooltip-pane,
