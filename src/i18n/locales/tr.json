@@ -1863,7 +1863,12 @@
     "feat_chart_body": "Ege ve Akdeniz kapsama — canlı tekne pini yok.",
     "about_title": "Hakkımızda",
     "about_body": "THALVO, Türkiye kıyısı ve Akdeniz için denizcilik işletim sistemidir. Pilot sürümde ödemeler demo modundadır.",
-    "partner_title": "Partner lead",
-    "partner_lede": "Marka, marina, bayi veya teknisyen — hesap gerekmez. Kısa form, hızlı dönüş."
+    "partner_title": "Partner masası",
+    "partner_lede": "Katalog, stok veya müdahale ortaklığı için kısa form. Spam yok — yalnızca THALVO ops.",
+    "partner_kicker": "Ortaklık",
+    "partner_point_1": "Hesap açmadan lead bırakın",
+    "partner_point_2": "Marka, marina, bayi veya teknisyen",
+    "partner_point_3": "Pilot ekip 24 saat içinde döner",
+    "partner_thanks_title": "Teşekkürler"
   }
 }
