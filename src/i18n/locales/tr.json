@@ -1030,7 +1030,10 @@
       "buy": "Al",
       "filter_panel": "Filtre paneli",
       "close_filters": "Filtreleri kapat",
-      "clear_all": "Tüm filtreleri temizle"
+      "clear_all": "Tüm filtreleri temizle",
+      "empty_catalog_title": "Katalog henüz boş",
+      "empty_catalog_body": "Bayiler stok girdikçe OEM parçalar burada listelenir. Bu bir hata değil.",
+      "skill_pass_note": "MarineOS skill · #0A192F / #00F0FF / #F5B942"
     }
   },
   "shop_cart": {

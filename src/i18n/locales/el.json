@@ -1025,7 +1025,10 @@
       "buy": "Αγορά",
       "filter_panel": "Πίνακας φίλτρων",
       "close_filters": "Κλείσιμο φίλτρων",
-      "clear_all": "Καθαρισμός όλων"
+      "clear_all": "Καθαρισμός όλων",
+      "empty_catalog_title": "Ο κατάλογος είναι άδειος",
+      "empty_catalog_body": "Τα OEM ανταλλακτικά εμφανίζονται καθώς οι αντιπρόσωποι καταχωρούν απόθεμα. Δεν είναι σφάλμα φόρτωσης.",
+      "skill_pass_note": "MarineOS skill · #0A192F / #00F0FF / #F5B942"
     }
   },
   "shop_cart": {

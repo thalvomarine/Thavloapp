@@ -3,7 +3,8 @@
  * Not linked from production nav. Remove or gate before merging to main.
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { PartsCatalogBoard } from "@/components/marketplace/PartsCatalogBoard";
 import type { PartCardData } from "@/components/marketplace/PartCard";
 import { MarketplaceShell } from "@/components/marketplace/MarketplaceShell";
@@ -181,22 +182,27 @@ const MOCK_PARTS: PartCardData[] = [
 ];
 
 function MarketplacePreviewPage() {
+  const { t, i18n } = useTranslation();
   const [toast, setToast] = useState<string | null>(null);
   const rawParts = useMemo(
     () => MOCK_PARTS.map((p, i) => ({ id: p.id, created_at: new Date(Date.now() - i * 86400000).toISOString() })),
     [],
   );
 
+  useEffect(() => {
+    void i18n.changeLanguage("tr");
+  }, [i18n]);
+
   return (
-    <div className="thalvo-dark min-h-dvh bg-[#0A192F] px-4 py-6 text-white sm:px-6">
+    <div className="thalvo-dark thalvo-catalog min-h-dvh bg-[#0A192F] px-4 py-6 text-white sm:px-6">
       <div className="mx-auto w-full max-w-6xl space-y-4">
-        <div className="rounded-xl border border-amber-400/35 bg-amber-400/10 px-4 py-3 text-[12px] leading-relaxed text-amber-100">
-          <p className="font-semibold uppercase tracking-[0.14em] text-amber-200">
-            Önizleme B · Web: sol filtre · Mobil: alttan sheet · canlıya yazılmaz
+        <div className="rounded-xl border border-[color:color-mix(in_srgb,#F5B942_40%,transparent)] bg-[color:color-mix(in_srgb,#F5B942_12%,transparent)] px-4 py-3 text-[12px] leading-relaxed text-[#F5B942]">
+          <p className="font-semibold uppercase tracking-[0.14em]">
+            Skill geçişi · MarineOS token · canlıya yazılmaz
           </p>
-          <p className="mt-1 text-amber-100/85">
-            Masaüstünde soldan, dar ekran / native uygulamada alttan açılır filtre. Onayınızdan sonra{" "}
-            <code className="rounded bg-black/30 px-1">/app/marketplace</code> yedek parça sekmesine taşınır.
+          <p className="mt-1 text-[color:color-mix(in_srgb,#F5B942_85%,white)]">
+            {t("marketplace.catalog.skill_pass_note")} — web sol / mobil alttan filtre. Onayınızdan sonra{" "}
+            <code className="rounded bg-black/30 px-1">/app/marketplace</code>.
           </p>
           <Link to="/" className="mt-2 inline-block text-[11px] font-semibold text-cyan-300 hover:text-cyan-200">
             ← Ana sayfa

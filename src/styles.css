@@ -295,6 +295,39 @@
     oklch(0.11 0.015 250);
 }
 
+/* Marketplace showroom — MarineOS skill tokens + light motion */
+.thalvo-catalog {
+  --mos-navy: #0a192f;
+  --mos-cyan: #00f0ff;
+  --mos-amber: #f5b942;
+}
+
+@keyframes thalvo-catalog-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.thalvo-catalog-rise {
+  animation: thalvo-catalog-rise 0.45s ease-out both;
+}
+
+.thalvo-catalog-brand {
+  animation: thalvo-catalog-rise 0.4s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thalvo-catalog-rise,
+  .thalvo-catalog-brand {
+    animation: none;
+  }
+}
+
 /* Premium glass panel */
 @utility glass-panel {
   background: color-mix(in oklab, var(--card) 72%, transparent);

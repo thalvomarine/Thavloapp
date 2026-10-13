@@ -254,8 +254,10 @@ export function PartsCatalogBoard({
 
   const title = category ? categoryLabelFn(t, category) : t("marketplace.category.spare_parts");
 
+  const catalogEmpty = parts.length === 0;
+
   return (
-    <div className="relative space-y-4 sm:space-y-5">
+    <div className="thalvo-catalog relative space-y-4 sm:space-y-5">
       {banner}
 
       {/* Web desktop: left edge tab. Mobile / native: header Filters only. */}
@@ -263,7 +265,7 @@ export function PartsCatalogBoard({
         <button
           type="button"
           onClick={openFilters}
-          className="fixed left-0 top-[38%] z-40 flex -translate-y-1/2 items-center gap-1.5 rounded-r-xl border border-l-0 border-cyan-400/35 bg-[#0A192F]/95 py-3 pl-2 pr-2.5 text-cyan-200 shadow-lg shadow-cyan-950/40 backdrop-blur-md sm:top-[32%]"
+          className="fixed left-0 top-[38%] z-40 flex -translate-y-1/2 items-center gap-1.5 rounded-r-xl border border-l-0 border-[color:color-mix(in_srgb,var(--mos-cyan)_40%,transparent)] bg-[color:color-mix(in_srgb,var(--mos-navy)_95%,transparent)] py-3 pl-2 pr-2.5 text-[color:var(--mos-cyan)] shadow-lg shadow-black/40 backdrop-blur-md sm:top-[32%]"
           aria-expanded={false}
           aria-controls="marketplace-filter-drawer"
         >
@@ -272,7 +274,7 @@ export function PartsCatalogBoard({
             {t("marketplace.catalog.filters")}
           </span>
           {activeFilterCount > 0 ? (
-            <span className="grid min-w-5 place-items-center rounded-md bg-cyan-400 px-1 text-[10px] font-bold text-slate-950">
+            <span className="grid min-w-5 place-items-center rounded-md bg-[color:var(--mos-cyan)] px-1 text-[10px] font-bold text-[color:var(--mos-navy)]">
               {activeFilterCount}
             </span>
           ) : null}
@@ -315,7 +317,7 @@ export function PartsCatalogBoard({
           ) : null}
           <div className="flex items-center justify-between gap-2 border-b border-white/10 px-4 py-3">
             <div className="min-w-0">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-300/85">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:color-mix(in_srgb,var(--mos-cyan)_85%,transparent)]">
                 {t("marketplace.catalog.filter_panel")}
               </p>
               <p className="truncate text-sm font-semibold text-white">{t("marketplace.catalog.filters")}</p>
@@ -462,7 +464,7 @@ export function PartsCatalogBoard({
             <button
               type="button"
               onClick={closeFilters}
-              className="flex h-11 w-full items-center justify-center rounded-xl bg-cyan-400 text-sm font-bold text-slate-950"
+              className="flex h-11 w-full items-center justify-center rounded-xl bg-[color:var(--mos-cyan)] text-sm font-bold text-[color:var(--mos-navy)] transition-transform active:scale-[0.98]"
             >
               {t("marketplace.catalog.apply_filters", { count: visible.length })}
             </button>
@@ -506,10 +508,10 @@ export function PartsCatalogBoard({
           <div className="flex flex-col gap-3">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-cyan-300/80 sm:text-[10px] sm:tracking-[0.22em]">
+                <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-[color:color-mix(in_srgb,var(--mos-cyan)_85%,transparent)] sm:text-[10px] sm:tracking-[0.22em]">
                   {t("marketplace.catalog.showroom_eyebrow")}
                 </p>
-                <h2 className="mt-1 font-[Montserrat,ui-sans-serif,system-ui] text-xl font-bold tracking-tight text-white sm:text-3xl">
+                <h2 className="thalvo-catalog-rise mt-1 font-[Montserrat,ui-sans-serif,system-ui] text-xl font-bold tracking-tight text-white sm:text-3xl">
                   {title}
                 </h2>
                 <p className="mt-1 hidden max-w-xl text-[13px] leading-relaxed text-white/55 sm:block">
@@ -519,7 +521,7 @@ export function PartsCatalogBoard({
               <button
                 type="button"
                 onClick={openFilters}
-                className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-3 text-[11px] font-bold uppercase tracking-wide text-cyan-100 sm:h-11"
+                className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl border border-[color:color-mix(in_srgb,var(--mos-cyan)_35%,transparent)] bg-[color:color-mix(in_srgb,var(--mos-cyan)_12%,transparent)] px-3 text-[11px] font-bold uppercase tracking-wide text-[color:var(--mos-cyan)] sm:h-11"
               >
                 {filterPresentation === "bottom" ? (
                   <SlidersHorizontal className="size-3.5" />
@@ -528,7 +530,7 @@ export function PartsCatalogBoard({
                 )}
                 {t("marketplace.catalog.filters")}
                 {activeFilterCount > 0 ? (
-                  <span className="rounded-md bg-cyan-400 px-1.5 py-0.5 text-[10px] text-slate-950">
+                  <span className="rounded-md bg-[color:var(--mos-cyan)] px-1.5 py-0.5 text-[10px] text-[color:var(--mos-navy)]">
                     {activeFilterCount}
                   </span>
                 ) : null}
@@ -574,7 +576,7 @@ export function PartsCatalogBoard({
           )}
         </div>
         <div className="-mx-1 flex gap-2 overflow-x-auto overscroll-x-contain px-1 pb-1 no-scrollbar">
-          {brandCounts.map(({ brand, count }) => {
+          {brandCounts.map(({ brand, count }, idx) => {
             const on = brands.includes(brand);
             return (
               <button
@@ -582,17 +584,20 @@ export function PartsCatalogBoard({
                 type="button"
                 onClick={() => toggleBrand(brand)}
                 aria-pressed={on}
+                style={{ animationDelay: `${Math.min(idx, 8) * 40}ms` }}
                 className={
-                  "group flex min-w-[5.75rem] shrink-0 flex-col items-start gap-1.5 rounded-xl border px-2.5 py-2.5 text-left transition-colors sm:min-w-[7.5rem] sm:gap-2 sm:rounded-2xl sm:px-3 sm:py-3 " +
+                  "thalvo-catalog-brand group flex min-w-[5.75rem] shrink-0 flex-col items-start gap-1.5 rounded-xl border px-2.5 py-2.5 text-left transition-colors sm:min-w-[7.5rem] sm:gap-2 sm:rounded-2xl sm:px-3 sm:py-3 " +
                   (on
-                    ? "border-cyan-300/50 bg-cyan-400/15 shadow-[inset_0_0_0_1px_rgba(0,240,255,0.15)]"
+                    ? "border-[color:color-mix(in_srgb,var(--mos-cyan)_55%,transparent)] bg-[color:color-mix(in_srgb,var(--mos-cyan)_14%,transparent)]"
                     : "border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.06]")
                 }
               >
                 <span
                   className={
                     "grid size-8 place-items-center rounded-lg text-[10px] font-bold tracking-wide sm:size-9 sm:rounded-xl sm:text-[11px] " +
-                    (on ? "bg-cyan-300 text-slate-950" : "bg-white/10 text-white/80")
+                    (on
+                      ? "bg-[color:var(--mos-cyan)] text-[color:var(--mos-navy)]"
+                      : "bg-white/10 text-white/80")
                   }
                 >
                   {brandInitials(brand)}
@@ -663,7 +668,7 @@ export function PartsCatalogBoard({
                     {t("marketplace.catalog.featured_n", { n: i + 1 })} · {p.brand}
                   </p>
                   <p className="mt-0.5 line-clamp-2 text-[12px] font-semibold leading-snug text-white">{p.name}</p>
-                  <p className="mt-1 text-[12px] font-bold tabular-nums text-amber-300">{currencyFormat(p.price)}</p>
+                  <p className="mt-1 text-[12px] font-bold tabular-nums text-[color:var(--mos-amber)]">{currencyFormat(p.price)}</p>
                 </div>
                 <ArrowUpRight className="size-3.5 shrink-0 text-white/30" />
               </button>
@@ -726,13 +731,30 @@ export function PartsCatalogBoard({
         </div>
       </div>
 
-      {visible.length === 0 ? (
+      {catalogEmpty ? (
+        <div className="thalvo-catalog-rise rounded-2xl border border-dashed border-[color:color-mix(in_srgb,var(--mos-cyan)_25%,transparent)] bg-[color:color-mix(in_srgb,var(--mos-navy)_55%,transparent)] px-4 py-12 text-center">
+          <Ship className="mx-auto size-8 text-[color:var(--mos-cyan)] opacity-70" />
+          <p className="mt-3 text-sm font-semibold text-white">{t("marketplace.catalog.empty_catalog_title")}</p>
+          <p className="mx-auto mt-1.5 max-w-md text-[12px] leading-relaxed text-white/55">
+            {t("marketplace.catalog.empty_catalog_body")}
+          </p>
+        </div>
+      ) : visible.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-white/15 px-4 py-10 text-center">
           <p className="text-sm text-white/60">{t("marketplace.no_parts_match")}</p>
+          {activeFilterCount > 0 ? (
+            <button
+              type="button"
+              onClick={clearAllFilters}
+              className="mt-3 text-[12px] font-semibold text-[color:var(--mos-cyan)]"
+            >
+              {t("marketplace.catalog.clear_all")}
+            </button>
+          ) : null}
         </div>
       ) : view === "grid" ? (
         <div className="grid grid-cols-1 gap-3 pb-36 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
-          {visible.map((p) => (
+          {visible.map((p, i) => (
             <ShowroomCard
               key={p.id}
               part={p}
@@ -742,6 +764,7 @@ export function PartsCatalogBoard({
               onAdd={onAdd}
               onNotify={onNotify}
               onAskAi={onAskAi}
+              riseDelay={Math.min(i, 8) * 35}
             />
           ))}
         </div>
@@ -781,14 +804,14 @@ function AisleTab({
       type="button"
       onClick={onClick}
       className={
-        "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-xl border px-2.5 text-[10px] font-semibold transition-colors sm:h-9 sm:gap-2 sm:px-3 sm:text-[11px] " +
+        "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-[10px] font-semibold transition-colors sm:h-9 sm:gap-2 sm:px-3 sm:text-[11px] " +
         (active
-          ? "border-cyan-300/60 bg-cyan-400 text-slate-950"
+          ? "border-[color:var(--mos-cyan)] bg-[color:var(--mos-cyan)] text-[color:var(--mos-navy)]"
           : "border-white/10 bg-transparent text-white/70 hover:border-white/25 hover:text-white")
       }
     >
       <span className="max-w-[9rem] truncate sm:max-w-none">{label}</span>
-      <span className={"tabular-nums " + (active ? "text-slate-800/70" : "text-white/35")}>{count}</span>
+      <span className={"tabular-nums " + (active ? "text-[color:color-mix(in_srgb,var(--mos-navy)_70%,transparent)]" : "text-white/35")}>{count}</span>
     </button>
   );
 }
@@ -801,6 +824,7 @@ function ShowroomCard({
   onAdd,
   onNotify,
   onAskAi,
+  riseDelay = 0,
 }: {
   part: PartCardData;
   favorited: boolean;
@@ -809,12 +833,16 @@ function ShowroomCard({
   onAdd: (p: PartCardData) => void;
   onNotify: (p: PartCardData) => void;
   onAskAi: (p: PartCardData) => void;
+  riseDelay?: number;
 }) {
   const { t } = useTranslation();
   const outOfStock = part.stock <= 0;
 
   return (
-    <article className="flex flex-col overflow-hidden rounded-xl border border-white/10 bg-[#091525] sm:rounded-2xl">
+    <article
+      style={{ animationDelay: `${riseDelay}ms` }}
+      className="thalvo-catalog-rise flex flex-col overflow-hidden rounded-xl border border-white/10 bg-[#091525] transition-transform duration-300 hover:-translate-y-0.5 sm:rounded-2xl"
+    >
       <div className="relative aspect-[16/10] bg-[radial-gradient(circle_at_30%_20%,#1a3a55,transparent_55%),#0e2136]">
         {part.imageUrl ? (
           <img src={part.imageUrl} alt={part.name} loading="lazy" className="h-full w-full object-cover" />
@@ -853,7 +881,9 @@ function ShowroomCard({
 
       <div className="flex flex-1 flex-col gap-2.5 p-3 sm:gap-3 sm:p-4">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cyan-300/85">{part.brand}</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:color-mix(in_srgb,var(--mos-cyan)_90%,transparent)]">
+            {part.brand}
+          </p>
           <h3 className="mt-1 line-clamp-2 text-[14px] font-semibold leading-snug text-white sm:text-[15px]">
             {part.name}
           </h3>
@@ -864,7 +894,7 @@ function ShowroomCard({
             <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-white/35">
               {t("marketplace.catalog.thalvo_price")}
             </p>
-            <p className="text-lg font-bold tabular-nums tracking-tight text-amber-300 sm:text-xl">
+            <p className="text-lg font-bold tabular-nums tracking-tight text-[color:var(--mos-amber)] sm:text-xl">
               {currencyFormat(part.price)}
             </p>
             <p className="mt-0.5 truncate text-[10px] text-white/40">
@@ -877,7 +907,7 @@ function ShowroomCard({
               type="button"
               onClick={() => onAskAi(part)}
               aria-label={t("marketplace.ai_thalvo")}
-              className="grid size-10 place-items-center rounded-xl border border-white/10 bg-white/5 text-cyan-200 hover:bg-white/10"
+              className="grid size-10 place-items-center rounded-xl border border-white/10 bg-white/5 text-[color:var(--mos-cyan)] hover:bg-white/10"
             >
               <Sparkles className="size-4" />
             </button>
@@ -888,7 +918,7 @@ function ShowroomCard({
                 "inline-flex h-10 items-center gap-1.5 rounded-xl px-2.5 text-[11px] font-bold uppercase tracking-wide sm:px-3 " +
                 (outOfStock
                   ? "border border-white/10 bg-white/5 text-white/50"
-                  : "bg-cyan-400 text-slate-950 hover:bg-cyan-300")
+                  : "bg-[color:var(--mos-cyan)] text-[color:var(--mos-navy)] hover:brightness-110")
               }
             >
               <ShoppingCart className="size-3.5" />
@@ -947,7 +977,7 @@ function DeskRow({
         </div>
       </div>
       <div className="flex items-center justify-between gap-2 border-t border-white/8 pt-2 sm:justify-end sm:border-0 sm:pt-0">
-        <p className="text-base font-bold tabular-nums text-amber-300">{currencyFormat(part.price)}</p>
+        <p className="text-base font-bold tabular-nums text-[color:var(--mos-amber)]">{currencyFormat(part.price)}</p>
         <div className="flex items-center gap-1.5">
           <button
             type="button"
