@@ -1,5 +1,5 @@
 -- Launch security hardening (public open).
--- Live DB: profiles.role is text (not user_role) — compare/assign via ::text.
+-- Live DB: profiles.role and user_roles.role are text — compare/assign via ::text.
 -- 1) Stop signup auto-verify / auto-privilege for dealer+provider
 -- 2) Disable ensure_superadmin bootstrap; seed operator admin once
 -- 3) claim_open_job requires is_verified_provider
@@ -156,7 +156,7 @@ WHERE p.role::text IN ('Supplier', 'Provider')
   )
   AND NOT EXISTS (
     SELECT 1 FROM public.user_roles ur
-    WHERE ur.user_id = p.id AND ur.role = 'admin'::public.app_role
+    WHERE ur.user_id = p.id AND ur.role::text = 'admin'
   );
 
 ALTER TABLE public.profiles ENABLE TRIGGER profiles_prevent_priv_escalation;
@@ -165,7 +165,7 @@ ALTER TABLE public.profiles ENABLE TRIGGER profiles_prevent_priv_escalation;
 -- 2. Superadmin: seed once, then make ensure_superadmin a no-op check
 -- ---------------------------------------------------------------------------
 INSERT INTO public.user_roles (user_id, role)
-SELECT u.id, 'admin'::public.app_role
+SELECT u.id, 'admin'
 FROM auth.users u
 WHERE lower(trim(u.email)) = 'ismailtolgasler@gmail.com'
 ON CONFLICT (user_id, role) DO NOTHING;
