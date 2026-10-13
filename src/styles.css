@@ -686,12 +686,15 @@ html[data-thalvo-theme="day"] .bg-\[\#0a192f\],
 html[data-thalvo-theme="day"] .bg-\[\#06101c\],
 html[data-thalvo-theme="day"] .bg-\[\#0c1b30\],
 html[data-thalvo-theme="day"] .bg-\[\#0F2440\],
+html[data-thalvo-theme="day"] .bg-\[\#071422\]\/88,
 html[data-thalvo-theme="day"] .bg-\[\#071422\]\/90,
 html[data-thalvo-theme="day"] .bg-\[\#071422\]\/92,
+html[data-thalvo-theme="day"] .bg-\[\#071422\]\/95,
 html[data-thalvo-theme="day"] .bg-\[\#071422\]\/96,
 html[data-thalvo-theme="day"] .bg-\[\#0A192F\]\/90,
 html[data-thalvo-theme="day"] .bg-\[\#0A192F\]\/95,
 html[data-thalvo-theme="day"] .bg-\[\#0a192f\]\/70,
+html[data-thalvo-theme="day"] .bg-\[\#0a192f\]\/88,
 html[data-thalvo-theme="day"] .bg-\[\#0a192f\]\/90,
 html[data-thalvo-theme="day"] .bg-\[\#0a192f\]\/95,
 html[data-thalvo-theme="day"] .bg-\[\#0a192f\]\/97,
@@ -802,17 +805,33 @@ html[data-thalvo-theme="day"] .border-cyan-500\/30 {
   border-color: rgb(8 145 178 / 0.45) !important;
 }
 
-/* Chart chrome written outside Tailwind utilities. */
+/*
+ * Chart canvas stays dark ECDIS. Attribution and on-map HUD chips need light
+ * ink (or a paper chip) — do not inherit the global day text remap there.
+ */
 html[data-thalvo-theme="day"] .thalvo-ecdis .leaflet-control-attribution,
 html[data-thalvo-theme="day"] .leaflet-control-attribution {
-  color: rgb(15 23 42 / 0.55) !important;
+  color: rgb(248 250 252 / 0.78) !important;
+  background: rgb(7 20 34 / 0.72) !important;
+  border-radius: 4px;
+  padding: 1px 6px;
 }
 html[data-thalvo-theme="day"] .thalvo-ecdis .leaflet-control-attribution a,
 html[data-thalvo-theme="day"] .leaflet-control-attribution a {
-  color: rgb(15 23 42 / 0.7) !important;
+  color: rgb(248 250 252 / 0.92) !important;
 }
 html[data-thalvo-theme="day"] .bg-deep {
   background-color: #f4f7fb !important;
+}
+
+/* Auth / premium crest: logo art is drawn for dark seas — seat it on ink. */
+html[data-thalvo-theme="day"] .thalvo-brand-mark {
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #0f172a;
+  padding: 0.15rem;
+  box-shadow: 0 1px 6px rgb(15 23 42 / 0.22);
 }
 
 /* Risk / health banners: dark ink on tinted paper (never pale-on-pale). */
