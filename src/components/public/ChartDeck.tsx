@@ -137,7 +137,8 @@ export function ChartDeck({ panel }: { panel?: ChartPanel }) {
 
         {!panel && (
           <div className="pointer-events-none absolute inset-x-2 bottom-2 z-[1100] flex max-w-full items-end justify-between gap-2">
-            <ul className="flex max-w-full flex-wrap gap-x-2 gap-y-1 rounded-md bg-[#071422]/88 px-2 py-1">
+            {/* Paper chips so day-theme ink stays readable over the dark chart. */}
+            <ul className="flex max-w-full flex-wrap gap-x-2 gap-y-1 rounded-md bg-[#071422]/88 px-2 py-1 shadow-sm">
               {LEGEND.map((item) => (
                 <li key={item.id} className="flex items-center gap-1.5 text-[10px] text-white/75">
                   <span className="size-1.5 rounded-full" style={{ background: item.color }} />
@@ -145,11 +146,11 @@ export function ChartDeck({ panel }: { panel?: ChartPanel }) {
                 </li>
               ))}
             </ul>
-            <div className="hidden shrink-0 gap-3 text-[11px] sm:flex">
-              <Link to="/privacy" className="pointer-events-auto text-white/45 hover:text-white">
+            <div className="hidden shrink-0 gap-3 rounded-md bg-[#071422]/88 px-2 py-1 text-[11px] shadow-sm sm:flex">
+              <Link to="/privacy" className="pointer-events-auto text-white/70 hover:text-white">
                 {t("public.footer_privacy")}
               </Link>
-              <Link to="/terms" className="pointer-events-auto text-white/45 hover:text-white">
+              <Link to="/terms" className="pointer-events-auto text-white/70 hover:text-white">
                 {t("public.footer_terms")}
               </Link>
             </div>
@@ -198,7 +199,7 @@ function DockLink({
       search={{ panel }}
       className={
         "flex h-full min-w-0 flex-col items-center justify-center gap-0.5 border-t-2 px-1 text-[11px] font-semibold " +
-        (active ? "border-cyan-300 text-cyan-100" : "border-transparent text-white/50")
+        (active ? "border-cyan-300 text-cyan-100" : "border-transparent text-white/65")
       }
     >
       {icon}
