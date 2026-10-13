@@ -13,7 +13,7 @@ import {
 import type { PartCardData } from "@/components/marketplace/PartCard";
 import { PART_CATEGORIES } from "@/lib/marine-catalog";
 import { isNativeWebView } from "@/lib/native-history";
-import type { PartsSortId } from "@/components/marketplace/PartsCatalogShowroom";
+import type { PartsSortId } from "@/lib/parts-catalog-sort";
 
 /** Narrow / native → bottom sheet; wide web → docked left rail. */
 function useMobileSheet(): boolean {
@@ -57,9 +57,37 @@ interface Props {
   banner?: ReactNode;
 }
 
+const FAVORITES_KEY = "thalvo-part-favorites";
+
+function readFavorites(): Set<string> {
+  try {
+    const raw = localStorage.getItem(FAVORITES_KEY);
+    if (!raw) return new Set();
+    const parsed = JSON.parse(raw) as unknown;
+    return Array.isArray(parsed) ? new Set(parsed.filter((x): x is string => typeof x === "string")) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+function writeFavorites(ids: Set<string>) {
+  try {
+    localStorage.setItem(FAVORITES_KEY, JSON.stringify([...ids]));
+  } catch {
+    /* ignore */
+  }
+}
+
+function brandInitials(brand: string): string {
+  const parts = brand.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "·";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+}
+
 /**
- * Design C — Day Counter: light authorised-dealer desk.
- * Kept separate so Design B (showroom) is never overwritten.
+ * Design C — Day Counter: light authorised-dealer desk (default marketplace).
+ * Design B remains in PartsCatalogShowroom as archive.
  */
 export function PartsCatalogDayDesk({
   parts,
@@ -79,6 +107,9 @@ export function PartsCatalogDayDesk({
   const [sort, setSort] = useState<PartsSortId>("recommended");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [railOpen, setRailOpen] = useState(true);
+  const [favorites, setFavorites] = useState<Set<string>>(() =>
+    typeof window === "undefined" ? new Set() : readFavorites(),
+  );
 
   useEffect(() => {
     if (!filtersOpen) return;
@@ -177,6 +208,16 @@ export function PartsCatalogDayDesk({
     setQ("");
   };
 
+  const toggleFavorite = (id: string) => {
+    setFavorites((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      writeFavorites(next);
+      return next;
+    });
+  };
+
   const title = category ? categoryLabelFn(t, category) : t("marketplace.category.spare_parts");
 
   const filterBody = (
@@ -254,9 +295,9 @@ export function PartsCatalogDayDesk({
   );
 
   return (
-    <div className="space-y-4 text-slate-900">
+    <div className="space-y-3">
       {banner}
-
+      <div className="-mx-1 space-y-4 rounded-2xl bg-[#EEF2F6] p-3 text-slate-900 sm:mx-0 sm:p-4">
       {/* Day masthead */}
       <header className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm sm:px-6 sm:py-5">
         <nav className="flex flex-wrap items-center gap-1.5 text-[11px] text-slate-500">
@@ -289,8 +330,18 @@ export function PartsCatalogDayDesk({
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder={t("marketplace.search_placeholder")}
-                className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#00F0FF] focus:bg-white"
+                className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-10 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#00F0FF] focus:bg-white"
               />
+              {q ? (
+                <button
+                  type="button"
+                  onClick={() => setQ("")}
+                  className="absolute right-2 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-lg text-slate-400 hover:bg-slate-100"
+                  aria-label={t("marketplace.catalog.clear_search")}
+                >
+                  <X className="size-3.5" />
+                </button>
+              ) : null}
             </div>
             {mobileSheet ? (
               <button
@@ -340,6 +391,68 @@ export function PartsCatalogDayDesk({
         )}
 
         <div className="min-w-0 space-y-3">
+          {/* Quick aisle chips */}
+          <div className="-mx-0.5 flex gap-1.5 overflow-x-auto px-0.5 pb-0.5 no-scrollbar">
+            <button
+              type="button"
+              onClick={() => setCategory("")}
+              className={
+                "h-8 shrink-0 rounded-lg border px-2.5 text-[11px] font-semibold " +
+                (!category
+                  ? "border-[#0A192F] bg-[#0A192F] text-white"
+                  : "border-slate-200 bg-white text-slate-600 hover:border-slate-300")
+              }
+            >
+              {t("marketplace.all_categories")} · {parts.length}
+            </button>
+            {groupCounts.map((g) => (
+              <button
+                key={g.id}
+                type="button"
+                onClick={() => setCategory(g.id === category ? "" : g.id)}
+                className={
+                  "h-8 shrink-0 rounded-lg border px-2.5 text-[11px] font-semibold " +
+                  (category === g.id
+                    ? "border-[#0A192F] bg-[#0A192F] text-white"
+                    : "border-slate-200 bg-white text-slate-600 hover:border-slate-300")
+                }
+              >
+                {categoryLabelFn(t, g.id)} · {g.count}
+              </button>
+            ))}
+          </div>
+
+          {/* Active filter chips */}
+          {activeFilterCount > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              {category ? (
+                <FilterChip
+                  label={categoryLabelFn(t, category)}
+                  onRemove={() => setCategory("")}
+                />
+              ) : null}
+              {brands.map((b) => (
+                <FilterChip key={b} label={b} onRemove={() => toggleBrand(b)} />
+              ))}
+              {inStockOnly ? (
+                <FilterChip
+                  label={t("marketplace.catalog.in_stock_only")}
+                  onRemove={() => setInStockOnly(false)}
+                />
+              ) : null}
+              {q.trim() ? (
+                <FilterChip label={`“${q.trim()}”`} onRemove={() => setQ("")} />
+              ) : null}
+              <button
+                type="button"
+                onClick={clearAll}
+                className="text-[11px] font-semibold text-slate-500 underline-offset-2 hover:underline"
+              >
+                {t("marketplace.catalog.clear_all")}
+              </button>
+            </div>
+          )}
+
           <div className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:px-4">
             <p className="text-[13px] font-semibold text-slate-600">
               {t("marketplace.catalog.total_products", { count: visible.length })}
@@ -381,6 +494,8 @@ export function PartsCatalogDayDesk({
                 <DayCard
                   key={p.id}
                   part={p}
+                  favorited={favorites.has(p.id)}
+                  onToggleFavorite={() => toggleFavorite(p.id)}
                   currencyFormat={currencyFormat}
                   onAdd={onAdd}
                   onNotify={onNotify}
@@ -449,18 +564,36 @@ export function PartsCatalogDayDesk({
           </aside>
         </div>
       )}
+      </div>
     </div>
+  );
+}
+
+function FilterChip({ label, onRemove }: { label: string; onRemove: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onRemove}
+      className="inline-flex h-7 max-w-full items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 text-[11px] font-semibold text-[#0A192F]"
+    >
+      <span className="truncate">{label}</span>
+      <X className="size-3 shrink-0 text-slate-400" />
+    </button>
   );
 }
 
 function DayCard({
   part,
+  favorited,
+  onToggleFavorite,
   currencyFormat,
   onAdd,
   onNotify,
   onAskAi,
 }: {
   part: PartCardData;
+  favorited: boolean;
+  onToggleFavorite: () => void;
   currencyFormat: (n: number) => string;
   onAdd: (p: PartCardData) => void;
   onNotify: (p: PartCardData) => void;
@@ -468,35 +601,49 @@ function DayCard({
 }) {
   const { t } = useTranslation();
   const out = part.stock <= 0;
-  const [fav, setFav] = useState(false);
+  const low = !out && part.stock <= 2;
+  const stockLabel = out
+    ? t("marketplace.product.out_of_stock")
+    : low
+      ? t("marketplace.product.running_low")
+      : t("marketplace.product.stock_ready");
+  const stockTone = out
+    ? "bg-rose-50 text-rose-700 border-rose-200"
+    : low
+      ? "bg-amber-50 text-amber-800 border-amber-200"
+      : "bg-emerald-50 text-emerald-800 border-emerald-200";
 
   return (
-    <article className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md">
-      <div className="relative aspect-[4/3] bg-slate-100">
+    <article className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-md">
+      <div className="relative aspect-[4/3] bg-gradient-to-b from-slate-100 to-slate-50">
         {part.imageUrl ? (
           <img src={part.imageUrl} alt={part.name} className="h-full w-full object-cover" loading="lazy" />
         ) : (
-          <div className="flex h-full flex-col items-center justify-center gap-2 text-slate-400">
-            <Ship className="size-10" />
+          <div className="flex h-full flex-col items-center justify-center gap-2 text-slate-500">
+            <span className="grid size-14 place-items-center rounded-2xl bg-white text-[15px] font-bold tracking-wide text-[#0A192F] shadow-sm">
+              {brandInitials(part.brand)}
+            </span>
             <span className="text-[10px] font-bold uppercase tracking-[0.14em]">{part.brand}</span>
           </div>
         )}
         <button
           type="button"
-          onClick={() => setFav((v) => !v)}
+          onClick={onToggleFavorite}
+          aria-pressed={favorited}
           className={
-            "absolute right-2 top-2 grid size-9 place-items-center rounded-full border bg-white/90 " +
-            (fav ? "border-rose-300 text-rose-500" : "border-slate-200 text-slate-500")
+            "absolute right-2 top-2 grid size-9 place-items-center rounded-full border bg-white/95 shadow-sm " +
+            (favorited ? "border-rose-300 text-rose-500" : "border-slate-200 text-slate-500")
           }
           aria-label={t("marketplace.catalog.favorite")}
         >
-          <Heart className={"size-4 " + (fav ? "fill-current" : "")} />
+          <Heart className={"size-4 " + (favorited ? "fill-current" : "")} />
         </button>
-        {part.emergencyCompatible && (
-          <span className="absolute left-2 top-2 rounded bg-rose-600 px-2 py-0.5 text-[10px] font-bold text-white">
-            SOS
-          </span>
-        )}
+        <div className="absolute left-2 top-2 flex flex-col gap-1">
+          {part.emergencyCompatible && (
+            <span className="rounded bg-rose-600 px-2 py-0.5 text-[10px] font-bold text-white">SOS</span>
+          )}
+          <span className={"rounded border px-2 py-0.5 text-[10px] font-bold " + stockTone}>{stockLabel}</span>
+        </div>
       </div>
       <div className="flex flex-1 flex-col gap-2 p-3.5">
         <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">{part.brand}</p>
@@ -505,20 +652,21 @@ function DayCard({
         </h3>
         {part.sku ? <p className="font-mono text-[10px] text-slate-400">{part.sku}</p> : null}
         <div className="mt-auto flex items-end justify-between gap-2 border-t border-slate-100 pt-2.5">
-          <div>
+          <div className="min-w-0">
             <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-slate-400">
               {t("marketplace.catalog.thalvo_price")}
             </p>
             <p className="text-lg font-bold tabular-nums text-[#F5B942]">{currencyFormat(part.price)}</p>
             <p className="truncate text-[10px] text-slate-500">
               {part.dealerName ?? t("marketplace.product.verified_dealer")}
+              {part.marina ? ` · ${part.marina}` : ""}
             </p>
           </div>
           <div className="flex gap-1.5">
             <button
               type="button"
               onClick={() => onAskAi(part)}
-              className="grid size-10 place-items-center rounded-xl border border-slate-200 text-slate-600"
+              className="grid size-10 place-items-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50"
               aria-label={t("marketplace.ai_thalvo")}
             >
               <Sparkles className="size-4" />
@@ -527,8 +675,8 @@ function DayCard({
               type="button"
               onClick={() => (out ? onNotify(part) : onAdd(part))}
               className={
-                "inline-flex h-10 items-center gap-1 rounded-xl px-3 text-[11px] font-bold uppercase " +
-                (out ? "border border-slate-200 text-slate-500" : "bg-[#0A192F] text-white")
+                "inline-flex h-10 items-center gap-1 rounded-xl px-3 text-[11px] font-bold uppercase transition-transform active:scale-[0.98] " +
+                (out ? "border border-slate-200 text-slate-500" : "bg-[#0A192F] text-white hover:bg-[#122845]")
               }
             >
               <ShoppingCart className="size-3.5" />

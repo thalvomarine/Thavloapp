@@ -187,7 +187,7 @@ type DesignId = "B" | "C";
 
 function MarketplacePreviewPage() {
   const { t, i18n } = useTranslation();
-  const [design, setDesign] = useState<DesignId>("C");
+  const [design, setDesign] = useState<DesignId>("C"); // C is now the app default
   const [toast, setToast] = useState<string | null>(null);
   const rawParts = useMemo(
     () => MOCK_PARTS.map((p, i) => ({ id: p.id, created_at: new Date(Date.now() - i * 86400000).toISOString() })),
@@ -239,11 +239,11 @@ function MarketplacePreviewPage() {
           }
         >
           <p className="font-semibold uppercase tracking-[0.14em]">
-            Önizleme · B saklı · C alternatif · canlıya yazılmaz
+            Tasarım C seçildi · B arşiv · canlıya yazılmaz
           </p>
           <p className="mt-1 opacity-90">
-            Beğendiğiniz <strong>Tasarım B</strong> korunuyor (`/app/marketplace` varsayılanı). Aşağıda son
-            alternatif <strong>Tasarım C</strong> (gündüz tezgâh).
+            <strong>Tasarım C</strong> artık `/app/marketplace` varsayılanı. <strong>B</strong> arşivde duruyor;
+            karşılaştırma için geçiş yapabilirsiniz.
           </p>
           <div className="mt-3 inline-flex rounded-xl border border-current/20 p-0.5">
             <button

@@ -16,6 +16,9 @@ import {
 import type { PartCardData } from "@/components/marketplace/PartCard";
 import { PART_CATEGORIES } from "@/lib/marine-catalog";
 import { isNativeWebView } from "@/lib/native-history";
+import type { PartsSortId } from "@/lib/parts-catalog-sort";
+
+export type { PartsSortId };
 
 /** Web desktop: side drawer. Native app / narrow viewports: bottom sheet. */
 function useFilterPresentation(): "side" | "bottom" {
@@ -39,8 +42,6 @@ function useFilterPresentation(): "side" | "bottom" {
 
   return mode;
 }
-
-export type PartsSortId = "recommended" | "price_asc" | "price_desc" | "name" | "newest";
 
 interface Props {
   parts: PartCardData[];

@@ -1,6 +1,6 @@
 /**
- * Default marketplace catalogue = Design B (showroom) — the layout the captain liked.
- * Design C lives in PartsCatalogDayDesk for side-by-side preview only.
+ * Default marketplace catalogue = Design C (day desk).
+ * Design B (showroom) stays in PartsCatalogShowroom for archive / preview.
  */
-export { PartsCatalogShowroom as PartsCatalogBoard } from "@/components/marketplace/PartsCatalogShowroom";
-export type { PartsSortId } from "@/components/marketplace/PartsCatalogShowroom";
+export { PartsCatalogDayDesk as PartsCatalogBoard } from "@/components/marketplace/PartsCatalogDayDesk";
+export type { PartsSortId } from "@/lib/parts-catalog-sort";
