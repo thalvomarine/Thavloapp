@@ -520,14 +520,109 @@ html[data-thalvo-theme="day"] .thalvo-premium {
   color-scheme: light;
   background: #f4f7fb !important;
   color: #0f172a;
+  /* Remap scoped cockpit tokens so semantic utilities stay readable on white. */
+  --background: #f4f7fb;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #0e7490;
+  --primary-foreground: #f8fafc;
+  --secondary: #e2e8f0;
+  --secondary-foreground: #0f172a;
+  --muted: #e8eef5;
+  --muted-foreground: #475569;
+  --accent: #0891b2;
+  --accent-foreground: #0f172a;
+  --border: rgb(15 23 42 / 0.14);
+  --input: #e2e8f0;
+  --ring: #0891b2;
+  --pm-text: #0f172a;
+  --pm-panel: rgb(15 23 42 / 0.04);
+  --pm-panel-border: rgb(15 23 42 / 0.12);
 }
-html[data-thalvo-theme="day"] .text-white {
+html[data-thalvo-theme="day"] .thalvo-cockpit {
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgb(14 116 144 / 0.08) 0%, transparent 55%),
+    #f4f7fb !important;
+}
+html[data-thalvo-theme="day"] .thalvo-premium {
+  background:
+    radial-gradient(120% 90% at 50% -10%, rgb(14 116 144 / 0.1) 0%, transparent 60%),
+    linear-gradient(180deg, #f8fafc 0%, #eef4f8 100%) !important;
+}
+/* Opaque paper cards — never leave dark glass over a white page. */
+html[data-thalvo-theme="day"] .thalvo-surface,
+html[data-thalvo-theme="day"] .glass-panel,
+html[data-thalvo-theme="day"] .pm-panel {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  color: #0f172a !important;
+  border-color: rgb(15 23 42 / 0.12) !important;
+  box-shadow:
+    0 1px 0 0 rgb(15 23 42 / 0.04) inset,
+    0 14px 36px -22px rgb(15 23 42 / 0.22) !important;
+}
+
+/* Semantic Tailwind tokens used by fields, cards, and labels. */
+html[data-thalvo-theme="day"] .bg-background,
+html[data-thalvo-theme="day"] .bg-card,
+html[data-thalvo-theme="day"] .bg-popover {
+  background-color: #ffffff !important;
+}
+html[data-thalvo-theme="day"] .bg-muted,
+html[data-thalvo-theme="day"] .bg-secondary {
+  background-color: #e8eef5 !important;
+}
+html[data-thalvo-theme="day"] .text-foreground,
+html[data-thalvo-theme="day"] .text-card-foreground,
+html[data-thalvo-theme="day"] .text-popover-foreground {
+  color: #0f172a !important;
+}
+html[data-thalvo-theme="day"] .text-muted-foreground {
+  color: #475569 !important;
+}
+html[data-thalvo-theme="day"] .border-input,
+html[data-thalvo-theme="day"] .border-border {
+  border-color: rgb(15 23 42 / 0.16) !important;
+}
+
+/* Profile / desk form controls must not keep the ECDIS near-black fill. */
+html[data-thalvo-theme="day"] .thalvo-dark input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+html[data-thalvo-theme="day"] .thalvo-dark select,
+html[data-thalvo-theme="day"] .thalvo-dark textarea {
+  color: #0f172a !important;
+  background-color: #ffffff !important;
+  border-color: rgb(15 23 42 / 0.22) !important;
+}
+html[data-thalvo-theme="day"] .thalvo-dark button {
+  color: inherit;
+}
+html[data-thalvo-theme="day"] .thalvo-dark input::placeholder,
+html[data-thalvo-theme="day"] .thalvo-dark textarea::placeholder {
+  color: #64748b !important;
+}
+html[data-thalvo-theme="day"] .thalvo-dark option {
+  color: #0f172a;
+  background-color: #ffffff;
+}
+
+/* Hardcoded white / near-white text → slate ink on day surfaces. */
+html[data-thalvo-theme="day"] .text-white,
+html[data-thalvo-theme="day"] .text-white\/90,
+html[data-thalvo-theme="day"] .text-white\/85 {
   color: #0f172a !important;
 }
 html[data-thalvo-theme="day"] .text-white\/80,
 html[data-thalvo-theme="day"] .text-white\/75,
 html[data-thalvo-theme="day"] .text-white\/70,
-html[data-thalvo-theme="day"] .text-white\/65,
+html[data-thalvo-theme="day"] .text-white\/65 {
+  color: #1e293b !important;
+}
 html[data-thalvo-theme="day"] .text-white\/60,
 html[data-thalvo-theme="day"] .text-white\/55,
 html[data-thalvo-theme="day"] .text-white\/50,
@@ -536,18 +631,210 @@ html[data-thalvo-theme="day"] .text-white\/40,
 html[data-thalvo-theme="day"] .text-white\/35 {
   color: #334155 !important;
 }
+html[data-thalvo-theme="day"] .text-white\/30,
+html[data-thalvo-theme="day"] .text-white\/25,
+html[data-thalvo-theme="day"] .text-white\/20 {
+  color: #64748b !important;
+}
+html[data-thalvo-theme="day"] .placeholder\:text-white\/40::placeholder,
+html[data-thalvo-theme="day"] .placeholder\:text-white\/50::placeholder,
+html[data-thalvo-theme="day"] .placeholder\:text-white\/60::placeholder {
+  color: #64748b !important;
+}
+
+/* Pale cyan / amber accents become darker marine ink on white. */
+html[data-thalvo-theme="day"] .text-cyan-50,
+html[data-thalvo-theme="day"] .text-cyan-100,
+html[data-thalvo-theme="day"] .text-cyan-100\/90,
+html[data-thalvo-theme="day"] .text-cyan-100\/80,
+html[data-thalvo-theme="day"] .text-cyan-100\/70 {
+  color: #0e7490 !important;
+}
+html[data-thalvo-theme="day"] .text-cyan-200,
+html[data-thalvo-theme="day"] .text-cyan-200\/90,
+html[data-thalvo-theme="day"] .text-cyan-200\/80,
+html[data-thalvo-theme="day"] .text-cyan-200\/70,
+html[data-thalvo-theme="day"] .text-cyan-300,
+html[data-thalvo-theme="day"] .text-cyan-300\/90,
+html[data-thalvo-theme="day"] .text-cyan-300\/85,
+html[data-thalvo-theme="day"] .text-cyan-300\/80,
+html[data-thalvo-theme="day"] .text-cyan-300\/70 {
+  color: #0f766e !important;
+}
+html[data-thalvo-theme="day"] .text-amber-50,
+html[data-thalvo-theme="day"] .text-amber-100,
+html[data-thalvo-theme="day"] .text-amber-100\/70,
+html[data-thalvo-theme="day"] .text-amber-200,
+html[data-thalvo-theme="day"] .text-amber-200\/80 {
+  color: #b45309 !important;
+}
+html[data-thalvo-theme="day"] .text-amber-300,
+html[data-thalvo-theme="day"] .text-amber-300\/80 {
+  color: #92400e !important;
+}
+html[data-thalvo-theme="day"] .text-\[\#F5B942\] {
+  color: #b45309 !important;
+}
+html[data-thalvo-theme="day"] .hover\:text-amber-200:hover {
+  color: #92400e !important;
+}
+
+/* Navy / ECDIS surfaces → paper white (every casing + opacity used in the shell). */
 html[data-thalvo-theme="day"] .bg-\[\#071422\],
 html[data-thalvo-theme="day"] .bg-\[\#0A192F\],
+html[data-thalvo-theme="day"] .bg-\[\#0a192f\],
 html[data-thalvo-theme="day"] .bg-\[\#06101c\],
+html[data-thalvo-theme="day"] .bg-\[\#0c1b30\],
+html[data-thalvo-theme="day"] .bg-\[\#0F2440\],
 html[data-thalvo-theme="day"] .bg-\[\#071422\]\/90,
 html[data-thalvo-theme="day"] .bg-\[\#071422\]\/92,
-html[data-thalvo-theme="day"] .bg-\[\#071422\]\/96 {
+html[data-thalvo-theme="day"] .bg-\[\#071422\]\/96,
+html[data-thalvo-theme="day"] .bg-\[\#0A192F\]\/90,
+html[data-thalvo-theme="day"] .bg-\[\#0A192F\]\/95,
+html[data-thalvo-theme="day"] .bg-\[\#0a192f\]\/70,
+html[data-thalvo-theme="day"] .bg-\[\#0a192f\]\/90,
+html[data-thalvo-theme="day"] .bg-\[\#0a192f\]\/95,
+html[data-thalvo-theme="day"] .bg-\[\#0a192f\]\/97,
+html[data-thalvo-theme="day"] .bg-\[oklch\(0\.13_0\.02_250\/0\.7\)\],
+html[data-thalvo-theme="day"] .bg-\[oklch\(0\.13_0\.02_250\/0\.9\)\],
+html[data-thalvo-theme="day"] .bg-\[oklch\(0\.14_0\.02_250\)\],
+html[data-thalvo-theme="day"] .bg-\[oklch\(0\.14_0\.02_250\/0\.86\)\],
+html[data-thalvo-theme="day"] .bg-\[oklch\(0\.16_0\.02_250\)\],
+html[data-thalvo-theme="day"] .bg-\[oklch\(0\.18_0\.02_250\)\] {
   background-color: #ffffff !important;
 }
+html[data-thalvo-theme="day"] .hover\:text-white:hover,
+html[data-thalvo-theme="day"] .hover\:text-white\/85:hover,
+html[data-thalvo-theme="day"] .hover\:text-white\/80:hover {
+  color: #0f172a !important;
+}
+html[data-thalvo-theme="day"] .text-sky-100,
+html[data-thalvo-theme="day"] .text-sky-200,
+html[data-thalvo-theme="day"] .text-sky-300 {
+  color: #0369a1 !important;
+}
+html[data-thalvo-theme="day"] .text-emerald-100,
+html[data-thalvo-theme="day"] .text-emerald-100\/70,
+html[data-thalvo-theme="day"] .text-emerald-200 {
+  color: #047857 !important;
+}
+html[data-thalvo-theme="day"] .text-rose-100,
+html[data-thalvo-theme="day"] .text-rose-200 {
+  color: #be123c !important;
+}
+html[data-thalvo-theme="day"] .bg-amber-400\/10,
+html[data-thalvo-theme="day"] .bg-amber-400\/15,
+html[data-thalvo-theme="day"] .bg-amber-500\/10 {
+  background-color: rgb(245 158 11 / 0.16) !important;
+}
+html[data-thalvo-theme="day"] .bg-emerald-400\/10,
+html[data-thalvo-theme="day"] .bg-emerald-400\/15,
+html[data-thalvo-theme="day"] .bg-emerald-500\/10 {
+  background-color: rgb(16 185 129 / 0.14) !important;
+}
+html[data-thalvo-theme="day"] .bg-rose-400\/10,
+html[data-thalvo-theme="day"] .bg-rose-500\/10 {
+  background-color: rgb(244 63 94 / 0.12) !important;
+}
+html[data-thalvo-theme="day"] .bg-sky-500\/15,
+html[data-thalvo-theme="day"] .bg-sky-500\/20 {
+  background-color: rgb(14 165 233 / 0.14) !important;
+}
+
+/* Translucent white fills that vanish on day paper → readable slate washes. */
+html[data-thalvo-theme="day"] .bg-white\/5,
+html[data-thalvo-theme="day"] .bg-white\/\[0\.02\],
+html[data-thalvo-theme="day"] .bg-white\/\[0\.03\],
+html[data-thalvo-theme="day"] .bg-white\/\[0\.04\],
+html[data-thalvo-theme="day"] .bg-white\/\[0\.05\],
+html[data-thalvo-theme="day"] .bg-white\/\[0\.06\] {
+  background-color: rgb(15 23 42 / 0.05) !important;
+}
+html[data-thalvo-theme="day"] .bg-white\/10,
+html[data-thalvo-theme="day"] .bg-white\/\[0\.08\],
+html[data-thalvo-theme="day"] .bg-white\/15,
+html[data-thalvo-theme="day"] .bg-white\/\[0\.12\],
+html[data-thalvo-theme="day"] .bg-white\/20 {
+  background-color: rgb(15 23 42 / 0.08) !important;
+}
+html[data-thalvo-theme="day"] .hover\:bg-white\/5:hover,
+html[data-thalvo-theme="day"] .hover\:bg-white\/10:hover,
+html[data-thalvo-theme="day"] .hover\:bg-white\/\[0\.06\]:hover,
+html[data-thalvo-theme="day"] .hover\:bg-white\/\[0\.08\]:hover,
+html[data-thalvo-theme="day"] .hover\:bg-white\/\[0\.12\]:hover,
+html[data-thalvo-theme="day"] .hover\:bg-white\/20:hover {
+  background-color: rgb(15 23 42 / 0.1) !important;
+}
+
+/* Cyan tint chips stay tinted but with enough ink contrast. */
+html[data-thalvo-theme="day"] .bg-cyan-400\/10,
+html[data-thalvo-theme="day"] .bg-cyan-400\/15,
+html[data-thalvo-theme="day"] .bg-cyan-400\/20,
+html[data-thalvo-theme="day"] .bg-cyan-400\/25,
+html[data-thalvo-theme="day"] .bg-cyan-400\/\[0\.06\],
+html[data-thalvo-theme="day"] .bg-cyan-300\/25,
+html[data-thalvo-theme="day"] .bg-cyan-500\/15 {
+  background-color: rgb(8 145 178 / 0.14) !important;
+}
+
+html[data-thalvo-theme="day"] .border-white\/5,
 html[data-thalvo-theme="day"] .border-white\/10,
+html[data-thalvo-theme="day"] .border-white\/\[0\.06\],
+html[data-thalvo-theme="day"] .border-white\/\[0\.07\],
 html[data-thalvo-theme="day"] .border-white\/\[0\.08\],
-html[data-thalvo-theme="day"] .border-white\/15 {
-  border-color: rgb(15 23 42 / 0.12) !important;
+html[data-thalvo-theme="day"] .border-white\/15,
+html[data-thalvo-theme="day"] .border-white\/20 {
+  border-color: rgb(15 23 42 / 0.2) !important;
+}
+html[data-thalvo-theme="day"] .border-cyan-300,
+html[data-thalvo-theme="day"] .border-cyan-300\/25,
+html[data-thalvo-theme="day"] .border-cyan-300\/30,
+html[data-thalvo-theme="day"] .border-cyan-300\/40,
+html[data-thalvo-theme="day"] .border-cyan-300\/50,
+html[data-thalvo-theme="day"] .border-cyan-300\/60,
+html[data-thalvo-theme="day"] .border-cyan-400\/20,
+html[data-thalvo-theme="day"] .border-cyan-400\/25,
+html[data-thalvo-theme="day"] .border-cyan-400\/30,
+html[data-thalvo-theme="day"] .border-cyan-400\/40,
+html[data-thalvo-theme="day"] .border-cyan-500\/20,
+html[data-thalvo-theme="day"] .border-cyan-500\/25,
+html[data-thalvo-theme="day"] .border-cyan-500\/30 {
+  border-color: rgb(8 145 178 / 0.45) !important;
+}
+
+/* Chart chrome written outside Tailwind utilities. */
+html[data-thalvo-theme="day"] .thalvo-ecdis .leaflet-control-attribution,
+html[data-thalvo-theme="day"] .leaflet-control-attribution {
+  color: rgb(15 23 42 / 0.55) !important;
+}
+html[data-thalvo-theme="day"] .thalvo-ecdis .leaflet-control-attribution a,
+html[data-thalvo-theme="day"] .leaflet-control-attribution a {
+  color: rgb(15 23 42 / 0.7) !important;
+}
+html[data-thalvo-theme="day"] .bg-deep {
+  background-color: #f4f7fb !important;
+}
+
+/* Risk / health banners: dark ink on tinted paper (never pale-on-pale). */
+html[data-thalvo-theme="day"] .thalvo-risk-medium {
+  color: #92400e !important;
+  background-color: #fff7ed !important;
+  border-color: rgb(180 83 9 / 0.35) !important;
+}
+html[data-thalvo-theme="day"] .thalvo-risk-safe {
+  color: #065f46 !important;
+  background-color: #ecfdf5 !important;
+  border-color: rgb(4 120 87 / 0.35) !important;
+}
+html[data-thalvo-theme="day"] .thalvo-risk-high {
+  color: #9f1239 !important;
+  background-color: #fff1f2 !important;
+  border-color: rgb(190 18 60 / 0.35) !important;
+}
+html[data-thalvo-theme="day"] .thalvo-risk-low {
+  color: #334155 !important;
+  background-color: #f8fafc !important;
+  border-color: rgb(15 23 42 / 0.14) !important;
 }
 
 

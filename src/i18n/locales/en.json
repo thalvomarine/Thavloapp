@@ -774,6 +774,7 @@
     "theme_system_hint": "The current THALVO cockpit. Chart colours stay as they are.",
     "theme_day_hint": "White ground, dark type.",
     "theme_night_hint": "Black ground.",
+    "sign_out": "Sign out",
     "identity": "Identity",
     "expert_name": "Expert / Individual name",
     "company_name": "Company / Workshop",
