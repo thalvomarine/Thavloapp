@@ -136,14 +136,16 @@ ALTER TABLE public.profiles DISABLE TRIGGER profiles_prevent_priv_escalation;
 
 UPDATE public.profiles p
 SET
-  requested_role = coalesce(
-    p.requested_role,
-    CASE p.role::text
-      WHEN 'Supplier' THEN 'Supplier'::public.user_role
-      WHEN 'Provider' THEN 'Provider'::public.user_role
-      ELSE NULL
-    END
-  ),
+  requested_role = (
+    coalesce(
+      p.requested_role::text,
+      CASE p.role::text
+        WHEN 'Supplier' THEN 'Supplier'
+        WHEN 'Provider' THEN 'Provider'
+        ELSE NULL
+      END
+    )
+  )::public.user_role,
   role = 'Client'
 WHERE p.role::text IN ('Supplier', 'Provider')
   AND NOT EXISTS (
