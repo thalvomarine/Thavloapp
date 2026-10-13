@@ -597,7 +597,10 @@ html[data-thalvo-theme="day"] .thalvo-dark select,
 html[data-thalvo-theme="day"] .thalvo-dark textarea {
   color: #0f172a !important;
   background-color: #ffffff !important;
-  border-color: rgb(15 23 42 / 0.16) !important;
+  border-color: rgb(15 23 42 / 0.22) !important;
+}
+html[data-thalvo-theme="day"] .thalvo-dark button {
+  color: inherit;
 }
 html[data-thalvo-theme="day"] .thalvo-dark input::placeholder,
 html[data-thalvo-theme="day"] .thalvo-dark textarea::placeholder {
@@ -781,7 +784,7 @@ html[data-thalvo-theme="day"] .border-white\/\[0\.07\],
 html[data-thalvo-theme="day"] .border-white\/\[0\.08\],
 html[data-thalvo-theme="day"] .border-white\/15,
 html[data-thalvo-theme="day"] .border-white\/20 {
-  border-color: rgb(15 23 42 / 0.14) !important;
+  border-color: rgb(15 23 42 / 0.2) !important;
 }
 html[data-thalvo-theme="day"] .border-cyan-300,
 html[data-thalvo-theme="day"] .border-cyan-300\/25,
