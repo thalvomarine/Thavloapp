@@ -1027,7 +1027,10 @@
       "featured_n": "#{{n}}",
       "view_grid": "Showroom",
       "view_desk": "Desk list",
-      "buy": "Buy"
+      "buy": "Buy",
+      "filter_panel": "Filter panel",
+      "close_filters": "Close filters",
+      "clear_all": "Clear all filters"
     }
   },
   "shop_cart": {

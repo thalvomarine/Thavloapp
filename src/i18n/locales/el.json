@@ -1022,7 +1022,10 @@
       "featured_n": "#{{n}}",
       "view_grid": "Showroom",
       "view_desk": "Λίστα",
-      "buy": "Αγορά"
+      "buy": "Αγορά",
+      "filter_panel": "Πίνακας φίλτρων",
+      "close_filters": "Κλείσιμο φίλτρων",
+      "clear_all": "Καθαρισμός όλων"
     }
   },
   "shop_cart": {

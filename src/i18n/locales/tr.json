@@ -1027,7 +1027,10 @@
       "featured_n": "#{{n}}",
       "view_grid": "Showroom",
       "view_desk": "Liste",
-      "buy": "Al"
+      "buy": "Al",
+      "filter_panel": "Filtre paneli",
+      "close_filters": "Filtreleri kapat",
+      "clear_all": "Tüm filtreleri temizle"
     }
   },
   "shop_cart": {
