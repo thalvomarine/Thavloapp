@@ -19,6 +19,7 @@ import { caretAfterGrouping, groupThousands, parseGrouped } from "@/lib/digit-fo
 import { MARINA_PRESETS } from "@/lib/boat-listings";
 import {
   PART_BRANDS,
+  PART_CATEGORIES,
   PART_CONDITIONS,
   publicCompatibility,
   readPartCondition,
@@ -31,14 +32,8 @@ export const Route = createFileRoute("/_authenticated/app/dealer")({
   component: DealerPage,
 });
 
-// Stable enum values persisted in parts_catalog.category (text column).
 // Labels are resolved via i18n at render time (dealer.categories.<value>).
-const CATEGORY_VALUES = [
-  "engine_parts", "outboard_parts", "inboard_parts", "propellers", "fuel_system",
-  "electrical", "batteries", "navigation_electronics", "pumps", "steering_system",
-  "anchoring", "deck_hardware", "safety_equipment", "plumbing", "paint_maintenance",
-  "rib_inflatable_parts", "trailer_parts", "filters_oils", "accessories", "other",
-] as const;
+const CATEGORY_VALUES = PART_CATEGORIES;
 const CUSTOM_CATEGORY_SENTINEL = "__custom__";
 
 interface Row {

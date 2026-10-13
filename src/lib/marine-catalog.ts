@@ -46,6 +46,72 @@ export const PART_BRANDS = [
   "Osculati",
 ] as const;
 
+/** Canonical `parts_catalog.category` values (dealer form + marketplace filters). */
+export const PART_CATEGORIES = [
+  "engine_parts",
+  "outboard_parts",
+  "inboard_parts",
+  "propellers",
+  "fuel_system",
+  "electrical",
+  "batteries",
+  "navigation_electronics",
+  "pumps",
+  "steering_system",
+  "anchoring",
+  "deck_hardware",
+  "safety_equipment",
+  "plumbing",
+  "paint_maintenance",
+  "rib_inflatable_parts",
+  "trailer_parts",
+  "filters_oils",
+  "accessories",
+  "other",
+] as const;
+
+export type PartCategoryId = (typeof PART_CATEGORIES)[number];
+
+/** Hull / brand lines for authorised dealer catalogue presentation. */
+export const BOAT_BRANDS = [
+  "Beneteau",
+  "Jeanneau",
+  "Bavaria",
+  "Hanseyachts",
+  "Dufour",
+  "Lagoon",
+  "Fountaine Pajot",
+  "Princess",
+  "Sunseeker",
+  "Azimut",
+  "Ferretti",
+  "Fairline",
+  "Sealine",
+  "Absolute",
+  "Prestige",
+  "Galeon",
+  "Cranchi",
+  "Riva",
+  "Zodiac",
+  "Highfield",
+  "Williams",
+  "Ribeye",
+  "Brig",
+  "Grand",
+  "Northstar",
+  "Joker Boat",
+  "Axopar",
+  "Saxdor",
+  "Nimbus",
+  "Quicksilver",
+  "Bayliner",
+] as const;
+
+/** Brands shown in marketplace filter rails (engines + boats + electronics). */
+export const MARKETPLACE_BRANDS = [
+  ...new Set<string>([...ENGINE_BRANDS, ...BOAT_BRANDS, ...PART_BRANDS]),
+] as const;
+
 export const VESSEL_CATEGORIES = ["yacht", "boat", "rib", "gulet", "tender", "commercial"] as const;
 export type VesselCategoryId = (typeof VESSEL_CATEGORIES)[number];
 
