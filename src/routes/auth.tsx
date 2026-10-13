@@ -203,7 +203,7 @@ function AuthPage() {
           switcher are the only interactive chrome above the fold, so they
           (not the sea backdrop behind them) need the safe-area inset. */}
       <header className="relative z-50 flex items-center justify-between px-4 pt-[calc(env(safe-area-inset-top)+1rem)]">
-        <a href="/" className="opacity-90">
+        <a href="/" className="thalvo-brand-mark opacity-90">
           <Wordmark size="sm" />
         </a>
         <LanguageSwitcher tone="dark" />
