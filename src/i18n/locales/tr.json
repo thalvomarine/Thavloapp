@@ -221,7 +221,12 @@
     "mission_bilge_notes": "Rule 2000 yedek iskelede hazır. Kalkış öncesi rıhtımı teyit edin."
   },
   "boats": {
-    "board_eyebrow": "Alım-Satım · Ege",
+    "board_eyebrow": "Alım-satım tezgâhı · Ege",
+    "day_lede": "Tekne ve bot ilanları — gövde, marina ve fiyat filtresiyle aynı masa düzeni.",
+    "scope": "Kapsam",
+    "region": "Bölge",
+    "asking_price": "İstenen fiyat",
+    "view_listing": "İlanı gör",
     "year": "Yıl",
     "loa": "Tam Boy",
     "beam": "En",
@@ -1039,8 +1044,8 @@
       "empty_catalog_title": "Katalog henüz boş",
       "empty_catalog_body": "Bayiler stok girdikçe OEM parçalar burada listelenir. Bu bir hata değil.",
       "skill_pass_note": "MarineOS skill · #0A192F / #00F0FF / #F5B942",
-      "day_eyebrow": "Gündüz masa · yetkili bayi",
-      "day_lede": "Açık zeminli parça tezgâhı — OEM filtre, stok ve marina teslimi.",
+      "day_eyebrow": "Yetkili bayi tezgâhı",
+      "day_lede": "OEM filtre, stok ve marina teslimiyle parça masası — görünüm gündüz / gece / sistem temasına uyar.",
       "hide_rail": "Paneli gizle",
       "design_b": "Tasarım B (beğenilen)",
       "design_c": "Tasarım C (alternatif)"

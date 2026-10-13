@@ -250,7 +250,7 @@ function Marketplace({ userId }: { userId: string }) {
               setEditingBoat(null);
               setCreateOpen(true);
             }}
-            className="inline-flex h-11 min-w-0 w-full items-center justify-center gap-1.5 rounded-xl bg-amber-200 px-4 text-[13px] font-semibold text-slate-950 sm:w-auto"
+            className="inline-flex h-11 min-w-0 w-full items-center justify-center gap-1.5 rounded-xl bg-[color:var(--mos-amber,#F5B942)] px-4 text-[13px] font-semibold text-[#0A192F] sm:w-auto"
           >
             <Plus className="size-4 shrink-0" />
             {t("boats.create_listing")}
@@ -361,10 +361,10 @@ function MarketCategoryBar({ active, onSelect }: { active: MarketCategory; onSel
             aria-selected={selected}
             onClick={() => onSelect(c)}
             className={
-              "h-10 px-2.5 rounded-xl text-[11px] font-semibold leading-tight border transition-colors " +
+              "h-10 rounded-xl border px-2.5 text-[12px] font-semibold leading-tight transition-colors " +
               (selected
-                ? "bg-white text-slate-900 border-white shadow-sm"
-                : "bg-white/5 border-white/10 text-white/75 hover:bg-white/10")
+                ? "border-[var(--desk-accent)] bg-[var(--desk-accent)] text-[var(--desk-accent-fg)] shadow-sm"
+                : "border-[var(--desk-border)] bg-[var(--desk-paper)] text-[var(--desk-muted)] hover:text-[var(--desk-ink)]")
             }
           >
             {t(`marketplace.category.${c}`)}

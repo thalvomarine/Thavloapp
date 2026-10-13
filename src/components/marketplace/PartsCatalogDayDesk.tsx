@@ -12,29 +12,8 @@ import {
 } from "lucide-react";
 import type { PartCardData } from "@/components/marketplace/PartCard";
 import { PART_CATEGORIES } from "@/lib/marine-catalog";
-import { isNativeWebView } from "@/lib/native-history";
 import type { PartsSortId } from "@/lib/parts-catalog-sort";
-
-/** Narrow / native → bottom sheet; wide web → docked left rail. */
-function useMobileSheet(): boolean {
-  const [mobile, setMobile] = useState(() => {
-    if (typeof window === "undefined") return false;
-    if (isNativeWebView()) return true;
-    return window.matchMedia("(max-width: 1023px)").matches;
-  });
-  useEffect(() => {
-    if (isNativeWebView()) {
-      setMobile(true);
-      return;
-    }
-    const mq = window.matchMedia("(max-width: 1023px)");
-    const apply = () => setMobile(mq.matches);
-    apply();
-    mq.addEventListener("change", apply);
-    return () => mq.removeEventListener("change", apply);
-  }, []);
-  return mobile;
-}
+import { useMarketplaceMobileSheet } from "@/components/marketplace/useMarketplaceMobileSheet";
 
 function categoryLabelFn(t: (key: string) => string, raw: string): string {
   const key = `dealer.categories.${raw}`;
@@ -99,7 +78,7 @@ export function PartsCatalogDayDesk({
   banner,
 }: Props) {
   const { t } = useTranslation();
-  const mobileSheet = useMobileSheet();
+  const mobileSheet = useMarketplaceMobileSheet();
   const [q, setQ] = useState("");
   const [category, setCategory] = useState("");
   const [brands, setBrands] = useState<string[]>([]);
@@ -223,7 +202,7 @@ export function PartsCatalogDayDesk({
   const filterBody = (
     <div className="space-y-5">
       <div>
-        <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">
+        <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--desk-muted)]">
           {t("marketplace.catalog.product_groups")}
         </p>
         <ul className="mt-2 space-y-0.5">
@@ -233,11 +212,15 @@ export function PartsCatalogDayDesk({
               onClick={() => setCategory("")}
               className={
                 "flex w-full items-center justify-between rounded-md px-2 py-2 text-left text-[13px] " +
-                (!category ? "bg-[#0A192F] font-semibold text-white" : "text-slate-700 hover:bg-slate-100")
+                (!category
+                  ? "bg-[var(--desk-accent)] font-semibold text-[var(--desk-accent-fg)]"
+                  : "text-[var(--desk-ink)] hover:bg-[var(--desk-chip)]")
               }
             >
               <span>{t("marketplace.all_categories")}</span>
-              <span className={!category ? "text-white/60" : "text-slate-400"}>{parts.length}</span>
+              <span className={!category ? "text-[var(--desk-accent-fg)]/60" : "text-[var(--desk-subtle)]"}>
+                {parts.length}
+              </span>
             </button>
           </li>
           {groupCounts.map((g) => (
@@ -248,12 +231,14 @@ export function PartsCatalogDayDesk({
                 className={
                   "flex w-full items-center justify-between rounded-md px-2 py-2 text-left text-[13px] " +
                   (category === g.id
-                    ? "bg-[#0A192F] font-semibold text-white"
-                    : "text-slate-700 hover:bg-slate-100")
+                    ? "bg-[var(--desk-accent)] font-semibold text-[var(--desk-accent-fg)]"
+                    : "text-[var(--desk-ink)] hover:bg-[var(--desk-chip)]")
                 }
               >
                 <span className="truncate">{categoryLabelFn(t, g.id)}</span>
-                <span className={category === g.id ? "text-white/60" : "text-slate-400"}>{g.count}</span>
+                <span className={category === g.id ? "text-[var(--desk-accent-fg)]/60" : "text-[var(--desk-subtle)]"}>
+                  {g.count}
+                </span>
               </button>
             </li>
           ))}
@@ -261,33 +246,33 @@ export function PartsCatalogDayDesk({
       </div>
 
       <div>
-        <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">
+        <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--desk-muted)]">
           {t("marketplace.catalog.all_brands")}
         </p>
         <ul className="mt-2 max-h-52 space-y-1 overflow-y-auto">
           {brandCounts.map(({ brand, count }) => (
             <li key={brand}>
-              <label className="flex cursor-pointer items-center gap-2 rounded-md px-1 py-1.5 text-[13px] text-slate-700 hover:bg-slate-100">
+              <label className="flex cursor-pointer items-center gap-2 rounded-md px-1 py-1.5 text-[13px] text-[var(--desk-ink)] hover:bg-[var(--desk-chip)]">
                 <input
                   type="checkbox"
                   checked={brands.includes(brand)}
                   onChange={() => toggleBrand(brand)}
-                  className="size-3.5 rounded border-slate-300 text-[#0A192F] focus:ring-[#00F0FF]/40"
+                  className="size-3.5 rounded border-[var(--desk-border)] text-[var(--desk-accent)] focus:ring-[var(--desk-active)]/40"
                 />
                 <span className="min-w-0 flex-1 truncate font-medium uppercase tracking-wide">{brand}</span>
-                <span className="text-slate-400">({count})</span>
+                <span className="text-[var(--desk-subtle)]">({count})</span>
               </label>
             </li>
           ))}
         </ul>
       </div>
 
-      <label className="flex cursor-pointer items-center gap-2 text-[13px] font-semibold text-slate-700">
+      <label className="flex cursor-pointer items-center gap-2 text-[13px] font-semibold text-[var(--desk-ink)]">
         <input
           type="checkbox"
           checked={inStockOnly}
           onChange={(e) => setInStockOnly(e.target.checked)}
-          className="size-3.5 rounded border-slate-300 text-[#0A192F]"
+          className="size-3.5 rounded border-[var(--desk-border)] text-[var(--desk-accent)]"
         />
         {t("marketplace.catalog.in_stock_only")}
       </label>
@@ -295,48 +280,48 @@ export function PartsCatalogDayDesk({
   );
 
   return (
-    <div className="space-y-3">
+    <div className="thalvo-desk space-y-3">
       {banner}
-      <div className="-mx-1 space-y-4 rounded-2xl bg-[#EEF2F6] p-3 text-slate-900 sm:mx-0 sm:p-4">
+      <div className="-mx-1 space-y-4 rounded-2xl bg-[var(--desk-canvas)] p-3 sm:mx-0 sm:p-4">
       {/* Day masthead */}
-      <header className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm sm:px-6 sm:py-5">
-        <nav className="flex flex-wrap items-center gap-1.5 text-[11px] text-slate-500">
+      <header className="rounded-2xl border border-[var(--desk-border)] bg-[var(--desk-paper)] px-4 py-4 shadow-[var(--desk-shadow)] sm:px-6 sm:py-5">
+        <nav className="flex flex-wrap items-center gap-1.5 text-[11px] text-[var(--desk-muted)]">
           <span>{t("marketplace.title")}</span>
           <span>/</span>
-          <button type="button" onClick={() => setCategory("")} className="hover:text-[#0A192F]">
+          <button type="button" onClick={() => setCategory("")} className="hover:text-[var(--desk-ink)]">
             {t("marketplace.category.spare_parts")}
           </button>
           {category ? (
             <>
               <span>/</span>
-              <span className="font-semibold text-[#0A192F]">{categoryLabelFn(t, category)}</span>
+              <span className="font-semibold text-[var(--desk-ink)]">{categoryLabelFn(t, category)}</span>
             </>
           ) : null}
         </nav>
         <div className="mt-3 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--desk-muted)]">
               {t("marketplace.catalog.day_eyebrow")}
             </p>
-            <h2 className="mt-1 font-[Montserrat,ui-sans-serif,system-ui] text-2xl font-bold tracking-tight text-[#0A192F] sm:text-3xl">
+            <h2 className="mt-1 thalvo-desk-title text-2xl tracking-tight text-[var(--desk-ink)] sm:text-3xl">
               {title}
             </h2>
-            <p className="mt-1 max-w-xl text-[13px] text-slate-600">{t("marketplace.catalog.day_lede")}</p>
+            <p className="mt-1 max-w-xl text-[13px] text-[var(--desk-muted)]">{t("marketplace.catalog.day_lede")}</p>
           </div>
           <div className="flex w-full max-w-md gap-2">
             <div className="relative min-w-0 flex-1">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--desk-subtle)]" />
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder={t("marketplace.search_placeholder")}
-                className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-10 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#00F0FF] focus:bg-white"
+                className="h-11 w-full rounded-xl border border-[var(--desk-border)] bg-[var(--desk-input)] pl-10 pr-10 text-sm text-[var(--desk-ink)] outline-none placeholder:text-[var(--desk-subtle)] focus:border-[var(--desk-active)]"
               />
               {q ? (
                 <button
                   type="button"
                   onClick={() => setQ("")}
-                  className="absolute right-2 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-lg text-slate-400 hover:bg-slate-100"
+                  className="absolute right-2 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-lg text-[var(--desk-subtle)] hover:bg-[var(--desk-chip)]"
                   aria-label={t("marketplace.catalog.clear_search")}
                 >
                   <X className="size-3.5" />
@@ -347,19 +332,19 @@ export function PartsCatalogDayDesk({
               <button
                 type="button"
                 onClick={() => setFiltersOpen(true)}
-                className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-xl bg-[#0A192F] px-3 text-[11px] font-bold uppercase tracking-wide text-white"
+                className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-xl bg-[var(--desk-accent)] px-3 text-[11px] font-bold uppercase tracking-wide text-[var(--desk-accent-fg)]"
               >
                 <SlidersHorizontal className="size-3.5" />
                 {t("marketplace.catalog.filters")}
                 {activeFilterCount > 0 ? (
-                  <span className="rounded bg-[#00F0FF] px-1.5 text-[10px] text-[#0A192F]">{activeFilterCount}</span>
+                  <span className="rounded bg-[var(--desk-active)] px-1.5 text-[10px] text-[var(--desk-active-ink)]">{activeFilterCount}</span>
                 ) : null}
               </button>
             ) : (
               <button
                 type="button"
                 onClick={() => setRailOpen((v) => !v)}
-                className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-[11px] font-bold uppercase tracking-wide text-[#0A192F]"
+                className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-xl border border-[var(--desk-border)] bg-[var(--desk-paper)] px-3 text-[11px] font-bold uppercase tracking-wide text-[var(--desk-ink)]"
               >
                 <SlidersHorizontal className="size-3.5" />
                 {railOpen ? t("marketplace.catalog.hide_rail") : t("marketplace.catalog.filters")}
@@ -377,11 +362,11 @@ export function PartsCatalogDayDesk({
       >
         {/* Desktop docked rail */}
         {!mobileSheet && railOpen && (
-          <aside className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <aside className="rounded-2xl border border-[var(--desk-border)] bg-[var(--desk-paper)] p-4 shadow-[var(--desk-shadow)]">
             <div className="mb-3 flex items-center justify-between">
-              <p className="text-sm font-bold text-[#0A192F]">{t("marketplace.catalog.filters")}</p>
+              <p className="text-sm font-bold text-[var(--desk-ink)]">{t("marketplace.catalog.filters")}</p>
               {activeFilterCount > 0 && (
-                <button type="button" onClick={clearAll} className="text-[11px] font-semibold text-slate-500">
+                <button type="button" onClick={clearAll} className="text-[11px] font-semibold text-[var(--desk-muted)]">
                   {t("marketplace.catalog.clear_all")}
                 </button>
               )}
@@ -399,8 +384,8 @@ export function PartsCatalogDayDesk({
               className={
                 "h-8 shrink-0 rounded-lg border px-2.5 text-[11px] font-semibold " +
                 (!category
-                  ? "border-[#0A192F] bg-[#0A192F] text-white"
-                  : "border-slate-200 bg-white text-slate-600 hover:border-slate-300")
+                  ? "border-[var(--desk-accent)] bg-[var(--desk-accent)] text-[var(--desk-accent-fg)]"
+                  : "border-[var(--desk-border)] bg-[var(--desk-chip)] text-[var(--desk-muted)] hover:border-[var(--desk-subtle)]")
               }
             >
               {t("marketplace.all_categories")} · {parts.length}
@@ -413,8 +398,8 @@ export function PartsCatalogDayDesk({
                 className={
                   "h-8 shrink-0 rounded-lg border px-2.5 text-[11px] font-semibold " +
                   (category === g.id
-                    ? "border-[#0A192F] bg-[#0A192F] text-white"
-                    : "border-slate-200 bg-white text-slate-600 hover:border-slate-300")
+                    ? "border-[var(--desk-accent)] bg-[var(--desk-accent)] text-[var(--desk-accent-fg)]"
+                    : "border-[var(--desk-border)] bg-[var(--desk-chip)] text-[var(--desk-muted)] hover:border-[var(--desk-subtle)]")
                 }
               >
                 {categoryLabelFn(t, g.id)} · {g.count}
@@ -446,23 +431,23 @@ export function PartsCatalogDayDesk({
               <button
                 type="button"
                 onClick={clearAll}
-                className="text-[11px] font-semibold text-slate-500 underline-offset-2 hover:underline"
+                className="text-[11px] font-semibold text-[var(--desk-muted)] underline-offset-2 hover:underline"
               >
                 {t("marketplace.catalog.clear_all")}
               </button>
             </div>
           )}
 
-          <div className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:px-4">
-            <p className="text-[13px] font-semibold text-slate-600">
+          <div className="flex flex-col gap-2 rounded-2xl border border-[var(--desk-border)] bg-[var(--desk-paper)] px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:px-4">
+            <p className="text-[13px] font-semibold text-[var(--desk-muted)]">
               {t("marketplace.catalog.total_products", { count: visible.length })}
             </p>
-            <label className="inline-flex items-center gap-2 text-[12px] text-slate-500">
+            <label className="inline-flex items-center gap-2 text-[12px] text-[var(--desk-muted)]">
               <ChevronDown className="size-3.5" />
               <select
                 value={sort}
                 onChange={(e) => setSort(e.target.value as PartsSortId)}
-                className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-[12px] font-semibold text-[#0A192F] outline-none"
+                className="h-9 rounded-lg border border-[var(--desk-border)] bg-[var(--desk-paper)] px-2 text-[12px] font-semibold text-[var(--desk-ink)] outline-none"
               >
                 <option value="recommended">{t("marketplace.catalog.sort_recommended")}</option>
                 <option value="price_asc">{t("marketplace.catalog.sort_price_asc")}</option>
@@ -474,17 +459,17 @@ export function PartsCatalogDayDesk({
           </div>
 
           {parts.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-12 text-center">
-              <Ship className="mx-auto size-8 text-slate-400" />
-              <p className="mt-3 text-sm font-semibold text-[#0A192F]">{t("marketplace.catalog.empty_catalog_title")}</p>
-              <p className="mx-auto mt-1 max-w-md text-[12px] text-slate-500">
+            <div className="rounded-2xl border border-dashed border-[var(--desk-border)] bg-[var(--desk-paper)] px-4 py-12 text-center">
+              <Ship className="mx-auto size-8 text-[var(--desk-subtle)]" />
+              <p className="mt-3 text-sm font-semibold text-[var(--desk-ink)]">{t("marketplace.catalog.empty_catalog_title")}</p>
+              <p className="mx-auto mt-1 max-w-md text-[12px] text-[var(--desk-muted)]">
                 {t("marketplace.catalog.empty_catalog_body")}
               </p>
             </div>
           ) : visible.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-10 text-center">
-              <p className="text-sm text-slate-600">{t("marketplace.no_parts_match")}</p>
-              <button type="button" onClick={clearAll} className="mt-2 text-[12px] font-semibold text-[#0A192F]">
+            <div className="rounded-2xl border border-dashed border-[var(--desk-border)] bg-[var(--desk-paper)] px-4 py-10 text-center">
+              <p className="text-sm text-[var(--desk-muted)]">{t("marketplace.no_parts_match")}</p>
+              <button type="button" onClick={clearAll} className="mt-2 text-[12px] font-semibold text-[var(--desk-ink)]">
                 {t("marketplace.catalog.clear_all")}
               </button>
             </div>
@@ -518,37 +503,37 @@ export function PartsCatalogDayDesk({
           <button
             type="button"
             className={
-              "absolute inset-0 bg-slate-900/40 transition-opacity " + (filtersOpen ? "opacity-100" : "opacity-0")
+              "absolute inset-0 bg-[var(--desk-overlay)] transition-opacity " + (filtersOpen ? "opacity-100" : "opacity-0")
             }
             aria-label={t("marketplace.catalog.close_filters")}
             onClick={() => setFiltersOpen(false)}
           />
           <aside
             className={
-              "absolute inset-x-0 bottom-0 flex max-h-[min(88dvh,40rem)] flex-col rounded-t-3xl border border-b-0 border-slate-200 bg-white shadow-2xl transition-transform duration-300 pb-[env(safe-area-inset-bottom)] " +
+              "absolute inset-x-0 bottom-0 flex max-h-[min(88dvh,40rem)] flex-col rounded-t-3xl border border-b-0 border-[var(--desk-border)] bg-[var(--desk-paper)] shadow-2xl transition-transform duration-300 pb-[env(safe-area-inset-bottom)] " +
               (filtersOpen ? "translate-y-0" : "translate-y-full")
             }
           >
             <div className="flex flex-col items-center pt-2">
-              <span className="mb-1 h-1 w-10 rounded-full bg-slate-300" />
+              <span className="mb-1 h-1 w-10 rounded-full bg-[var(--desk-border)]" />
             </div>
-            <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-              <p className="text-sm font-bold text-[#0A192F]">{t("marketplace.catalog.filters")}</p>
+            <div className="flex items-center justify-between border-b border-[var(--desk-border)] px-4 py-3">
+              <p className="text-sm font-bold text-[var(--desk-ink)]">{t("marketplace.catalog.filters")}</p>
               <button
                 type="button"
                 onClick={() => setFiltersOpen(false)}
-                className="grid size-9 place-items-center rounded-lg border border-slate-200 text-slate-500"
+                className="grid size-9 place-items-center rounded-lg border border-[var(--desk-border)] text-[var(--desk-muted)]"
               >
                 <X className="size-4" />
               </button>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">{filterBody}</div>
-            <div className="space-y-2 border-t border-slate-100 p-4">
+            <div className="space-y-2 border-t border-[var(--desk-border)] p-4">
               {activeFilterCount > 0 && (
                 <button
                   type="button"
                   onClick={clearAll}
-                  className="h-10 w-full rounded-xl border border-slate-200 text-[12px] font-semibold text-slate-600"
+                  className="h-10 w-full rounded-xl border border-[var(--desk-border)] text-[12px] font-semibold text-[var(--desk-muted)]"
                 >
                   {t("marketplace.catalog.clear_all")}
                 </button>
@@ -556,7 +541,7 @@ export function PartsCatalogDayDesk({
               <button
                 type="button"
                 onClick={() => setFiltersOpen(false)}
-                className="flex h-11 w-full items-center justify-center rounded-xl bg-[#0A192F] text-sm font-bold text-white"
+                className="flex h-11 w-full items-center justify-center rounded-xl bg-[var(--desk-accent)] text-sm font-bold text-[var(--desk-accent-fg)]"
               >
                 {t("marketplace.catalog.apply_filters", { count: visible.length })}
               </button>
@@ -574,10 +559,10 @@ function FilterChip({ label, onRemove }: { label: string; onRemove: () => void }
     <button
       type="button"
       onClick={onRemove}
-      className="inline-flex h-7 max-w-full items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 text-[11px] font-semibold text-[#0A192F]"
+      className="inline-flex h-7 max-w-full items-center gap-1 rounded-lg border border-[var(--desk-border)] bg-[var(--desk-paper)] px-2 text-[11px] font-semibold text-[var(--desk-ink)]"
     >
       <span className="truncate">{label}</span>
-      <X className="size-3 shrink-0 text-slate-400" />
+      <X className="size-3 shrink-0 text-[var(--desk-subtle)]" />
     </button>
   );
 }
@@ -614,13 +599,13 @@ function DayCard({
       : "bg-emerald-50 text-emerald-800 border-emerald-200";
 
   return (
-    <article className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-md">
-      <div className="relative aspect-[4/3] bg-gradient-to-b from-slate-100 to-slate-50">
+    <article className="flex flex-col overflow-hidden rounded-2xl border border-[var(--desk-border)] bg-[var(--desk-paper)] shadow-[var(--desk-shadow)] transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5">
+      <div className="relative aspect-[4/3] bg-gradient-to-b from-[var(--desk-input)] to-[var(--desk-canvas)]">
         {part.imageUrl ? (
           <img src={part.imageUrl} alt={part.name} className="h-full w-full object-cover" loading="lazy" />
         ) : (
-          <div className="flex h-full flex-col items-center justify-center gap-2 text-slate-500">
-            <span className="grid size-14 place-items-center rounded-2xl bg-white text-[15px] font-bold tracking-wide text-[#0A192F] shadow-sm">
+          <div className="flex h-full flex-col items-center justify-center gap-2 text-[var(--desk-muted)]">
+            <span className="grid size-14 place-items-center rounded-2xl bg-[var(--desk-paper)] text-[15px] font-bold tracking-wide text-[var(--desk-ink)] shadow-sm">
               {brandInitials(part.brand)}
             </span>
             <span className="text-[10px] font-bold uppercase tracking-[0.14em]">{part.brand}</span>
@@ -631,8 +616,8 @@ function DayCard({
           onClick={onToggleFavorite}
           aria-pressed={favorited}
           className={
-            "absolute right-2 top-2 grid size-9 place-items-center rounded-full border bg-white/95 shadow-sm " +
-            (favorited ? "border-rose-300 text-rose-500" : "border-slate-200 text-slate-500")
+            "absolute right-2 top-2 grid size-9 place-items-center rounded-full border bg-[var(--desk-paper)]/95 shadow-sm " +
+            (favorited ? "border-rose-300 text-rose-500" : "border-[var(--desk-border)] text-[var(--desk-muted)]")
           }
           aria-label={t("marketplace.catalog.favorite")}
         >
@@ -646,18 +631,18 @@ function DayCard({
         </div>
       </div>
       <div className="flex flex-1 flex-col gap-2 p-3.5">
-        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">{part.brand}</p>
-        <h3 className="line-clamp-2 min-h-[2.5rem] text-[14px] font-semibold leading-snug text-[#0A192F]">
+        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--desk-muted)]">{part.brand}</p>
+        <h3 className="line-clamp-2 min-h-[2.5rem] text-[14px] font-semibold leading-snug text-[var(--desk-ink)]">
           {part.name}
         </h3>
-        {part.sku ? <p className="font-mono text-[10px] text-slate-400">{part.sku}</p> : null}
-        <div className="mt-auto flex items-end justify-between gap-2 border-t border-slate-100 pt-2.5">
+        {part.sku ? <p className="font-mono text-[10px] text-[var(--desk-subtle)]">{part.sku}</p> : null}
+        <div className="mt-auto flex items-end justify-between gap-2 border-t border-[var(--desk-border)] pt-2.5">
           <div className="min-w-0">
-            <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-slate-400">
+            <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-[var(--desk-subtle)]">
               {t("marketplace.catalog.thalvo_price")}
             </p>
-            <p className="text-lg font-bold tabular-nums text-[#F5B942]">{currencyFormat(part.price)}</p>
-            <p className="truncate text-[10px] text-slate-500">
+            <p className="text-lg font-bold tabular-nums text-[var(--desk-price)]">{currencyFormat(part.price)}</p>
+            <p className="truncate text-[10px] text-[var(--desk-muted)]">
               {part.dealerName ?? t("marketplace.product.verified_dealer")}
               {part.marina ? ` · ${part.marina}` : ""}
             </p>
@@ -666,7 +651,7 @@ function DayCard({
             <button
               type="button"
               onClick={() => onAskAi(part)}
-              className="grid size-10 place-items-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50"
+              className="grid size-10 place-items-center rounded-xl border border-[var(--desk-border)] text-[var(--desk-muted)] hover:bg-[var(--desk-chip)]"
               aria-label={t("marketplace.ai_thalvo")}
             >
               <Sparkles className="size-4" />
@@ -676,7 +661,9 @@ function DayCard({
               onClick={() => (out ? onNotify(part) : onAdd(part))}
               className={
                 "inline-flex h-10 items-center gap-1 rounded-xl px-3 text-[11px] font-bold uppercase transition-transform active:scale-[0.98] " +
-                (out ? "border border-slate-200 text-slate-500" : "bg-[#0A192F] text-white hover:bg-[#122845]")
+                (out
+                  ? "border border-[var(--desk-border)] text-[var(--desk-muted)]"
+                  : "bg-[var(--desk-accent)] text-[var(--desk-accent-fg)]")
               }
             >
               <ShoppingCart className="size-3.5" />

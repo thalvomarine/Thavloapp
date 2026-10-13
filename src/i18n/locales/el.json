@@ -216,7 +216,12 @@
     "mission_bilge_notes": "Rule 2000 replacement staged at the quay. Confirm berth before launch."
   },
   "boats": {
-    "board_eyebrow": "Brokerage · Aegean",
+    "board_eyebrow": "Brokerage desk · Aegean",
+    "day_lede": "Αγγελίες σκαφών — ίδιο desk με φίλτρα γάστρας, μαρίνας και τιμής.",
+    "scope": "Εύρος",
+    "region": "Περιοχή",
+    "asking_price": "Τιμή",
+    "view_listing": "Προβολή",
     "year": "Year",
     "loa": "LOA",
     "beam": "Beam",
@@ -1034,8 +1039,8 @@
       "empty_catalog_title": "Ο κατάλογος είναι άδειος",
       "empty_catalog_body": "Τα OEM ανταλλακτικά εμφανίζονται καθώς οι αντιπρόσωποι καταχωρούν απόθεμα. Δεν είναι σφάλμα φόρτωσης.",
       "skill_pass_note": "MarineOS skill · #0A192F / #00F0FF / #F5B942",
-      "day_eyebrow": "Ημερήσιο γραφείο · εξουσιοδοτημένος",
-      "day_lede": "Ανοιχτό γραφείο ανταλλακτικών — OEM φίλτρα, απόθεμα, παράδοση.",
+      "day_eyebrow": "Εξουσιοδοτημένο desk",
+      "day_lede": "OEM φίλτρα, απόθεμα και παράδοση — εμφάνιση σύμφωνα με day / night / system θέμα.",
       "hide_rail": "Απόκρυψη πίνακα",
       "design_b": "Σχέδιο B (κρατημένο)",
       "design_c": "Σχέδιο C (εναλλακτικό)"
