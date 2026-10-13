@@ -1,4 +1,5 @@
 -- Launch security hardening (public open).
+-- Live DB: profiles.role is text (not user_role) — compare/assign via ::text.
 -- 1) Stop signup auto-verify / auto-privilege for dealer+provider
 -- 2) Disable ensure_superadmin bootstrap; seed operator admin once
 -- 3) claim_open_job requires is_verified_provider
@@ -38,7 +39,7 @@ BEGIN
     new.id,
     coalesce(new.raw_user_meta_data->>'full_name', ''),
     new.raw_user_meta_data->>'boat_name',
-    'Client'::public.user_role,
+    'Client',
     _requested,
     coalesce((new.raw_user_meta_data->>'preferred_language')::public.language_code, 'tr'),
     nullif(new.raw_user_meta_data->>'account_type', ''),
@@ -63,6 +64,7 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
+  _current_text text;
   _current public.user_role;
   _requested public.user_role;
   _meta public.user_role;
@@ -71,13 +73,20 @@ BEGIN
     RAISE EXCEPTION 'auth required';
   END IF;
 
-  SELECT role, requested_role INTO _current, _requested
-  FROM public.profiles
-  WHERE id = auth.uid();
+  SELECT p.role::text, p.requested_role
+    INTO _current_text, _requested
+  FROM public.profiles p
+  WHERE p.id = auth.uid();
 
-  IF _current IS NULL THEN
+  IF _current_text IS NULL THEN
     RETURN 'Client'::public.user_role;
   END IF;
+
+  BEGIN
+    _current := _current_text::public.user_role;
+  EXCEPTION WHEN others THEN
+    _current := 'Client'::public.user_role;
+  END;
 
   IF _requested IS NULL THEN
     BEGIN
@@ -127,9 +136,16 @@ ALTER TABLE public.profiles DISABLE TRIGGER profiles_prevent_priv_escalation;
 
 UPDATE public.profiles p
 SET
-  requested_role = coalesce(p.requested_role, p.role),
-  role = 'Client'::public.user_role
-WHERE p.role IN ('Supplier'::public.user_role, 'Provider'::public.user_role)
+  requested_role = coalesce(
+    p.requested_role,
+    CASE p.role::text
+      WHEN 'Supplier' THEN 'Supplier'::public.user_role
+      WHEN 'Provider' THEN 'Provider'::public.user_role
+      ELSE NULL
+    END
+  ),
+  role = 'Client'
+WHERE p.role::text IN ('Supplier', 'Provider')
   AND NOT EXISTS (
     SELECT 1 FROM public.verified_dealers vd
     WHERE vd.user_id = p.id AND vd.verified_by IS NOT NULL
@@ -186,7 +202,7 @@ BEGIN
 
   IF NOT EXISTS (
     SELECT 1 FROM public.profiles
-    WHERE id = auth.uid() AND role = 'Provider'::public.user_role
+    WHERE id = auth.uid() AND role::text = 'Provider'
   ) THEN
     RAISE EXCEPTION 'Not a provider';
   END IF;
