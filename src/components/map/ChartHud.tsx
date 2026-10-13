@@ -471,7 +471,7 @@ export function ChartReadout({
   return (
     <div
       className={
-        "z-[50] rounded-md border border-white/10 bg-[#07111E]/80 px-2.5 py-1.5 shadow-lg backdrop-blur-sm transition-opacity duration-200 " +
+        "thalvo-on-dark z-[50] rounded-md border border-white/10 bg-[#07111E]/85 px-2.5 py-1.5 shadow-lg backdrop-blur-sm transition-opacity duration-200 " +
         (concealed ? "pointer-events-none opacity-0" : "pointer-events-auto opacity-100") +
         " " +
         (viewportPinned
@@ -479,16 +479,16 @@ export function ChartReadout({
           : "absolute bottom-3 right-3 max-w-[min(11.5rem,calc(100vw-5.5rem))] text-right")
       }
     >
-      <p className="font-mono text-[11px] leading-tight tracking-tight text-cyan-200">
+      <p className="font-mono text-[11px] leading-tight tracking-tight text-cyan-100">
         {coords}
       </p>
       <p
         className={
-          "mt-0.5 flex items-center gap-1 font-mono text-[9px] uppercase tracking-[0.12em] text-cyan-300/55 " +
+          "mt-0.5 flex items-center gap-1 font-mono text-[9px] uppercase tracking-[0.12em] text-cyan-200/80 " +
           (viewportPinned ? "justify-start" : "justify-end")
         }
       >
-        <Navigation className="size-2.5 shrink-0 text-cyan-400/50" />
+        <Navigation className="size-2.5 shrink-0 text-cyan-300/80" />
         <span className="truncate">
           {t("common.distance")}
           {scaleNm == null ? "" : ` · ${t("chart.scale_nm", { value: scaleNm.toFixed(scaleNm < 1 ? 2 : 1) })}`}
@@ -579,7 +579,7 @@ export function ChartFabStack({
         <LeafletPointerGuard className="pointer-events-auto lg:hidden">
           <div
             ref={menuRef}
-            className="w-[min(252px,calc(100vw-5.5rem))] overflow-hidden rounded-xl border border-cyan-500/30 bg-[#0a192f]/95 text-xs shadow-2xl backdrop-blur-md"
+            className="thalvo-on-dark w-[min(252px,calc(100vw-5.5rem))] overflow-hidden rounded-xl border border-cyan-500/30 bg-[#0a192f]/95 text-xs shadow-2xl backdrop-blur-md"
           >
             <div className="h-px w-full bg-gradient-to-r from-transparent via-cyan-300/60 to-transparent" />
             <div className="p-3">
