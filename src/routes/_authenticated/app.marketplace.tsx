@@ -348,7 +348,7 @@ function MarketCategoryBar({ active, onSelect }: { active: MarketCategory; onSel
   const { t } = useTranslation();
   return (
     <div
-      className="thalvo-desk grid w-full min-w-0 max-w-full grid-cols-2 gap-1.5"
+      className="grid w-full min-w-0 max-w-full grid-cols-2 gap-1.5"
       role="tablist"
       aria-label={t("marketplace.category.label")}
     >

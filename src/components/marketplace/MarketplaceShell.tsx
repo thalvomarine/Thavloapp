@@ -20,7 +20,7 @@ interface Props {
  */
 export function MarketplaceShell({ title, eyebrow, subtitle, right, banner, children }: Props) {
   return (
-    <div className="thalvo-dark thalvo-cockpit min-h-[calc(100dvh-4rem)] w-full min-w-0 max-w-full space-y-4 overflow-x-hidden">
+    <div className="thalvo-dark thalvo-cockpit thalvo-desk min-h-[calc(100dvh-4rem)] w-full min-w-0 max-w-full space-y-4 overflow-x-hidden">
       <div className="flex min-w-0 w-full flex-col gap-2">
         <CockpitHeader eyebrow={eyebrow} title={title} subtitle={subtitle} actions={right} />
         {banner ? <div className="min-w-0 w-full">{banner}</div> : null}

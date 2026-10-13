@@ -92,8 +92,9 @@ const EMPTY: FormState = {
 };
 
 const fieldClass =
-  "w-full min-h-11 rounded-lg border border-cyan-500/25 bg-[#0a192f]/70 px-2.5 text-[13px] text-white outline-none focus:border-cyan-400/70";
-const labelClass = "mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-cyan-300/80";
+  "w-full min-h-11 rounded-lg border border-[var(--desk-border)] bg-[var(--desk-input)] px-2.5 text-[13px] text-[var(--desk-ink)] outline-none placeholder:text-[var(--desk-subtle)] focus:border-[var(--desk-active)]";
+const labelClass =
+  "mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--desk-muted)]";
 
 function formFromListing(boat: BoatListing): FormState {
   return {
@@ -270,32 +271,35 @@ export function CreateBoatListingSheet({ open, onClose, sellerName, listingCount
   ];
 
   return createPortal(
-    <div className="fixed inset-0 z-[100]" role="presentation">
+    <div className="thalvo-desk fixed inset-0 z-[100]" role="presentation">
       <button
         type="button"
         aria-label={t("common.close")}
-        className="absolute inset-0 z-[99] bg-black/70 backdrop-blur-sm"
+        className="absolute inset-0 z-[99] bg-[var(--desk-overlay)] backdrop-blur-sm"
         onClick={onClose}
       />
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="thalvo-create-listing-title"
-        className="thalvo-dark pointer-events-auto absolute inset-x-0 bottom-0 z-[100] mx-auto flex w-full max-w-lg flex-col overflow-y-auto rounded-t-3xl border border-cyan-500/30 bg-[#0a192f]/97 shadow-2xl sm:bottom-auto sm:top-1/2 sm:max-h-[90dvh] sm:-translate-y-1/2 sm:rounded-3xl"
+        className="pointer-events-auto absolute inset-x-0 bottom-0 z-[100] mx-auto flex w-full max-w-lg flex-col overflow-y-auto rounded-t-3xl border border-[var(--desk-border)] bg-[var(--desk-paper)] shadow-2xl sm:bottom-auto sm:top-1/2 sm:max-h-[90dvh] sm:-translate-y-1/2 sm:rounded-3xl"
         style={{
           maxHeight: "90dvh",
           paddingBottom: "max(1.25rem, env(safe-area-inset-bottom))",
         }}
       >
-        <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-white/10 bg-[#0a192f]/97 px-4 pb-3 pt-[max(1rem,env(safe-area-inset-top))] sm:pt-4">
+        <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-[var(--desk-border)] bg-[var(--desk-paper)] px-4 pb-3 pt-[max(1rem,env(safe-area-inset-top))] sm:pt-4">
           <div className="min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-300">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--desk-muted)]">
               {t("boats.create_eyebrow")}
             </p>
-            <h2 id="thalvo-create-listing-title" className="mt-1 text-base font-semibold text-white">
+            <h2
+              id="thalvo-create-listing-title"
+              className="thalvo-desk-title mt-1 text-lg tracking-tight text-[var(--desk-ink)]"
+            >
               {t(editing ? "boats.edit_listing" : "boats.create_listing")}
             </h2>
-            <p className="mt-1 text-[11px] text-white/50">
+            <p className="mt-1 text-[11px] text-[var(--desk-subtle)]">
               {t("boats.step_of", { current: step + 1, total: 4 })} · {steps[step]}
             </p>
           </div>
@@ -303,7 +307,7 @@ export function CreateBoatListingSheet({ open, onClose, sellerName, listingCount
             type="button"
             onClick={onClose}
             aria-label={t("common.close")}
-            className="grid size-9 shrink-0 place-items-center rounded-full border border-white/15 text-white/70 hover:bg-white/10"
+            className="grid size-9 shrink-0 place-items-center rounded-full border border-[var(--desk-border)] text-[var(--desk-muted)] hover:bg-[var(--desk-chip)]"
           >
             <X className="size-4" />
           </button>
@@ -312,8 +316,17 @@ export function CreateBoatListingSheet({ open, onClose, sellerName, listingCount
         <div className="grid grid-cols-4 gap-1 px-4 pt-3">
           {steps.map((label, i) => (
             <div key={label} className="min-w-0">
-              <div className={`h-1 rounded-full ${i <= step ? "bg-cyan-400" : "bg-white/10"}`} />
-              <p className={`mt-1 truncate text-[8px] font-semibold uppercase tracking-[0.1em] ${i === step ? "text-cyan-200" : "text-white/35"}`}>
+              <div
+                className={
+                  "h-1 rounded-full " + (i <= step ? "bg-[var(--desk-active)]" : "bg-[var(--desk-border)]")
+                }
+              />
+              <p
+                className={
+                  "mt-1 truncate text-[8px] font-semibold uppercase tracking-[0.1em] " +
+                  (i === step ? "text-[var(--desk-ink)]" : "text-[var(--desk-subtle)]")
+                }
+              >
                 {label}
               </p>
             </div>
@@ -324,7 +337,7 @@ export function CreateBoatListingSheet({ open, onClose, sellerName, listingCount
           {step === 0 && (
             <>
               <Field label={t("boats.form_photos")}>
-                <p className="mb-2 text-[11px] text-white/45">{t("boats.form_photos_hint")}</p>
+                <p className="mb-2 text-[11px] text-[var(--desk-subtle)]">{t("boats.form_photos_hint")}</p>
                 <div className="grid grid-cols-3 gap-2">
                   {form.photos.map((url, index) => (
                     <div key={url} className="relative">
@@ -341,7 +354,7 @@ export function CreateBoatListingSheet({ open, onClose, sellerName, listingCount
                         }
                       />
                       {index === 0 && (
-                        <span className="pointer-events-none absolute bottom-1.5 left-1.5 rounded-full bg-black/60 px-1.5 py-0.5 text-[9px] font-medium text-amber-100">
+                        <span className="pointer-events-none absolute bottom-1.5 left-1.5 rounded-full bg-black/60 px-1.5 py-0.5 text-[9px] font-medium text-[var(--desk-price)]">
                           {t("boats.photo_cover")}
                         </span>
                       )}
@@ -494,8 +507,8 @@ export function CreateBoatListingSheet({ open, onClose, sellerName, listingCount
                       className={
                         "min-h-11 rounded-lg border text-[12px] font-semibold " +
                         (form.fuel === f
-                          ? "border-cyan-400 bg-cyan-400/15 text-cyan-100"
-                          : "border-white/10 bg-white/5 text-white/70")
+                          ? "border-[var(--desk-accent)] bg-[var(--desk-accent)] text-[var(--desk-accent-fg)]"
+                          : "border-[var(--desk-border)] bg-[var(--desk-chip)] text-[var(--desk-muted)]")
                       }
                     >
                       {t(`boats.fuel_${f}`)}
@@ -512,7 +525,9 @@ export function CreateBoatListingSheet({ open, onClose, sellerName, listingCount
                         key={eq}
                         className={
                           "flex min-h-11 items-center gap-3 rounded-lg border px-3 text-[13px] " +
-                          (on ? "border-cyan-400/50 bg-cyan-400/10 text-white" : "border-white/10 bg-white/5 text-white/75")
+                          (on
+                            ? "border-[var(--desk-accent)] bg-[var(--desk-accent)] text-[var(--desk-accent-fg)]"
+                            : "border-[var(--desk-border)] bg-[var(--desk-chip)] text-[var(--desk-ink)]")
                         }
                       >
                         <input
@@ -525,7 +540,7 @@ export function CreateBoatListingSheet({ open, onClose, sellerName, listingCount
                                 : [...form.equipment, eq],
                             })
                           }
-                          className="size-4 accent-cyan-400"
+                          className="size-4 accent-[var(--desk-active)]"
                         />
                         {t(`boats.eq.${eq.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "")}`, { defaultValue: eq })}
                       </label>
@@ -559,10 +574,10 @@ export function CreateBoatListingSheet({ open, onClose, sellerName, listingCount
             </>
           )}
 
-          {error && <p className="text-[12px] text-rose-300">{error}</p>}
+          {error && <p className="text-[12px] text-rose-500">{error}</p>}
         </div>
 
-        <div className="grid grid-cols-2 gap-2 border-t border-white/10 px-4 pt-3">
+        <div className="grid grid-cols-2 gap-2 border-t border-[var(--desk-border)] px-4 pt-3">
           <button
             type="button"
             onClick={() => {
@@ -570,7 +585,7 @@ export function CreateBoatListingSheet({ open, onClose, sellerName, listingCount
               if (step === 0) onClose();
               else setStep((s) => s - 1);
             }}
-            className="inline-flex h-11 items-center justify-center gap-1.5 rounded-xl border border-white/15 text-[11px] font-semibold uppercase tracking-[0.1em] text-white/80"
+            className="inline-flex h-11 items-center justify-center gap-1.5 rounded-xl border border-[var(--desk-border)] text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--desk-ink)]"
           >
             <ChevronLeft className="size-3.5" />
             {step === 0 ? t("common.close") : t("boats.form_back")}
@@ -579,7 +594,7 @@ export function CreateBoatListingSheet({ open, onClose, sellerName, listingCount
             <button
               type="button"
               onClick={goNext}
-              className="inline-flex h-11 items-center justify-center gap-1.5 rounded-xl bg-cyan-400 text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-900"
+              className="inline-flex h-11 items-center justify-center gap-1.5 rounded-xl bg-[var(--desk-active)] text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--desk-active-ink)]"
             >
               {t("boats.form_next")}
               <ChevronRight className="size-3.5" />
@@ -589,7 +604,7 @@ export function CreateBoatListingSheet({ open, onClose, sellerName, listingCount
               type="button"
               onClick={() => void submit()}
               disabled={saving}
-              className="inline-flex h-11 items-center justify-center gap-1.5 rounded-xl bg-amber-300 text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-900 disabled:opacity-60"
+              className="inline-flex h-11 items-center justify-center gap-1.5 rounded-xl bg-[var(--desk-price)] text-[11px] font-semibold uppercase tracking-[0.1em] text-[#0A192F] disabled:opacity-60"
             >
               <Plus className="size-3.5" />
               {t(editing ? "boats.form_save" : "boats.form_publish")}

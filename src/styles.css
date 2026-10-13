@@ -324,6 +324,24 @@
   --desk-overlay: rgb(0 0 0 / 0.55);
   color: var(--desk-ink);
 }
+/* system = cockpit (same as default desk tokens on html[data-thalvo-theme="system"]). */
+html[data-thalvo-theme="system"] .thalvo-desk {
+  --desk-canvas: #0c1829;
+  --desk-paper: #12233a;
+  --desk-ink: #e8f4ff;
+  --desk-muted: rgb(230 246 255 / 0.58);
+  --desk-subtle: rgb(230 246 255 / 0.4);
+  --desk-border: rgb(230 246 255 / 0.12);
+  --desk-input: #071422;
+  --desk-chip: rgb(230 246 255 / 0.06);
+  --desk-price: #f5b942;
+  --desk-accent: #0a192f;
+  --desk-accent-fg: #ffffff;
+  --desk-active: #00f0ff;
+  --desk-active-ink: #0a192f;
+  --desk-shadow: 0 14px 36px -22px rgb(0 0 0 / 0.55);
+  --desk-overlay: rgb(0 0 0 / 0.55);
+}
 html[data-thalvo-theme="day"] .thalvo-desk {
   --desk-canvas: #eef2f6;
   --desk-paper: #ffffff;

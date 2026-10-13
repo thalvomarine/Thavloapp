@@ -1,16 +1,18 @@
 /**
- * Local / PR review only — mock authorised-dealer catalogue.
- * Design B (showroom) is preserved as the liked default for /app/marketplace.
- * Design C (day desk) is an alternative for comparison only.
+ * Local / PR review only — mock authorised-dealer catalogue + boat desk.
+ * Design C is the `/app/marketplace` default (parts + boats share .thalvo-desk).
  */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { PartsCatalogShowroom } from "@/components/marketplace/PartsCatalogShowroom";
 import { PartsCatalogDayDesk } from "@/components/marketplace/PartsCatalogDayDesk";
+import { BoatsTendersBoard } from "@/components/marketplace/BoatsTendersBoard";
 import type { PartCardData } from "@/components/marketplace/PartCard";
 import { MarketplaceShell } from "@/components/marketplace/MarketplaceShell";
 import { formatTL } from "@/lib/filter";
+import { useThalvoTheme, type ThalvoTheme } from "@/lib/theme";
+import type { BoatListing } from "@/lib/boat-listings";
 
 export const Route = createFileRoute("/marketplace-preview")({
   ssr: false,
@@ -184,11 +186,115 @@ const MOCK_PARTS: PartCardData[] = [
 ];
 
 type DesignId = "B" | "C";
+type MarketTab = "boats" | "spare_parts";
+
+const THEMES: ThalvoTheme[] = ["system", "day", "night"];
+const PREVIEW_OWNER = "preview-owner";
+
+const MOCK_BOATS: BoatListing[] = [
+  {
+    id: "b1",
+    title: "2021 Beneteau Oceanis 40.1",
+    year: 2021,
+    price: 285000,
+    currency: "EUR",
+    marina: "Göcek D-Marin",
+    region: "Göcek",
+    hull: "sail",
+    loaM: 12.87,
+    beamM: 4.18,
+    draftM: 2.17,
+    engineBrand: "Yanmar 45 HP",
+    engineHp: 45,
+    engineHours: 420,
+    fuel: "diesel",
+    flag: "Türkiye",
+    cabins: 3,
+    berths: 6,
+    cruiseKn: 7,
+    fuelTankL: 200,
+    waterTankL: 330,
+    lat: 36.7578,
+    lng: 28.9412,
+    equipment: ["Bow Thruster", "Autopilot", "Solar"],
+    description: "Ege için bakımlı cruiser. Son sezon Göcek’te bağlandı.",
+    seller: "Ege Broker Desk",
+    sellerPhone: "+905321112233",
+    hue: "navy",
+    status: "live",
+  },
+  {
+    id: "b2",
+    title: "2019 Axopar 28 Cabin",
+    year: 2019,
+    price: 168000,
+    currency: "EUR",
+    marina: "Bodrum Milta",
+    region: "Bodrum",
+    hull: "motor",
+    loaM: 9.1,
+    beamM: 2.95,
+    draftM: 0.85,
+    engineBrand: "Mercury Verado 300",
+    engineHp: 300,
+    engineHours: 310,
+    fuel: "petrol",
+    flag: "Türkiye",
+    cabins: 1,
+    berths: 2,
+    cruiseKn: 28,
+    fuelTankL: 280,
+    waterTankL: 80,
+    lat: 37.0342,
+    lng: 27.4298,
+    equipment: ["Joystick", "Chartplotter", "T-Top"],
+    description: "Günübirlik ve ada geçişleri için hızlı cabin RIB ailesi.",
+    seller: "Bodrum Powerboats",
+    sellerPhone: "+905324445566",
+    hue: "teal",
+    status: "live",
+  },
+  {
+    id: "b3",
+    title: "2018 Lagoon 42",
+    year: 2018,
+    price: 420000,
+    currency: "EUR",
+    marina: "Marmaris Yacht Marina",
+    region: "Marmaris",
+    hull: "catamaran",
+    loaM: 12.8,
+    beamM: 7.7,
+    draftM: 1.25,
+    engineBrand: "Yanmar 2x57 HP",
+    engineHp: 114,
+    engineHours: 980,
+    fuel: "diesel",
+    flag: "Malta",
+    cabins: 4,
+    berths: 8,
+    cruiseKn: 8,
+    fuelTankL: 300,
+    waterTankL: 300,
+    lat: 36.851,
+    lng: 28.274,
+    equipment: ["Generator", "Watermaker", "Air Conditioning"],
+    description: "Aile ve charter için geniş katamaran; marmaris bağlama.",
+    seller: "Marmaris Yacht Desk",
+    sellerPhone: "+905327778899",
+    hue: "gold",
+    ownerId: PREVIEW_OWNER,
+    status: "live",
+  },
+];
 
 function MarketplacePreviewPage() {
   const { t, i18n } = useTranslation();
-  const [design, setDesign] = useState<DesignId>("C"); // C is now the app default
+  const { theme, choose } = useThalvoTheme();
+  const [design, setDesign] = useState<DesignId>("C");
+  const [tab, setTab] = useState<MarketTab>("boats");
   const [toast, setToast] = useState<string | null>(null);
+  const [boats, setBoats] = useState<BoatListing[]>(MOCK_BOATS);
   const rawParts = useMemo(
     () => MOCK_PARTS.map((p, i) => ({ id: p.id, created_at: new Date(Date.now() - i * 86400000).toISOString() })),
     [],
@@ -204,7 +310,7 @@ function MarketplacePreviewPage() {
     onAskAi: (p: PartCardData) => setToast(`THALVO AI · ${p.name} (önizleme)`),
   };
 
-  const catalog =
+  const partsCatalog =
     design === "B" ? (
       <PartsCatalogShowroom
         parts={MOCK_PARTS}
@@ -222,58 +328,62 @@ function MarketplacePreviewPage() {
     );
 
   return (
-    <div
-      className={
-        design === "B"
-          ? "thalvo-dark thalvo-catalog min-h-dvh bg-[#0A192F] px-4 py-6 text-white sm:px-6"
-          : "min-h-dvh bg-[#EEF2F6] px-4 py-6 text-slate-900 sm:px-6"
-      }
-    >
+    <div className="thalvo-dark thalvo-cockpit thalvo-desk min-h-dvh bg-[var(--desk-canvas)] px-4 py-6 sm:px-6">
       <div className="mx-auto w-full max-w-6xl space-y-4">
-        <div
-          className={
-            "rounded-xl border px-4 py-3 text-[12px] leading-relaxed " +
-            (design === "B"
-              ? "border-[color:color-mix(in_srgb,#F5B942_40%,transparent)] bg-[color:color-mix(in_srgb,#F5B942_12%,transparent)] text-[#F5B942]"
-              : "border-slate-300 bg-white text-slate-700 shadow-sm")
-          }
-        >
-          <p className="font-semibold uppercase tracking-[0.14em]">
-            Tasarım C seçildi · B arşiv · canlıya yazılmaz
+        <div className="rounded-xl border border-[var(--desk-border)] bg-[var(--desk-paper)] px-4 py-3 text-[12px] leading-relaxed text-[var(--desk-ink)] shadow-[var(--desk-shadow)]">
+          <p className="font-semibold uppercase tracking-[0.14em] text-[var(--desk-muted)]">
+            Önizleme · bot + yedek parça aynı tezgâh
           </p>
-          <p className="mt-1 opacity-90">
-            <strong>Tasarım C</strong> artık `/app/marketplace` varsayılanı. <strong>B</strong> arşivde duruyor;
-            karşılaştırma için geçiş yapabilirsiniz.
+          <p className="mt-1 text-[var(--desk-muted)]">
+            Tema siteyle aynı kaynaktan gelir: <strong>sistem / gündüz / gece</strong>. Canlıya yazılmaz.
           </p>
-          <div className="mt-3 inline-flex rounded-xl border border-current/20 p-0.5">
-            <button
-              type="button"
-              onClick={() => setDesign("B")}
-              className={
-                "h-9 rounded-lg px-3 text-[11px] font-bold " +
-                (design === "B" ? "bg-[#F5B942] text-[#0A192F]" : "opacity-70 hover:opacity-100")
-              }
-            >
-              {t("marketplace.catalog.design_b")}
-            </button>
-            <button
-              type="button"
-              onClick={() => setDesign("C")}
-              className={
-                "h-9 rounded-lg px-3 text-[11px] font-bold " +
-                (design === "C" ? "bg-[#0A192F] text-white" : "opacity-70 hover:opacity-100")
-              }
-            >
-              {t("marketplace.catalog.design_c")}
-            </button>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <div className="inline-flex rounded-xl border border-[var(--desk-border)] p-0.5">
+              {THEMES.map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => choose(id)}
+                  className={
+                    "h-9 rounded-lg px-3 text-[11px] font-bold uppercase " +
+                    (theme === id
+                      ? "bg-[var(--desk-accent)] text-[var(--desk-accent-fg)]"
+                      : "text-[var(--desk-muted)] hover:text-[var(--desk-ink)]")
+                  }
+                >
+                  {id === "system" ? "Sistem" : id === "day" ? "Gündüz" : "Gece"}
+                </button>
+              ))}
+            </div>
+            <div className="inline-flex rounded-xl border border-[var(--desk-border)] p-0.5">
+              <button
+                type="button"
+                onClick={() => setDesign("B")}
+                className={
+                  "h-9 rounded-lg px-3 text-[11px] font-bold " +
+                  (design === "B"
+                    ? "bg-[var(--desk-price)] text-[#0A192F]"
+                    : "text-[var(--desk-muted)] hover:text-[var(--desk-ink)]")
+                }
+              >
+                {t("marketplace.catalog.design_b")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setDesign("C")}
+                className={
+                  "h-9 rounded-lg px-3 text-[11px] font-bold " +
+                  (design === "C"
+                    ? "bg-[var(--desk-accent)] text-[var(--desk-accent-fg)]"
+                    : "text-[var(--desk-muted)] hover:text-[var(--desk-ink)]")
+                }
+              >
+                {t("marketplace.catalog.design_c")}
+              </button>
+            </div>
           </div>
           <div className="mt-2">
-            <Link
-              to="/"
-              className={
-                "text-[11px] font-semibold " + (design === "B" ? "text-cyan-300" : "text-[#0A192F]")
-              }
-            >
+            <Link to="/" className="text-[11px] font-semibold text-[var(--desk-ink)]">
               ← Ana sayfa
             </Link>
           </div>
@@ -281,31 +391,62 @@ function MarketplacePreviewPage() {
 
         {design === "B" ? (
           <MarketplaceShell eyebrow="THALVO · Marine Logistics" title="Pazar yeri">
-            {catalog}
+            {partsCatalog}
           </MarketplaceShell>
         ) : (
           <div className="space-y-3">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--desk-muted)]">
                 THALVO · Marine Logistics
               </p>
-              <h1 className="font-[Montserrat,ui-sans-serif,system-ui] text-2xl font-bold text-[#0A192F]">
-                Pazar yeri
-              </h1>
+              <h1 className="thalvo-desk-title text-2xl tracking-tight text-[var(--desk-ink)]">Pazar yeri</h1>
             </div>
-            {catalog}
+            <div
+              className="grid w-full grid-cols-2 gap-1.5"
+              role="tablist"
+              aria-label={t("marketplace.category.label")}
+            >
+              {(["boats", "spare_parts"] as const).map((c) => {
+                const selected = tab === c;
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    role="tab"
+                    aria-selected={selected}
+                    onClick={() => setTab(c)}
+                    className={
+                      "h-10 rounded-xl border px-2.5 text-[12px] font-semibold " +
+                      (selected
+                        ? "border-[var(--desk-accent)] bg-[var(--desk-accent)] text-[var(--desk-accent-fg)]"
+                        : "border-[var(--desk-border)] bg-[var(--desk-paper)] text-[var(--desk-muted)]")
+                    }
+                  >
+                    {t(`marketplace.category.${c}`)}
+                  </button>
+                );
+              })}
+            </div>
+            {tab === "boats" ? (
+              <BoatsTendersBoard
+                extraListings={boats}
+                ownerId={PREVIEW_OWNER}
+                onEdit={(boat) => setToast(`Düzenle · ${boat.title} (önizleme)`)}
+                onSetStatus={(id, status) => {
+                  setBoats((prev) => prev.map((b) => (b.id === id ? { ...b, status } : b)));
+                  setToast(status === "paused" ? "İlan yayından kaldırıldı (önizleme)" : "İlan yayında (önizleme)");
+                }}
+              />
+            ) : (
+              partsCatalog
+            )}
           </div>
         )}
 
         {toast && (
           <div
             role="status"
-            className={
-              "fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-xl border px-4 py-2 text-[12px] shadow-xl " +
-              (design === "B"
-                ? "border-cyan-400/30 bg-[#0f1c2e] text-cyan-100"
-                : "border-slate-200 bg-white text-slate-800")
-            }
+            className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-xl border border-[var(--desk-border)] bg-[var(--desk-paper)] px-4 py-2 text-[12px] text-[var(--desk-ink)] shadow-xl"
           >
             {toast}
             <button type="button" className="ml-3 opacity-50 hover:opacity-100" onClick={() => setToast(null)}>
