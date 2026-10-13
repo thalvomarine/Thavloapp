@@ -13,6 +13,12 @@ can pick them up without re-discovering.
   persisted. Add a table + RLS + admin read policy in a future phase.
 - **`MaskedContact` reveal.** Currently UI-only; must be gated by a
   server RPC that checks role and logs the reveal.
+- **Simulated payments.** `record_payment_intent` still writes
+  `status='secured'` with `provider='simulated'`. Acceptable for pilot
+  while UI labels demo mode; replace with PSP webhook before real money.
+  See migration `20261013213000_launch_security_hardening.sql`.
+- **CSP.** Vercel ships HSTS / frame / nosniff / Permissions-Policy;
+  Content-Security-Policy still deferred (Leaflet + Supabase + fonts).
 
 ## Reputation
 

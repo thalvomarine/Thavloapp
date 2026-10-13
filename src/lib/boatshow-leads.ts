@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { SUPERADMIN_EMAIL } from "@/lib/superadmin";
+import { OPS_CONTACT_EMAIL } from "@/lib/superadmin";
 
 export type BoatshowLeadKind =
   | "brand"
@@ -55,6 +55,6 @@ export async function submitBoatshowLead(input: BoatshowLeadInput): Promise<Boat
   );
   return {
     stored: "mailto",
-    mailto: `mailto:${SUPERADMIN_EMAIL}?subject=${subject}&body=${body}`,
+    mailto: `mailto:${OPS_CONTACT_EMAIL}?subject=${subject}&body=${body}`,
   };
 }

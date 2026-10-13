@@ -148,7 +148,8 @@ export function useProfile(userId: string | undefined) {
     // role (previously defaulted to "Client"), which caused Provider users to
     // render as Captain when the fetch was slow.
     void (async () => {
-      const claimedRole = await claimSignupRoleOnce();
+      // Syncs requested_role from signup metadata; does not promote privileges.
+      await claimSignupRoleOnce();
       const [profileRes, contactRes] = await Promise.all([
         supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
         skipMissing("profile_contacts")
@@ -177,10 +178,7 @@ export function useProfile(userId: string | undefined) {
             ? asProfile({
                 ...row,
                 phone: contactRes.data?.phone ?? null,
-                role:
-                  row.role === "Client" && (claimedRole === "Supplier" || claimedRole === "Provider")
-                    ? claimedRole
-                    : row.role,
+                role: row.role,
               })
             : null;
           if (next) {

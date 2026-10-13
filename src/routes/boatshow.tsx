@@ -6,7 +6,7 @@ import { Wordmark } from "@/components/Wordmark";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { PublicFooter } from "@/components/public/PublicFooter";
 import { SeaBackdrop } from "@/components/brand/SeaBackdrop";
-import { SUPERADMIN_EMAIL } from "@/lib/superadmin";
+import { OPS_CONTACT_EMAIL } from "@/lib/superadmin";
 import { submitBoatshowLead, type BoatshowLeadKind } from "@/lib/boatshow-leads";
 import { Anchor, Ship, Store, Wrench } from "lucide-react";
 
@@ -203,7 +203,7 @@ function BoatshowPage() {
                 {busy ? t("common.loading") : t("boatshow.lead_submit")}
               </button>
               <p className="text-[11px] text-white/40">
-                {t("boatshow.lead_privacy", { email: SUPERADMIN_EMAIL })}
+                {t("boatshow.lead_privacy", { email: OPS_CONTACT_EMAIL })}
               </p>
             </form>
           )}
