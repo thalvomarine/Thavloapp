@@ -1033,7 +1033,12 @@
       "clear_all": "Clear all filters",
       "empty_catalog_title": "Catalogue is empty",
       "empty_catalog_body": "OEM parts appear here as dealers stock them. This is an empty state, not a load error.",
-      "skill_pass_note": "MarineOS skill · #0A192F / #00F0FF / #F5B942"
+      "skill_pass_note": "MarineOS skill · #0A192F / #00F0FF / #F5B942",
+      "day_eyebrow": "Day desk · authorised dealer",
+      "day_lede": "A light parts counter — OEM filters, stock, and marina delivery.",
+      "hide_rail": "Hide panel",
+      "design_b": "Design B (kept)",
+      "design_c": "Design C (alternative)"
     }
   },
   "shop_cart": {
