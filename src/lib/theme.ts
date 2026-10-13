@@ -37,7 +37,9 @@ export function writeThalvoTheme(theme: ThalvoTheme) {
 }
 
 export function useThalvoTheme() {
-  const [theme, setTheme] = useState<ThalvoTheme>("system");
+  const [theme, setTheme] = useState<ThalvoTheme>(() =>
+    typeof document !== "undefined" ? readThalvoTheme() : "system",
+  );
   useEffect(() => {
     const current = readThalvoTheme();
     setTheme(current);

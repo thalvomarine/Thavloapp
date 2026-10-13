@@ -479,7 +479,7 @@ function Field({ label, value, onChange, type = "text", placeholder }: {
     <div>
       <label className="text-xs font-bold text-muted-foreground">{label}</label>
       <input type={type} value={value} placeholder={placeholder} onChange={(e) => onChange(e.target.value)}
-        className="mt-1 w-full h-11 rounded-xl border border-input bg-background px-3.5 text-sm" />
+        className="mt-1 h-11 w-full rounded-xl border border-input bg-background px-3.5 text-sm text-foreground" />
     </div>
   );
 }

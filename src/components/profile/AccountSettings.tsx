@@ -60,7 +60,7 @@ export function AccountSettings() {
         onClick={() => void signOut()}
         className="h-11 w-full rounded-xl border border-white/15 text-[13px] font-semibold text-white/80"
       >
-        {t("profile.sign_out")}
+        {t("profile.sign_out", { defaultValue: t("common.sign_out") })}
       </button>
     </GlassPanel>
   );

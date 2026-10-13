@@ -11,22 +11,22 @@ interface Props {
 
 const TONE: Record<LeakRisk, { wrap: string; icon: ReactNode; label: string }> = {
   safe: {
-    wrap: "border-emerald-400/25 bg-emerald-400/10 text-emerald-200",
+    wrap: "thalvo-risk-safe border-emerald-400/25 bg-emerald-400/10 text-emerald-200",
     icon: <ShieldCheck className="size-4" />,
     label: "Protected",
   },
   low: {
-    wrap: "border-white/15 bg-white/[0.04] text-white/80",
+    wrap: "thalvo-risk-low border-white/15 bg-white/[0.04] text-white/80",
     icon: <ShieldAlert className="size-4" />,
     label: "Heads up",
   },
   medium: {
-    wrap: "border-amber-400/30 bg-amber-400/10 text-amber-200",
+    wrap: "thalvo-risk-medium border-amber-400/30 bg-amber-400/10 text-amber-200",
     icon: <AlertTriangle className="size-4" />,
     label: "Warning",
   },
   high: {
-    wrap: "border-rose-500/40 bg-rose-500/10 text-rose-200",
+    wrap: "thalvo-risk-high border-rose-500/40 bg-rose-500/10 text-rose-200",
     icon: <AlertTriangle className="size-4" />,
     label: "Blocked",
   },
