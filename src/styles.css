@@ -478,15 +478,15 @@
   justify-content: center;
   gap: 0.45rem;
   border-radius: 0.5rem;
-  background: #00f0ff;
+  background: #f5b942;
   padding: 0 1.75rem;
   font-size: 0.875rem;
   font-weight: 700;
-  color: #06101c;
+  color: #1a1406;
   transition: background 160ms ease, transform 160ms ease;
 }
 .landing-cta-primary:hover {
-  background: #67f6ff;
+  background: #ffc857;
 }
 .landing-cta-primary:disabled {
   opacity: 0.55;
@@ -523,7 +523,7 @@
   transition: border-color 160ms ease, background 160ms ease;
 }
 .landing-field:focus {
-  border-color: rgb(0 240 255 / 0.45);
+  border-color: rgb(245 185 66 / 0.55);
   background: rgb(255 255 255 / 0.06);
 }
 .landing-hero-img {

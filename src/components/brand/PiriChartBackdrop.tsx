@@ -2,7 +2,8 @@ import piriUrl from "@/assets/thalvo-piri-chart-bg.jpg";
 
 /**
  * THALVO-exclusive hero atmosphere inspired by Piri Reis portolan charts.
- * Decorative only — invented coastlines and rhumb geometry; not a navigational chart.
+ * Decorative only — invented coastlines; not a navigational chart.
+ * Chart artwork (including the compass rose) lives in the JPG — no SVG sunburst overlay.
  */
 export function PiriChartBackdrop({ className = "" }: { className?: string }) {
   return (
@@ -19,61 +20,6 @@ export function PiriChartBackdrop({ className = "" }: { className?: string }) {
       <div className="absolute inset-0 bg-[#06101c]/42" />
       <div className="absolute inset-0 bg-gradient-to-b from-[#06101c]/75 via-transparent to-[#06101c]/92" />
       <div className="absolute inset-0 bg-gradient-to-r from-[#06101c]/35 via-transparent to-[#06101c]/25" />
-
-      {/* Sharp vector rhumb + rose layer (THALVO ink) — no radial sun glow */}
-      <svg
-        className="absolute inset-0 size-full opacity-[0.55]"
-        viewBox="0 0 1600 900"
-        preserveAspectRatio="xMidYMid slice"
-        focusable="false"
-      >
-        {/* Rhumb rays from a portolan rose (lower-right) */}
-        <g
-          stroke="#D4AF37"
-          strokeOpacity="0.22"
-          strokeWidth="0.9"
-          fill="none"
-          transform="translate(1240 640)"
-        >
-          {Array.from({ length: 32 }, (_, i) => {
-            const a = (i * Math.PI) / 16;
-            const x2 = Math.cos(a) * 520;
-            const y2 = Math.sin(a) * 520;
-            return <line key={i} x1="0" y1="0" x2={x2} y2={y2} />;
-          })}
-          <circle r="56" stroke="#F5B942" strokeOpacity="0.32" />
-          <circle r="34" stroke="#00F0FF" strokeOpacity="0.16" />
-          <circle r="6" stroke="#F5B942" strokeOpacity="0.28" />
-          {/* 8-point rose tips — stroke only, no filled sun disk */}
-          {[0, 45, 90, 135, 180, 225, 270, 315].map((deg) => (
-            <path
-              key={deg}
-              d="M0 -58 L6 -28 L0 -34 L-6 -28 Z"
-              fill="none"
-              stroke="#F5B942"
-              strokeOpacity="0.3"
-              transform={`rotate(${deg})`}
-            />
-          ))}
-        </g>
-
-        {/* Secondary rose — upper left, quieter */}
-        <g
-          stroke="#00F0FF"
-          strokeOpacity="0.12"
-          strokeWidth="0.7"
-          fill="none"
-          transform="translate(220 200)"
-        >
-          {Array.from({ length: 16 }, (_, i) => {
-            const a = (i * Math.PI) / 8;
-            return (
-              <line key={i} x1="0" y1="0" x2={Math.cos(a) * 280} y2={Math.sin(a) * 280} />
-            );
-          })}
-          <circle r="28" stroke="#D4AF37" strokeOpacity="0.2" />
-        </g>
-      </svg>
     </div>
   );
 }

@@ -124,10 +124,10 @@ export function BrandLanding() {
             <h1 className="thalvo-display text-[clamp(3.6rem,14vw,7rem)] leading-[0.88] tracking-[0.06em] text-white">
               THALVO
             </h1>
-            <p className="mt-5 text-[clamp(1.05rem,2.4vw,1.4rem)] font-semibold tracking-[0.04em] text-[#00F0FF]">
+            <p className="mt-5 text-[clamp(1.05rem,2.4vw,1.4rem)] font-semibold tracking-[0.04em] text-[#F5B942]">
               {t("landing.slogan")}
             </p>
-            <div className="mx-auto mt-4 h-px w-16 bg-[#00F0FF]/80" />
+            <div className="mx-auto mt-4 h-px w-16 bg-[#F5B942]/80" />
             <p className="mx-auto mt-5 max-w-md text-[15px] leading-relaxed text-white/78 sm:text-base">
               {t("landing.lede")}
             </p>
@@ -151,7 +151,7 @@ export function BrandLanding() {
       {/* ——— SOLUTIONS ——— */}
       <section id="solutions" className="scroll-mt-24 border-t border-white/[0.07] px-5 py-20 sm:px-8 lg:px-12">
         <div className="mx-auto max-w-5xl">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#00F0FF]/80">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#F5B942]/80">
             {t("landing.nav_solutions")}
           </p>
           <h2 className="thalvo-display mt-3 max-w-xl text-[clamp(1.8rem,4vw,2.6rem)] leading-tight tracking-wide text-white">
@@ -191,12 +191,12 @@ export function BrandLanding() {
           className="pointer-events-none absolute inset-0 opacity-[0.07]"
           style={{
             backgroundImage:
-              "radial-gradient(circle at 12% 20%, #F5B942 0.6px, transparent 0.7px), radial-gradient(circle at 88% 70%, #00F0FF 0.5px, transparent 0.6px)",
+              "radial-gradient(circle at 12% 20%, #F5B942 0.6px, transparent 0.7px), radial-gradient(circle at 88% 70%, #F5B942 0.5px, transparent 0.6px)",
             backgroundSize: "28px 28px, 36px 36px",
           }}
         />
         <div className="pointer-events-none absolute -right-24 top-10 size-[28rem] rounded-full bg-[#F5B942]/[0.04] blur-3xl" />
-        <div className="pointer-events-none absolute -left-16 bottom-0 size-[22rem] rounded-full bg-[#00F0FF]/[0.04] blur-3xl" />
+        <div className="pointer-events-none absolute -left-16 bottom-0 size-[22rem] rounded-full bg-[#F5B942]/[0.04] blur-3xl" />
 
         <div className="relative mx-auto max-w-6xl px-5 py-20 sm:px-8 lg:px-12 lg:py-24">
           <div className="mb-12 flex flex-col gap-4 border-b border-white/[0.08] pb-10 lg:flex-row lg:items-end lg:justify-between">
@@ -221,7 +221,7 @@ export function BrandLanding() {
                   key={line}
                   className="border-l border-[#D4AF37]/35 pl-3 text-[12px] leading-snug text-white/55"
                 >
-                  <span className="thalvo-num block text-[10px] tracking-[0.2em] text-[#00F0FF]/70">
+                  <span className="thalvo-num block text-[10px] tracking-[0.2em] text-[#F5B942]/70">
                     0{i + 1}
                   </span>
                   <span className="mt-1 block">{line}</span>
@@ -232,11 +232,11 @@ export function BrandLanding() {
 
           <div className="relative overflow-hidden rounded-[1.25rem] border border-[#D4AF37]/20 bg-[#0a1628]/95 shadow-[inset_0_1px_0_rgba(212,175,55,0.12)]">
             <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-[#F5B942]/55 to-transparent" />
-            <div className="pointer-events-none absolute left-0 top-0 h-full w-px bg-gradient-to-b from-[#F5B942]/35 via-transparent to-[#00F0FF]/20" />
+            <div className="pointer-events-none absolute left-0 top-0 h-full w-px bg-gradient-to-b from-[#F5B942]/35 via-transparent to-[#F5B942]/20" />
 
             {sent ? (
               <div className="flex min-h-[320px] flex-col justify-center px-6 py-14 sm:px-10">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#00F0FF]/80">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#F5B942]/80">
                   {t("landing.partner_kicker")}
                 </p>
                 <p className="thalvo-display mt-3 text-3xl text-white">
@@ -411,7 +411,7 @@ export function BrandLanding() {
 function Feature({ n, title, body }: { n: string; title: string; body: string }) {
   return (
     <div className="border-t border-white/10 pt-5">
-      <p className="thalvo-num text-[11px] tracking-[0.2em] text-[#00F0FF]/70">{n}</p>
+      <p className="thalvo-num text-[11px] tracking-[0.2em] text-[#F5B942]/70">{n}</p>
       <p className="mt-3 text-[15px] font-semibold text-white">{title}</p>
       <p className="mt-2 text-[13px] leading-relaxed text-white/55">{body}</p>
     </div>
