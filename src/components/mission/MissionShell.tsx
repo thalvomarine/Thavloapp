@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { Wordmark } from "@/components/Wordmark";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { ThalvoChat } from "@/components/ThalvoChat";
+import { QuickSellHost } from "@/components/marketplace/QuickSellHost";
 import { AccountMenuButton } from "@/components/mission/AccountMenuButton";
 import { SosSheet } from "@/components/mission/SosSheet";
 import { EmergencyServiceSheet } from "@/components/mission/EmergencyServiceSheet";
@@ -328,6 +329,7 @@ export function MissionShell({ profile, children, fullBleed = false }: Props) {
       {/* Above the dock on every screen except the chart, where ChartFabStack
           owns the corner and opens this same panel through THALVO_AI_OPEN_EVENT. */}
       <ThalvoChat showLauncher={!fullBleed} />
+      <QuickSellHost profile={profile} />
 
       {hasSos &&
         sheetHostReady &&

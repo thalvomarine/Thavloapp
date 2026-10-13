@@ -10,6 +10,7 @@ import {
   rankNearbyPoints,
 } from "@/lib/aiCaptainService";
 import type { CaptainAction, CaptainCockpitContext, NearbyChartPoint } from "@/lib/ai-captain-types";
+import { detectBrokerIntent } from "@/lib/thalvo-ai/brokerage";
 import { answerFromTraining, retrieveMarineNotes } from "@/lib/thalvo-ai/domain";
 import { fetchMarineWeather } from "@/lib/thalvo-ai/marine-weather";
 import { loadMemoryBlock, rememberFact, saveChatLine } from "@/lib/thalvo-ai/memory-store";
@@ -45,6 +46,8 @@ export interface EmbeddedTurnResult {
   actions: CaptainAction[];
   weather: EmbeddedWeather | null;
   emergency: boolean;
+  /** Client opens the Hızlı Sat listing sheet (details + photos). */
+  openSellForm: boolean;
 }
 
 export async function runEmbeddedTurn(input: {
@@ -67,6 +70,8 @@ export async function runEmbeddedTurn(input: {
 
   const position = validPosition(input.position);
   const trained = await answerFromTraining({ text: last.content, lang: input.lang, position });
+  const brokerIntent = detectBrokerIntent(last.content);
+  const openSellForm = brokerIntent === "sell";
   await saveChatLine(
     input.supabase,
     input.userId,
@@ -76,7 +81,10 @@ export async function runEmbeddedTurn(input: {
   );
 
   const apiKey = (process.env.THALVO_AI_API_KEY ?? process.env.LOVABLE_API_KEY ?? "").trim();
-  const needsModel = Boolean(apiKey) && Boolean(input.image || !trained.confident);
+  // Run the cloud model for photos, weak local drafts, and free-form/general questions.
+  const needsModel =
+    Boolean(apiKey) &&
+    Boolean(input.image || !trained.confident || trained.domain === "general");
   if (!needsModel) {
     const photo =
       input.image && !apiKey
@@ -88,10 +96,11 @@ export async function runEmbeddedTurn(input: {
     await saveChatLine(input.supabase, input.userId, input.sessionId, "assistant", text);
     return {
       text,
-      route: null,
+      route: openSellForm ? "/app/marketplace" : null,
       actions: [],
       weather: trained.weather,
       emergency: trained.emergency,
+      openSellForm,
     };
   }
   if (!allowLocalQuota(input.userId)) throw new Error("ai_rate_limited");
@@ -131,10 +140,11 @@ export async function runEmbeddedTurn(input: {
     await saveChatLine(input.supabase, input.userId, input.sessionId, "assistant", trained.text);
     return {
       text: trained.text,
-      route: null,
+      route: openSellForm ? "/app/marketplace" : null,
       actions: [],
       weather: trained.weather,
       emergency: trained.emergency,
+      openSellForm,
     };
   }
 
@@ -145,7 +155,15 @@ export async function runEmbeddedTurn(input: {
   const emergency = /\[EMERGENCY\]/i.test(result.text);
   const text = result.text.replace(/\[EMERGENCY\]/gi, "").trim() || fallback(input.lang);
   await saveChatLine(input.supabase, input.userId, input.sessionId, "assistant", text);
-  return { text, emergency, ...harvested };
+  const sellFromTool = harvested.openSellForm || openSellForm;
+  return {
+    text,
+    emergency,
+    actions: harvested.actions,
+    route: harvested.route ?? (sellFromTool ? "/app/marketplace" : null),
+    weather: harvested.weather,
+    openSellForm: sellFromTool,
+  };
 }
 
 function createEmbeddedTools(supabase: Client, userId: string, nearby: NearbyChartPoint[]) {
@@ -176,6 +194,14 @@ function createEmbeddedTools(supabase: Client, userId: string, nearby: NearbyCha
         if (!route) return { ok: false as const, error: "unknown_route" };
         return { ok: true as const, route, redirect: true as const };
       },
+    }),
+    openQuickSell: tool({
+      description:
+        "Open the Hızlı Sat / Quick sell boat listing form so the captain can enter vessel details and photos. Use when they want to sell or list a boat.",
+      inputSchema: z.object({
+        reason: z.string().max(200).optional(),
+      }),
+      execute: async () => ({ ok: true as const, openSellForm: true as const, route: "/app/marketplace" as const }),
     }),
     rememberFact: tool({
       description:
@@ -218,10 +244,11 @@ function toModelMessages(messages: EmbeddedChatMessage[], image?: EmbeddedChatIm
   return modelMessages;
 }
 
-function harvest(outputs: unknown[]): Pick<EmbeddedTurnResult, "actions" | "route" | "weather"> {
+function harvest(outputs: unknown[]): Pick<EmbeddedTurnResult, "actions" | "route" | "weather" | "openSellForm"> {
   const actions: CaptainAction[] = [];
   let route: AppPath | null = null;
   let weather: EmbeddedWeather | null = null;
+  let openSellForm = false;
   for (const output of outputs) {
     if (!output || typeof output !== "object") continue;
     const record = output as Record<string, unknown>;
@@ -229,6 +256,10 @@ function harvest(outputs: unknown[]): Pick<EmbeddedTurnResult, "actions" | "rout
     if (action) actions.push(action);
     if (record.ok === true && typeof record.route === "string") {
       route = resolvePlatformRoute(record.route) ?? route;
+    }
+    if (record.ok === true && record.openSellForm === true) {
+      openSellForm = true;
+      route = resolvePlatformRoute("/app/marketplace") ?? route;
     }
     if (
       record.ok === true &&
@@ -239,7 +270,7 @@ function harvest(outputs: unknown[]): Pick<EmbeddedTurnResult, "actions" | "rout
       weather = { alert: record.alert, summaryTr: record.summaryTr, summaryEn: record.summaryEn };
     }
   }
-  return { actions, route, weather };
+  return { actions, route, weather, openSellForm };
 }
 
 function asAction(value: unknown): CaptainAction | null {

@@ -18,7 +18,7 @@ description: >-
 - Captain signup stays the boat flow. Dealer signup is a company desk (contact, legal name, home marina, phone) and opens `/app/dealer`, not the vessel passport.
 - Supabase email confirmation stays on. After signup the visitor enters the public chart with an unverified-email warning. The cockpit opens after the confirmation link.
 - An empty catalogue is an empty state, not a load error.
-- THALVO AI answers seamanship, machinery, and weather without inventing wave heights. If the server function fails, the client still answers from `answerFromTraining`.
+- THALVO AI answers seamanship, machinery, weather, brokerage/appraisal, and free-form help without inventing wave heights or survey prices. “Hızlı sat” opens the boat listing form (details + photos) via `QuickSellHost`. If the server function fails, the client still answers from `answerFromTraining`.
 - Do not commit route-drawing leftovers, `print/`, whitepaper drafts, or local config copies. Do not print Supabase keys. Payments stay simulated and labelled.
 - `routeTree.gen.ts` is generated. Do not hand-edit it.
 - Live site: push `main`. GitHub deploys thalvo.org. Do not redeploy an old TanStack Start build.

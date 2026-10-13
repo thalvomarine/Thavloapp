@@ -16,20 +16,24 @@ import { openThalvoSos } from "@/lib/sos-bus";
 import { THALVO_AI_OPEN_EVENT } from "@/lib/thalvo-ai-bus";
 import { askThalvoChat, loadThalvoChat } from "@/lib/thalvo-chat.functions";
 import { answerFromTraining } from "@/lib/thalvo-ai/domain";
+import { detectBrokerIntent } from "@/lib/thalvo-ai/brokerage";
+import { openThalvoQuickSell } from "@/lib/quick-sell-bus";
 
 const SESSION_KEY = "thalvo-ai-session";
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 
 const PILLS_TR = [
+  "Hızlı sat — teknemi ilana koy",
+  "Fiyat biç: 2018 Bavaria 40, 12 m yelkenli",
   "Motor hararet yaptı, sade dil raporu yazar mısın?",
   "Göcek'te deniz durumu nasıl?",
-  "Bu rüzgârda alargaya demirlenir mi?",
 ];
 const PILLS_EN = [
+  "Quick sell — list my boat",
+  "Appraise: 2018 Bavaria 40, 12 m sail",
   "Engine is overheating — write a plain-language report.",
   "What is the sea state at Göcek?",
-  "Can I anchor in this wind?",
 ];
 
 interface ChatLine {
@@ -123,9 +127,19 @@ function ThalvoChatLive({ showLauncher }: { showLauncher: boolean }) {
 
   const pills = lang === "en" ? PILLS_EN : PILLS_TR;
 
-  const applyReply = (replyId: string, route: string | null, actions: CaptainAction[]) => {
+  const applyReply = (
+    replyId: string,
+    route: string | null,
+    actions: CaptainAction[],
+    openSellForm?: boolean,
+  ) => {
+    if (openSellForm) {
+      setOpen(false);
+      openThalvoQuickSell();
+    }
     const path = route ? resolvePlatformRoute(route) : null;
-    if (path) void navigate({ to: path });
+    if (path && !openSellForm) void navigate({ to: path });
+    if (path && openSellForm) void navigate({ to: path });
     for (const action of actions) {
       if (action.tool === "focusBay") {
         requestMapFocus({ lat: action.lat, lng: action.lng, zoom: action.zoom, label: action.bayName });
@@ -168,7 +182,8 @@ function ThalvoChatLive({ showLauncher }: { showLauncher: boolean }) {
         },
       });
       const id = crypto.randomUUID();
-      applyReply(id, reply.route, reply.actions ?? []);
+      const sell = Boolean(reply.openSellForm) || detectBrokerIntent(caption) === "sell";
+      applyReply(id, reply.route, reply.actions ?? [], sell);
       const summary = reply.weather ? (lang === "en" ? reply.weather.summaryEn : reply.weather.summaryTr) : undefined;
       setMessages((current) => [
         ...current,
@@ -190,6 +205,10 @@ function ThalvoChatLive({ showLauncher }: { showLauncher: boolean }) {
           lang,
           position: getCockpitContext().position,
         });
+        if (detectBrokerIntent(caption) === "sell") {
+          setOpen(false);
+          openThalvoQuickSell();
+        }
         setMessages((current) => [
           ...current,
           { id: crypto.randomUUID(), role: "assistant", content: trained.text },
@@ -268,7 +287,7 @@ function ThalvoChatLive({ showLauncher }: { showLauncher: boolean }) {
             <div>
               <p className="text-[13px] font-semibold tracking-wide text-white">THALVO AI</p>
               <p className="text-[10px] uppercase tracking-[0.18em] text-cyan-100/70">
-                {lang === "en" ? "Chief engineer" : "Başmühendis"}
+                {lang === "en" ? "Engineer · broker" : "Başmühendis · broker"}
               </p>
             </div>
           </div>
@@ -297,8 +316,8 @@ function ThalvoChatLive({ showLauncher }: { showLauncher: boolean }) {
             <div className="space-y-3">
               <p className="text-sm leading-relaxed text-white/75">
                 {lang === "en"
-                  ? "Ask about an engine fault, the sea state, or where to go in THALVO. A plate photo can be read from the camera button."
-                  : "Motor arızası, deniz durumu veya THALVO'da nereye gideceğini sor. Kamera düğmesiyle plaka fotoğrafı okunur."}
+                  ? "Ask anything I can help with — faults, sea state, brokerage, or THALVO pages. Quick sell opens the listing form for details and photos."
+                  : "Sorabildiğin her şey: arıza, deniz durumu, broker/ekspertiz veya THALVO sayfaları. Hızlı sat ile detay ve fotoğraf formu açılır."}
               </p>
               <div className="flex flex-col gap-2">
                 {pills.map((pill) => (

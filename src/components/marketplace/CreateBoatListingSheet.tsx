@@ -34,6 +34,8 @@ interface Props {
   listingCount: number;
   ownerId: string;
   editing?: BoatListing | null;
+  /** AI “Hızlı Sat” entry uses broker-facing copy. */
+  intent?: "default" | "quick_sell";
   onSaved: (listing: BoatListing) => void | Promise<void>;
 }
 
@@ -136,7 +138,16 @@ function writeGrouped(
   requestAnimationFrame(() => el.setSelectionRange(caret, caret));
 }
 
-export function CreateBoatListingSheet({ open, onClose, sellerName, listingCount, ownerId, editing, onSaved }: Props) {
+export function CreateBoatListingSheet({
+  open,
+  onClose,
+  sellerName,
+  listingCount,
+  ownerId,
+  editing,
+  intent = "default",
+  onSaved,
+}: Props) {
   const { t } = useTranslation();
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormState>(EMPTY);
@@ -290,13 +301,19 @@ export function CreateBoatListingSheet({ open, onClose, sellerName, listingCount
         <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-white/10 bg-[#0a192f]/97 px-4 pb-3 pt-[max(1rem,env(safe-area-inset-top))] sm:pt-4">
           <div className="min-w-0">
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-300">
-              {t("boats.create_eyebrow")}
+              {intent === "quick_sell" && !editing ? t("boats.quick_sell_eyebrow") : t("boats.create_eyebrow")}
             </p>
             <h2 id="thalvo-create-listing-title" className="mt-1 text-base font-semibold text-white">
-              {t(editing ? "boats.edit_listing" : "boats.create_listing")}
+              {editing
+                ? t("boats.edit_listing")
+                : intent === "quick_sell"
+                  ? t("boats.quick_sell_title")
+                  : t("boats.create_listing")}
             </h2>
             <p className="mt-1 text-[11px] text-white/50">
-              {t("boats.step_of", { current: step + 1, total: 4 })} · {steps[step]}
+              {intent === "quick_sell" && !editing
+                ? t("boats.quick_sell_hint")
+                : `${t("boats.step_of", { current: step + 1, total: 4 })} · ${steps[step]}`}
             </p>
           </div>
           <button

@@ -249,6 +249,9 @@
     "view_on_map": "Bulunduğu marinayı haritada göster",
     "create_listing": "İlan Ver",
     "create_eyebrow": "THALVO · Alım-Satım",
+    "quick_sell_eyebrow": "THALVO AI · Hızlı Sat",
+    "quick_sell_title": "Tekneni hızlı sat",
+    "quick_sell_hint": "Detayları ve fotoğrafları gir — ilk görsel kapak olur.",
     "create_published": "İlanınız başarıyla yayına alındı.",
     "save_failed": "İlan kaydedilemedi.",
     "load_failed": "İlanlar yüklenemedi.",
@@ -809,9 +812,9 @@
   },
   "ai": {
     "subtitle": "Deniz asistanınız",
-    "role_line": "Baş Seyir Asistanı",
-    "greeting": "Merhaba! Ege ve Akdeniz için yakıt, tonoz, hava, kural ve arıza konularında yardımcı olabilirim. Nasıl destek olayım?",
-    "placeholder": "Pusula'ya sorun — rota, hava, arıza…",
+    "role_line": "Başmühendis · broker",
+    "greeting": "Merhaba! Arıza, hava, seyir, tekne ekspertizi ve hızlı sat konusunda yardımcı olurum. Nasıl destek olayım?",
+    "placeholder": "Sor — arıza, hava, fiyat biç, hızlı sat…",
     "thinking": "Pusula hizalanıyor…",
     "error": "Bağlantı hatası. Lütfen tekrar deneyin.",
     "autofill_sos": "Acil talep formunu otomatik doldur"

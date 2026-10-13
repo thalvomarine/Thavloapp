@@ -249,6 +249,9 @@
     "view_on_map": "Show marina on chart",
     "create_listing": "Create listing",
     "create_eyebrow": "THALVO · Brokerage",
+    "quick_sell_eyebrow": "THALVO AI · Quick sell",
+    "quick_sell_title": "Sell your boat fast",
+    "quick_sell_hint": "Enter details and photos — the first image is the cover.",
     "create_published": "Your listing is now live.",
     "save_failed": "The listing could not be saved.",
     "load_failed": "Listings could not be loaded.",
@@ -809,9 +812,9 @@
   },
   "ai": {
     "subtitle": "Your marine assistant",
-    "role_line": "Chief navigation officer",
-    "greeting": "Hi! I can help with fuel docks, mooring fees, weather, regulations and diagnostics across the Aegean and Mediterranean. How can I help?",
-    "placeholder": "Ask Compass — navigation, weather, diagnostics…",
+    "role_line": "Engineer · broker",
+    "greeting": "Hi! I can help with faults, weather, seamanship, boat appraisal, and quick sell. How can I help?",
+    "placeholder": "Ask — fault, weather, appraise, quick sell…",
     "thinking": "Compass is aligning…",
     "error": "Connection error. Please try again.",
     "autofill_sos": "Auto-fill emergency request form"
