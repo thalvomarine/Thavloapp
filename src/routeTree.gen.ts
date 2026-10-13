@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BoatshowRouteImport } from './routes/boatshow'
+import { Route as ChartRouteImport } from './routes/chart'
 import { Route as CoverageRouteImport } from './routes/coverage'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as MarketplacePreviewRouteImport } from './routes/marketplace-preview'
@@ -53,6 +54,11 @@ const AuthRoute = AuthRouteImport.update({
 const BoatshowRoute = BoatshowRouteImport.update({
   id: '/boatshow',
   path: '/boatshow',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChartRoute = ChartRouteImport.update({
+  id: '/chart',
+  path: '/chart',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CoverageRoute = CoverageRouteImport.update({
@@ -176,6 +182,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/boatshow': typeof BoatshowRoute
+  '/chart': typeof ChartRoute
   '/coverage': typeof CoverageRoute
   '/marketplace': typeof MarketplaceRoute
   '/marketplace-preview': typeof MarketplacePreviewRoute
@@ -203,6 +210,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/boatshow': typeof BoatshowRoute
+  '/chart': typeof ChartRoute
   '/coverage': typeof CoverageRoute
   '/marketplace': typeof MarketplaceRoute
   '/marketplace-preview': typeof MarketplacePreviewRoute
@@ -232,6 +240,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/boatshow': typeof BoatshowRoute
+  '/chart': typeof ChartRoute
   '/coverage': typeof CoverageRoute
   '/marketplace': typeof MarketplaceRoute
   '/marketplace-preview': typeof MarketplacePreviewRoute
@@ -261,6 +270,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/boatshow'
+    | '/chart'
     | '/coverage'
     | '/marketplace'
     | '/marketplace-preview'
@@ -288,6 +298,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/boatshow'
+    | '/chart'
     | '/coverage'
     | '/marketplace'
     | '/marketplace-preview'
@@ -316,6 +327,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/boatshow'
+    | '/chart'
     | '/coverage'
     | '/marketplace'
     | '/marketplace-preview'
@@ -345,6 +357,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   BoatshowRoute: typeof BoatshowRoute
+  ChartRoute: typeof ChartRoute
   CoverageRoute: typeof CoverageRoute
   MarketplaceRoute: typeof MarketplaceRoute
   MarketplacePreviewRoute: typeof MarketplacePreviewRoute
@@ -382,6 +395,13 @@ declare module '@tanstack/react-router' {
       path: '/boatshow'
       fullPath: '/boatshow'
       preLoaderRoute: typeof BoatshowRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/chart': {
+      id: '/chart'
+      path: '/chart'
+      fullPath: '/chart'
+      preLoaderRoute: typeof ChartRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/coverage': {
@@ -585,6 +605,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   BoatshowRoute: BoatshowRoute,
+  ChartRoute: ChartRoute,
   CoverageRoute: CoverageRoute,
   MarketplaceRoute: MarketplaceRoute,
   MarketplacePreviewRoute: MarketplacePreviewRoute,
@@ -596,3 +617,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

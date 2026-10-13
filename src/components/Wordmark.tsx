@@ -14,13 +14,14 @@ export function Wordmark({
   decorative = false,
 }: {
   className?: string;
-  size?: "sm" | "md" | "lg" | "xl";
+  size?: "sm" | "md" | "nav" | "lg" | "xl";
   /** Set when an adjacent visible text label already says THALVO. */
   decorative?: boolean;
 }) {
   const boxCls = {
     sm: "size-9",
     md: "size-12",
+    nav: "size-14 sm:size-16",
     lg: "size-28",
     xl: "size-40 sm:size-48",
   }[size];

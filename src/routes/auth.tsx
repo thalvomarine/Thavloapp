@@ -143,7 +143,7 @@ function AuthPage() {
           if (siErr && isEmailNotConfirmedMessage(siErr.message)) {
             markEmailUnconfirmed();
             toast.warning(t("auth.email_unconfirmed_banner"), { duration: 8000 });
-            navigate({ to: "/" });
+            navigate({ to: "/chart" });
             return;
           }
           if (siErr) throw siErr;
@@ -194,7 +194,7 @@ function AuthPage() {
       if (isEmailNotConfirmedMessage(message)) {
         markEmailUnconfirmed();
         toast.warning(t("auth.email_unconfirmed_banner"), { duration: 8000 });
-        navigate({ to: "/" });
+        navigate({ to: "/chart" });
         return;
       }
       setErr(message);
