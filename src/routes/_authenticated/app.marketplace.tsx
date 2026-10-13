@@ -47,8 +47,11 @@ interface Part {
 }
 
 function MarketplacePage() {
-  const { user, loading } = useSessionUser();
-  if (loading) return <ThalvoLoader />;
+  const routeUser = Route.useRouteContext().user;
+  const { user: sessionUser, loading: sessionLoading } = useSessionUser();
+  const user = sessionUser ?? routeUser;
+  // Auth beforeLoad already has the user — do not flash ThalvoLoader on warm dock nav.
+  if (!user && sessionLoading) return <ThalvoLoader />;
   if (!user) return null;
   return (
     <AppShell userId={user.id}>

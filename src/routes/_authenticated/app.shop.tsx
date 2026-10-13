@@ -33,8 +33,10 @@ interface Part {
 }
 
 function ShopPage() {
-  const { user, loading } = useSessionUser();
-  if (loading) return <ThalvoLoader />;
+  const routeUser = Route.useRouteContext().user;
+  const { user: sessionUser, loading: sessionLoading } = useSessionUser();
+  const user = sessionUser ?? routeUser;
+  if (!user && sessionLoading) return <ThalvoLoader />;
   if (!user) return null;
   return (
     <AppShell userId={user.id}>

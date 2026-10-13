@@ -3,19 +3,33 @@
  * during pan, resize, and bursty postgres_changes.
  */
 
-const IDLE_FALLBACK_MS = 200;
+const IDLE_FALLBACK_MS = 80;
 
-export function runWhenIdle(fn: () => void, timeout = 1200): () => void {
+/** Cap idle budgets on Capacitor — requestIdleCallback often waits until timeout. */
+export function idleBudget(ms: number, nativeMs = 100): number {
+  if (typeof window === "undefined") return ms;
+  try {
+    const Cap = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } })
+      .Capacitor;
+    if (Cap?.isNativePlatform?.()) return Math.min(ms, nativeMs);
+  } catch {
+    /* ignore */
+  }
+  return ms;
+}
+
+export function runWhenIdle(fn: () => void, timeout = 400): () => void {
   if (typeof window === "undefined") {
     fn();
     return () => {};
   }
+  const budget = idleBudget(timeout);
   const ric = window.requestIdleCallback?.bind(window);
   if (ric) {
-    const id = ric(() => fn(), { timeout });
+    const id = ric(() => fn(), { timeout: budget });
     return () => window.cancelIdleCallback?.(id);
   }
-  const timer = window.setTimeout(fn, Math.min(IDLE_FALLBACK_MS, timeout));
+  const timer = window.setTimeout(fn, Math.min(IDLE_FALLBACK_MS, budget));
   return () => window.clearTimeout(timer);
 }
 

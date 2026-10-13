@@ -82,7 +82,7 @@ import { ReportModal } from "@/components/ReportModal";
 import { AdminZoneDialog } from "@/components/map/AdminZoneDialog";
 import { MetoceanHud } from "@/components/map/MetoceanHud";
 import { MapPlaceholder } from "@/components/ClientOnly";
-import { createRealtimeBuffer, debounce, runWhenIdle } from "@/lib/schedule";
+import { createRealtimeBuffer, debounce, idleBudget, runWhenIdle } from "@/lib/schedule";
 import {
   AEGEAN_OFFLINE_BOUNDS,
   createCachedTileLayer,
@@ -800,7 +800,7 @@ function LiveMapCanvas({
   useEffect(() => {
     return runWhenIdle(() => {
       setLayers((v) => (v.seamarks ? v : { ...v, seamarks: true }));
-    }, 1400);
+    }, idleBudget(400, 80));
   }, []);
 
   const [zones, setZones] = useState<MarineZone[]>([]);
@@ -949,7 +949,7 @@ function LiveMapCanvas({
   useEffect(() => {
     return runWhenIdle(() => {
       void loadChartData();
-    }, 900);
+    }, idleBudget(300, 60));
   }, [loadChartData]);
 
   useEffect(() => {
@@ -991,7 +991,7 @@ function LiveMapCanvas({
           .maybeSingle();
         if (!cancelled) setIsAdmin(!!data);
       })();
-    }, 1400);
+    }, idleBudget(500, 100));
     return () => {
       cancelled = true;
       stopIdle();

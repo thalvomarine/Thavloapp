@@ -7,7 +7,7 @@ import { ThalvoChat } from "@/components/ThalvoChat";
 import { AccountMenuButton } from "@/components/mission/AccountMenuButton";
 import { SosSheet } from "@/components/mission/SosSheet";
 import { EmergencyServiceSheet } from "@/components/mission/EmergencyServiceSheet";
-import { ClipboardList, Map as MapIcon, Store, UserCircle2, AlertOctagon, X } from "lucide-react";
+import { ClipboardList, Store, UserCircle2, AlertOctagon, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { OnboardingOverlay } from "@/components/onboarding/OnboardingOverlay";
 import { useFirstRun } from "@/components/onboarding/useFirstRun";
@@ -20,11 +20,11 @@ import type { EmergencyServiceCategory } from "@/lib/emergency-service";
 import { setMapChromeOverlay } from "@/lib/map-chrome";
 import { CockpitErrorBoundary } from "@/components/CockpitErrorBoundary";
 
-import { RescueMark, PassportMark, MarketplaceMark } from "@/components/brand/ProductMarks";
+import { AtlasMark, RescueMark, PassportMark, MarketplaceMark } from "@/components/brand/ProductMarks";
 import { ensureAdminAccess } from "@/lib/superadmin";
 import { useOpsAlerts } from "@/hooks/useOpsAlerts";
 import { useSessionUser, type Profile } from "@/lib/session";
-import { runWhenIdle } from "@/lib/schedule";
+import { idleBudget, runWhenIdle } from "@/lib/schedule";
 import { consumeSignupWelcome } from "@/lib/signup-welcome";
 
 interface Props {
@@ -72,14 +72,14 @@ export function MissionShell({ profile, children, fullBleed = false }: Props) {
     setWelcomeBanner(consumeSignupWelcome());
   }, []);
   useEffect(() => {
-    return runWhenIdle(() => setOpsReady(true), 1200);
+    return runWhenIdle(() => setOpsReady(true), idleBudget(400, 80));
   }, []);
   useOpsAlerts(isProvider && opsReady);
   useEffect(() => {
     if (!user) return;
     return runWhenIdle(() => {
       void ensureAdminAccess(user).then(setIsAdmin);
-    }, 1400);
+    }, idleBudget(500, 100));
   }, [user]);
 
   useEffect(() => {
@@ -142,11 +142,11 @@ export function MissionShell({ profile, children, fullBleed = false }: Props) {
     >
       {/* Top status rail — replaced by the map cockpit's own floating top bar in fullBleed mode */}
       {!fullBleed && (
-        <header className="sticky top-0 z-30 border-b border-white/[0.06] bg-[oklch(0.13_0.02_250/0.7)] backdrop-blur-xl pt-[env(safe-area-inset-top)]">
+        <header className="thalvo-chrome-header sticky top-0 z-30 border-b border-white/[0.07] bg-[oklch(0.12_0.02_250/0.82)] backdrop-blur-2xl pt-[env(safe-area-inset-top)]">
           <div className="mx-auto flex h-12 max-w-6xl items-center justify-between gap-3 px-4">
             <Link to="/app" className="flex min-w-0 items-center gap-2.5">
               <Wordmark size="sm" className="text-white" />
-              <span className="thalvo-display text-[14px] tracking-[0.16em] text-white">THALVO</span>
+              <span className="thalvo-display text-[15px] tracking-[0.18em] text-white">THALVO</span>
             </Link>
             <div className="flex items-center gap-2">
               <LanguageSwitcher tone="dark" />
@@ -178,25 +178,25 @@ export function MissionShell({ profile, children, fullBleed = false }: Props) {
           subtree so the control is committed even if the chart throws. */}
       {sheetHostReady && !firstRun.open && (
       <nav
-        className="pointer-events-none fixed inset-x-0 z-50"
+        className="thalvo-dock pointer-events-none fixed inset-x-0 z-50"
         style={{
-          bottom: "max(1rem, env(safe-area-inset-bottom))",
+          bottom: "max(0.75rem, env(safe-area-inset-bottom))",
         }}
       >
         <div className="pointer-events-auto mx-auto w-full max-w-lg px-3">
-          <div className="rounded-full border border-white/10 bg-[oklch(0.14_0.02_250/0.86)] backdrop-blur-xl shadow-[0_20px_60px_-20px_rgba(0,0,0,0.7)]">
+          <div className="thalvo-dock-bar rounded-[1.35rem] border border-white/[0.12] bg-[oklch(0.13_0.02_250/0.9)] backdrop-blur-2xl">
             <div
               className={
-                "grid w-full items-center px-1 " +
+                "grid w-full items-center px-1.5 " +
                 (isSupplier ? "grid-cols-3" : isProvider ? "grid-cols-6" : "grid-cols-5")
               }
-              style={{ height: 56 }}
+              style={{ height: 58 }}
             >
               {!isSupplier && (
                 <NavTab
                   to="/app"
                   active={path === "/app"}
-                  icon={<MapIcon className="size-[16px]" />}
+                  icon={<AtlasMark size={18} />}
                   label={t("nav.map")}
                 />
               )}
@@ -301,7 +301,7 @@ export function MissionShell({ profile, children, fullBleed = false }: Props) {
         className={
           fullBleed
             ? "relative min-h-[500px] min-w-0 flex-1 overflow-hidden"
-            : "mx-auto min-w-0 w-full max-w-6xl flex-1 overflow-x-hidden px-4 py-5 pb-28"
+            : "thalvo-page-enter mx-auto min-w-0 w-full max-w-6xl flex-1 overflow-x-hidden px-4 py-5 pb-28"
         }
       >
         {welcomeBanner && (
@@ -426,15 +426,16 @@ function NavTab({
   return (
     <Link
       to={to}
+      preload="intent"
       className={
-        "relative flex min-w-0 flex-col items-center justify-center gap-0.5 overflow-hidden px-0.5 text-[9px] font-semibold uppercase tracking-tight transition-colors " +
-        (active ? "text-white" : "text-white/50 hover:text-white/80")
+        "thalvo-dock-tab relative flex min-w-0 flex-col items-center justify-center gap-0.5 overflow-hidden px-0.5 text-[9px] font-semibold uppercase tracking-[0.04em] transition-[color,transform] duration-150 " +
+        (active ? "text-cyan-100" : "text-white/45 active:text-white/75")
       }
     >
-      {active && (
-        <span className="absolute -top-0.5 h-1 w-6 rounded-full bg-sky-400 shadow-[0_0_12px_theme(colors.sky.400)]" />
-      )}
-      {icon}
+      {active && <span className="thalvo-dock-active-pip absolute -top-0.5 h-[3px] w-5 rounded-full bg-[#00F0FF]" />}
+      <span className={active ? "scale-105 transition-transform duration-150" : "transition-transform duration-150"}>
+        {icon}
+      </span>
       <span className="max-w-full truncate whitespace-nowrap leading-none">{label}</span>
     </Link>
   );

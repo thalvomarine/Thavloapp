@@ -1,0 +1,96 @@
+# cursorthlv — Thalvo MarineOS (Cursor index)
+# Canonical repo only. Stale bible/task paths removed.
+
+repo
+  github.com/thalvomarine/Thavloapp
+  live: origin/main → thalvo.org
+  tip: b2781af  iOS 1.0.3 (build 4) shell bump
+
+mobile (this branch: cursor/iphone-thalvo-latest-3d7f)
+  ios  1.0.4 (build 5)  →  ios/App/App.xcodeproj
+  android  1.0.2 (versionCode 3)  →  android/app
+  sync: npm run cap:sync && npx cap open ios
+  PR: https://github.com/thalvomarine/Thavloapp/pull/5
+
+open PRs
+  #5  iPhone 1.0.4 + Capgo reset     cursor/iphone-thalvo-latest-3d7f
+  #3  iOS dock polish (same shell)   cursor/ios-perf-polish-9cb9
+  #4  matbaa katalog PDF             cursor/katalog-pdf-indir-c197
+  #1  polo baskı paketi              cursor/polo-shirt-logo-design-571b
+
+/docs
+  ARCHITECTURE_FREEZE.md
+  COMPONENT_CATALOG.md
+  DESIGN_TOKENS.md
+  EVENT_MODEL.md
+  PAYMENT_ARCHITECTURE.md
+  RPC_SECURITY_AUDIT.md
+  TECHNICAL_DEBT.md
+  UI_CONSISTENCY_PASS.md
+
+/src
+  client.tsx
+  router.tsx
+  styles.css
+  /components
+    /admin
+    /brand
+    /core
+    /map
+    /marketplace
+    /mission
+    /navigation
+    /onboarding
+    /orders
+    /passport
+    /payments
+    /profile
+    /public
+    /pwa
+    /security
+    /trust
+    /ui
+  /lib
+    /map
+    /sea-route
+    /thalvo-ai
+  /routes
+    /_authenticated
+  /integrations
+    /supabase
+  /i18n
+  /hooks
+  /types
+  /assets
+
+/ios
+  /App
+    App.xcodeproj
+    /App
+    /CapApp-SPM
+
+/android
+  /app
+
+/scripts
+  assert-tanstack-start.mjs
+  prepare-capacitor-www.mjs
+  prepare-web-spa.mjs
+
+/supabase
+  config.toml
+  /migrations
+
+/public
+  favicon.ico
+  favicon.png
+  icon-192.png
+  icon-512.png
+  manifest.webmanifest
+
+/resources
+  icon.png
+
+stack
+  React · Vite · Tailwind · Leaflet · Supabase · Capacitor
+  cockpit: #0A192F / #00F0FF / #F5B942 / #EF4444
