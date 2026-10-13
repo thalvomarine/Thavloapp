@@ -86,9 +86,10 @@ STABLE
 SECURITY DEFINER
 SET search_path = public
 AS $$
+  -- profiles.role may be text or user_role depending on DB vintage; compare as text.
   SELECT EXISTS (
     SELECT 1 FROM public.profiles p
-    WHERE p.id = uid AND p.role = 'Client'::public.user_role
+    WHERE p.id = uid AND p.role::text = 'Client'
   );
 $$;
 
