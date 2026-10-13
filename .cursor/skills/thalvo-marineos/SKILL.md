@@ -1,9 +1,9 @@
 ---
 name: thalvo-marineos
 description: >-
-  Thalvo MarineOS product rules for the Turkish-coast chart, dealer desk, auth,
-  and live site. Use when changing thalvo.org UI, Supabase auth, the public
-  chart, dealer or captain flows, or shipping to main.
+  Required for all Thalvo MarineOS work. Product rules for the Turkish-coast
+  chart, dealer desk, auth, THALVO AI, marketplace/broker flows, Capacitor
+  mobile, and live site. Read this skill before any Thalvo code change.
 ---
 
 # Thalvo MarineOS
