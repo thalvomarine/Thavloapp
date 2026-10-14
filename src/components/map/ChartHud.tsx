@@ -113,9 +113,8 @@ const RAIL_BTN_IDLE = "border-[var(--sheet-border)] bg-transparent";
 
 /**
  * Shared body — region quick-jump pills, layer toggles and the
- * contribute/draw actions. Rendered inside the desktop floating panel
- * *and* inside the mobile bottom drawer so the two surfaces never drift
- * out of sync.
+ * contribute/draw actions. Rendered inside the desktop command panel
+ * and the mobile full-width bottom sheet so the two never drift apart.
  */
 function ChartHudBody({
   layers,
@@ -639,9 +638,9 @@ const FAB_BTN =
   "grid size-11 place-items-center rounded-full border border-cyan-500/30 bg-[#0a192f]/90 text-cyan-200 shadow-2xl backdrop-blur-md transition-colors hover:bg-cyan-400/15 hover:text-cyan-100 disabled:opacity-60";
 
 /**
- * Bottom-right FAB stack — compass, layers menu, locate, heading rose.
- * The layers popover is anchored here so opening it cannot race a full-screen
- * drawer overlay (which was closing on the same pointerup).
+ * Bottom-right FAB stack — compass, layers, locate.
+ * On phones, layers opens a full-width bottom sheet (not a side popover)
+ * so every control stays on-screen and scrollable above the dock.
  */
 export function ChartFabStack({
   onCycleBasemap,
