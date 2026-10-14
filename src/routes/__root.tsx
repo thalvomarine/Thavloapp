@@ -163,14 +163,14 @@ function RootShell({ children }: { children: ReactNode }) {
   return (
     <html
       lang="tr"
-      className="h-full w-full max-w-[100vw] overflow-x-hidden bg-[#0A192F]"
+      className="min-h-dvh w-full max-w-[100vw] bg-[#0A192F]"
       suppressHydrationWarning
     >
       <head>
         <HeadContent />
       </head>
       <body
-        className="h-full w-full max-w-[100vw] overflow-x-hidden bg-[#0A192F]"
+        className="min-h-dvh w-full max-w-[100vw] bg-[#0A192F]"
         suppressHydrationWarning
       >
         {children}
@@ -221,7 +221,7 @@ function RootComponent() {
           a flex ancestor without `min-w-0`) can never stretch the whole
           document horizontally — see also the html/body safeguard in
           styles.css. */}
-      <div className="w-full max-w-[100vw] overflow-x-hidden" data-thalvo-app>
+      <div className="w-full max-w-[100vw] overflow-x-clip" data-thalvo-app>
         <Outlet />
       </div>
       <Toaster position="top-center" richColors closeButton className="!z-[300]" />
