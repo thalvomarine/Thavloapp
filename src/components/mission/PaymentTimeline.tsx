@@ -55,7 +55,7 @@ export function PaymentTimeline({ currentIndex, reachedFlags, stages = DEFAULT_S
                 aria-hidden
                 className={
                   "absolute left-[11px] top-6 bottom-0 w-px " +
-                  (state === "done" ? "bg-sky-400/40" : "bg-white/10")
+                  (state === "done" ? "bg-amber-400/40" : "bg-white/10")
                 }
               />
             )}
@@ -63,9 +63,9 @@ export function PaymentTimeline({ currentIndex, reachedFlags, stages = DEFAULT_S
               className={
                 "absolute left-0 top-0.5 size-6 rounded-full grid place-items-center border " +
                 (state === "done"
-                  ? "bg-sky-400/15 border-sky-400/40 text-sky-300"
+                  ? "bg-amber-400/15 border-amber-400/40 text-amber-300"
                   : state === "current"
-                    ? "bg-sky-400 border-sky-300 text-slate-900 shadow-[0_0_18px_theme(colors.sky.400)]"
+                    ? "bg-amber-400 border-sky-300 text-slate-900 shadow-[0_0_18px_theme(colors.amber.400)]"
                     : "bg-white/5 border-white/10 text-white/30")
               }
             >
@@ -80,7 +80,7 @@ export function PaymentTimeline({ currentIndex, reachedFlags, stages = DEFAULT_S
             <p
               className={
                 "text-[11px] font-semibold uppercase tracking-[0.14em] " +
-                (state === "todo" ? "text-white/40" : state === "current" ? "text-sky-300" : "text-white/80")
+                (state === "todo" ? "text-white/40" : state === "current" ? "text-amber-300" : "text-white/80")
               }
             >
               {s.label}

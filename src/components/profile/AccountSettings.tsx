@@ -39,7 +39,7 @@ export function AccountSettings() {
               className={
                 "h-10 rounded-xl border text-[12px] font-semibold " +
                 (theme === item
-                  ? "border-cyan-300 bg-cyan-400/15 text-cyan-50"
+                  ? "border-amber-300 bg-amber-400/15 text-amber-50"
                   : "border-white/10 bg-white/5 text-white/65")
               }
             >

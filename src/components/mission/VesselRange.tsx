@@ -36,24 +36,44 @@ export function VesselRange({
   const assumed = own?.speedKts == null;
 
   return (
-    <div className="grid grid-cols-2 gap-2 rounded-2xl border border-cyan-400/30 bg-cyan-400/10 p-3">
+    <div
+      className="grid grid-cols-2 gap-2 rounded-2xl border p-3"
+      style={{
+        borderColor: "var(--sheet-active-border, rgb(245 185 66 / 0.5))",
+        background: "var(--sheet-active-bg, rgb(245 185 66 / 0.16))",
+      }}
+    >
       <div>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-cyan-100/70">
+        <p
+          className="text-[10px] font-semibold uppercase tracking-[0.16em]"
+          style={{ color: "var(--sheet-active-ink, #f5b942)" }}
+        >
           {t("ops.distance")}
         </p>
-        <p className="mt-1 text-lg font-semibold tabular-nums text-white">
+        <p
+          className="mt-1 text-lg font-semibold tabular-nums"
+          style={{ color: "var(--sheet-ink, #fff)" }}
+        >
           {nm == null ? "—" : `${nm.toFixed(nm < 10 ? 1 : 0)} NM`}
         </p>
       </div>
       <div>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-cyan-100/70">
+        <p
+          className="text-[10px] font-semibold uppercase tracking-[0.16em]"
+          style={{ color: "var(--sheet-active-ink, #f5b942)" }}
+        >
           {t("ops.eta")}
         </p>
-        <p className="mt-1 text-lg font-semibold tabular-nums text-white">
+        <p
+          className="mt-1 text-lg font-semibold tabular-nums"
+          style={{ color: "var(--sheet-ink, #fff)" }}
+        >
           {eta == null ? "—" : t("ops.eta_min", { min: eta })}
         </p>
-        <p className="text-[10px] text-white/45">
-          {assumed ? t("ops.eta_assumed", { kts: SERVICE_SPEED_KTS }) : t("ops.eta_live", { kts: speed.toFixed(1) })}
+        <p className="text-[10px]" style={{ color: "var(--sheet-faint, rgb(255 255 255 / 0.45))" }}>
+          {assumed
+            ? t("ops.eta_assumed", { kts: SERVICE_SPEED_KTS })
+            : t("ops.eta_live", { kts: speed.toFixed(1) })}
         </p>
       </div>
     </div>

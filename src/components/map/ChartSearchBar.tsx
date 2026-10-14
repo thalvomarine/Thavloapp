@@ -78,7 +78,7 @@ export function ChartSearchBar({
                 <span className="h-4 w-px shrink-0 bg-white/15" aria-hidden />
               </>
             ) : null}
-            <Search className="size-3.5 shrink-0 text-cyan-300/90" />
+            <Search className="size-3.5 shrink-0 text-amber-300/90" />
             <input
               ref={inputRef}
               value={query}
@@ -102,7 +102,7 @@ export function ChartSearchBar({
                 <X className="size-3" />
               </button>
             ) : null}
-            <span className="shrink-0 rounded-full border border-cyan-300/40 bg-cyan-400/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-cyan-100">
+            <span className="shrink-0 rounded-full border border-amber-300/40 bg-amber-400/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-amber-100">
               {t("chart.live_pill")}
             </span>
           </div>
@@ -133,9 +133,9 @@ export function ChartSearchBar({
                             setFocused(false);
                             onSelect(point);
                           }}
-                          className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left transition-colors hover:bg-cyan-400/10"
+                          className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left transition-colors hover:bg-amber-400/10"
                         >
-                          <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-white/[0.06] text-cyan-200">
+                          <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-white/[0.06] text-amber-200">
                             <Anchor className="size-3.5" />
                           </span>
                           <span className="min-w-0 flex-1">

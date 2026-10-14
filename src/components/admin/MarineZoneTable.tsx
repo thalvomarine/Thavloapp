@@ -57,7 +57,7 @@ export function MarineZoneTable({ zones, busyId, onToggleActive, onDelete }: Pro
                       </p>
                     </td>
                     <td className="px-3 py-2 text-white/70">{t(ZONE_KIND_LABEL_KEYS[z.kind])}</td>
-                    <td className="px-3 py-2 font-mono text-[10px] text-cyan-200/80">
+                    <td className="px-3 py-2 font-mono text-[10px] text-amber-200/80">
                       {formatDegrees(z.lat, z.lng)}
                     </td>
                     <td className="px-3 py-2">

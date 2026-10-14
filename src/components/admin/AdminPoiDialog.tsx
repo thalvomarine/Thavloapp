@@ -20,9 +20,9 @@ interface Props {
 }
 
 const fieldClass =
-  "w-full h-9 rounded-lg border border-cyan-500/25 bg-[#0a192f]/70 px-2.5 text-[12px] text-white outline-none focus:border-cyan-400/70";
+  "w-full h-9 rounded-lg border border-amber-500/25 bg-[#0a192f]/70 px-2.5 text-[12px] text-white outline-none focus:border-amber-400/70";
 const labelClass =
-  "mb-1 block text-[10px] font-semibold uppercase tracking-[0.16em] text-cyan-300/70";
+  "mb-1 block text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-300/70";
 
 /**
  * Manual chart-point entry — the Control Tower counterpart to the on-map
@@ -94,7 +94,7 @@ export function AdminPoiDialog({ onSaved }: Props) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex h-8 items-center gap-1.5 rounded-full border border-cyan-400/40 bg-cyan-400/15 px-3 text-[10px] font-bold uppercase tracking-[0.1em] text-cyan-100 transition-colors hover:bg-cyan-400/25"
+        className="inline-flex h-8 items-center gap-1.5 rounded-full border border-amber-400/40 bg-amber-400/15 px-3 text-[10px] font-bold uppercase tracking-[0.1em] text-amber-100 transition-colors hover:bg-amber-400/25"
       >
         <Plus className="size-3.5" />
         {t("admin.poi.trigger")}
@@ -109,7 +109,7 @@ export function AdminPoiDialog({ onSaved }: Props) {
           }
         }}
       >
-        <DialogContent className="thalvo-dark border-cyan-500/30 bg-[#0a192f]/95 text-white backdrop-blur-xl sm:max-w-[460px]">
+        <DialogContent className="thalvo-dark border-amber-500/30 bg-[#0a192f]/95 text-white backdrop-blur-xl sm:max-w-[460px]">
           <DialogHeader>
             <DialogTitle className="text-white">{t("admin.poi.title")}</DialogTitle>
             <DialogDescription className="text-white/60">
@@ -202,7 +202,7 @@ export function AdminPoiDialog({ onSaved }: Props) {
                 maxLength={600}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="w-full rounded-lg border border-cyan-500/25 bg-[#0a192f]/70 p-2.5 text-[12px] text-white outline-none focus:border-cyan-400/70"
+                className="w-full rounded-lg border border-amber-500/25 bg-[#0a192f]/70 p-2.5 text-[12px] text-white outline-none focus:border-amber-400/70"
               />
             </label>
 
@@ -226,7 +226,7 @@ export function AdminPoiDialog({ onSaved }: Props) {
               type="button"
               onClick={() => void save()}
               disabled={pending}
-              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-cyan-400 px-4 text-[11px] font-bold uppercase tracking-[0.1em] text-[#0a192f] disabled:opacity-50"
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-amber-400 px-4 text-[11px] font-bold uppercase tracking-[0.1em] text-[#0a192f] disabled:opacity-50"
             >
               {pending && <Loader2 className="size-3.5 animate-spin" />}
               {t("admin.poi.save")}

@@ -80,7 +80,7 @@ export function AdminPaymentOpsPanel({ intents, payouts, commissions, providerCo
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-white/[0.05]">
-        <Cell label={t("admin.payops.held")}   value={centsToUnits(heldCents)}       tone="text-sky-300" />
+        <Cell label={t("admin.payops.held")}   value={centsToUnits(heldCents)}       tone="text-amber-300" />
         <Cell label={t("admin.payops.owed")}  value={centsToUnits(payoutOwedCents)} tone="text-amber-300" />
         <Cell label={t("admin.payops.released")}      value={centsToUnits(releasedCents)}   tone="text-emerald-300" />
         <Cell label={t("admin.payops.commission")}    value={centsToUnits(commissionCents)} tone="text-emerald-200" />

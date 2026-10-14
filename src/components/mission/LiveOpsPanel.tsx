@@ -120,13 +120,22 @@ function OpsMissionCard({ mission, onDetails }: { mission: OpsMission; onDetails
   };
 
   return (
-    <article className="overflow-hidden rounded-2xl border border-cyan-500/25 bg-[#0a192f]/90 shadow-[0_0_32px_rgba(0,240,255,0.06)]">
-      <div className="flex items-start justify-between gap-3 border-b border-white/[0.06] px-4 py-3">
+    <article className="thalvo-chart-sheet overflow-hidden rounded-2xl border shadow-[0_0_32px_rgba(245,185,66,0.08)]">
+      <div
+        className="flex items-start justify-between gap-3 border-b px-4 py-3"
+        style={{ borderColor: "var(--sheet-border)" }}
+      >
         <div className="min-w-0">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-300/80">
+          <p
+            className="text-[10px] font-semibold uppercase tracking-[0.2em]"
+            style={{ color: "var(--sheet-active-ink)" }}
+          >
             {t("ops.unit_label")} · {mission.vessel}
           </p>
-          <h2 className="mt-1 text-[15px] font-semibold leading-snug text-white">
+          <h2
+            className="mt-1 text-[15px] font-semibold leading-snug"
+            style={{ color: "var(--sheet-ink)" }}
+          >
             {t(mission.titleKey)}
           </h2>
         </div>
@@ -134,21 +143,24 @@ function OpsMissionCard({ mission, onDetails }: { mission: OpsMission; onDetails
       </div>
 
       <div className="space-y-2 px-4 py-3">
-        <p className="flex items-start gap-2 text-[13px] text-white/80">
-          <MapPin className="mt-0.5 size-3.5 shrink-0 text-amber-300" />
+        <p className="flex items-start gap-2 text-[13px]" style={{ color: "var(--sheet-ink)" }}>
+          <MapPin className="mt-0.5 size-3.5 shrink-0" style={{ color: "var(--sheet-active-ink)" }} />
           <span>
-            <span className="text-white/45">{t("ops.target")}: </span>
+            <span style={{ color: "var(--sheet-muted)" }}>{t("ops.target")}: </span>
             {t(mission.targetKey)}
           </span>
         </p>
         {mission.distanceNm != null && mission.etaMin != null && (
-          <p className="text-[12px] font-medium text-amber-200/90">
+          <p className="text-[12px] font-medium" style={{ color: "var(--sheet-active-ink)" }}>
             {t("ops.remaining", { nm: mission.distanceNm.toFixed(1), min: mission.etaMin })}
           </p>
         )}
       </div>
 
-      <div className="grid grid-cols-3 gap-1.5 border-t border-white/[0.06] bg-black/20 p-2">
+      <div
+        className="grid grid-cols-3 gap-1.5 border-t p-2"
+        style={{ borderColor: "var(--sheet-border)", background: "var(--sheet-chip)" }}
+      >
         <OpsAction
           onClick={focusMap}
           icon={<Crosshair className="size-3.5" />}
@@ -178,7 +190,8 @@ function OpsAction({
     <button
       type="button"
       onClick={onClick}
-      className="flex min-w-0 flex-col items-center gap-1 rounded-xl px-1 py-2 text-center text-[10px] font-semibold uppercase tracking-[0.08em] text-cyan-100/90 transition-colors hover:bg-cyan-400/10"
+      className="flex min-w-0 flex-col items-center gap-1 rounded-xl px-1 py-2 text-center text-[10px] font-semibold uppercase tracking-[0.08em] transition-colors hover:bg-amber-400/10"
+      style={{ color: "var(--sheet-active-ink)" }}
     >
       {icon}
       <span className="leading-tight">{label}</span>
@@ -196,12 +209,12 @@ function OpsMissionSheet({ mission, onClose }: { mission: OpsMission; onClose: (
       onClick={onClose}
     >
       <div
-        className="thalvo-dark w-full max-w-md overflow-hidden rounded-t-3xl border border-cyan-500/25 bg-[#0a192f] shadow-2xl sm:rounded-3xl"
+        className="thalvo-chart-sheet w-full max-w-md overflow-hidden rounded-t-3xl border shadow-2xl sm:rounded-3xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-3 border-b border-white/10 px-4 py-3">
           <div className="min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-300">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-300">
               {t("ops.details")}
             </p>
             <h3 className="mt-1 text-sm font-semibold text-white">{t(mission.titleKey)}</h3>
@@ -248,7 +261,7 @@ function OpsMissionSheet({ mission, onClose }: { mission: OpsMission; onClose: (
               onClose();
               void navigate({ to: "/app" });
             }}
-            className="h-11 rounded-xl border border-cyan-400/40 bg-cyan-400/10 text-[11px] font-semibold uppercase tracking-[0.12em] text-cyan-100"
+            className="h-11 rounded-xl border border-amber-400/40 bg-amber-400/10 text-[11px] font-semibold uppercase tracking-[0.12em] text-amber-100"
           >
             {t("ops.focus_map")}
           </button>
@@ -406,20 +419,20 @@ function CaptainEmergencyCalls() {
 
   return (
     <div className="space-y-2">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-cyan-300/80">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-amber-300/80">
         {t("esvc.my_calls")}
       </p>
       <ul className="space-y-2">
         {rows.map((row) => (
           <li
             key={row.id}
-            className="rounded-2xl border border-cyan-400/20 bg-white/[0.03] px-4 py-3"
+            className="rounded-2xl border border-amber-400/20 bg-white/[0.03] px-4 py-3"
           >
             <div className="flex items-center justify-between gap-2">
               <p className="text-sm font-semibold text-white">
                 {t(EMERGENCY_CATEGORY_LABEL_KEYS[row.category])}
               </p>
-              <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-cyan-200">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-200">
                 {t(`esvc.status_${row.status}`)}
               </span>
             </div>

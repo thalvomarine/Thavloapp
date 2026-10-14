@@ -29,7 +29,7 @@ export function TrustExplanationSheet({ open, onClose, report, subject }: Props)
       <div className="thalvo-dark thalvo-cockpit absolute inset-x-0 bottom-0 max-h-[85dvh] overflow-y-auto rounded-t-3xl border-t border-white/10 p-4 space-y-4 sm:inset-x-auto sm:right-4 sm:top-4 sm:bottom-4 sm:w-[420px] sm:rounded-3xl sm:border">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-[10px] uppercase tracking-[0.22em] text-sky-300/80">{t("trust.sheet.eyebrow")}</p>
+            <p className="text-[10px] uppercase tracking-[0.22em] text-amber-300/80">{t("trust.sheet.eyebrow")}</p>
             <h2 className="text-lg font-semibold text-white">{t("trust.sheet.title")}</h2>
           </div>
           <button

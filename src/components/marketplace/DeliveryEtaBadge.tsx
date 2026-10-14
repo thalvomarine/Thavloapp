@@ -21,7 +21,7 @@ export function DeliveryEtaBadge({ mode, minutes, distanceKm, className = "" }: 
   return (
     <span
       className={
-        "inline-flex items-center gap-1 rounded-full border border-sky-400/25 bg-sky-400/10 text-sky-300 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] " +
+        "inline-flex items-center gap-1 rounded-full border border-amber-400/25 bg-amber-400/10 text-amber-300 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] " +
         className
       }
     >

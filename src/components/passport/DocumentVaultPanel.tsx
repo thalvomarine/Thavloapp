@@ -136,7 +136,7 @@ export function DocumentVaultPanel({ userId }: { userId: string }) {
     <GlassPanel padded={false}>
       <div className="flex items-center justify-between gap-2 border-b border-white/10 p-4">
         <div className="flex items-center gap-2">
-          <FileText className="size-4 text-sky-300/80" />
+          <FileText className="size-4 text-amber-300/80" />
           <p className="text-sm font-medium text-white/90">{t("passport.document_vault")}</p>
         </div>
         <StatusChip tone="info" icon={<ShieldCheck className="size-3" />}>{t("passport.doc_private")}</StatusChip>
@@ -167,7 +167,7 @@ export function DocumentVaultPanel({ userId }: { userId: string }) {
               </div>
               <div className="flex shrink-0 items-center gap-1.5">
                 {busy ? (
-                  <Loader2 className="size-4 animate-spin text-cyan-200" />
+                  <Loader2 className="size-4 animate-spin text-amber-200" />
                 ) : row ? (
                   <>
                     <button

@@ -161,7 +161,7 @@ function ProviderProfile({ profile }: { profile: Profile }) {
             <button key={b} onClick={() => toggleBrand(b)}
               className={"px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-[0.12em] border transition-colors " +
                 (brands.includes(b)
-                  ? "bg-sky-500/20 border-sky-400/50 text-sky-100"
+                  ? "bg-amber-500/20 border-amber-400/50 text-amber-100"
                   : "bg-white/[0.03] border-white/10 text-white/55 hover:bg-white/10")}>
               {b}
             </button>
@@ -291,11 +291,46 @@ function SupplierProfile({ profile }: { profile: Profile }) {
           <select
             value={marina}
             onChange={(e) => setMarina(e.target.value)}
-            className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-white outline-none focus:border-sky-400/60"
+            className="mt-1 h-11 w-full rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-white outline-none focus:border-amber-400/60"
           >
-            {( ["Göcek", "Marmaris", "Bodrum", "Fethiye", "Kaş"].includes(marina)
-              ? ["Göcek", "Marmaris", "Bodrum", "Fethiye", "Kaş"]
-              : [marina, "Göcek", "Marmaris", "Bodrum", "Fethiye", "Kaş"]
+            {(
+              [
+                "Didim",
+                "Bodrum",
+                "Datça",
+                "Marmaris",
+                "Göcek",
+                "Fethiye",
+                "Kaş",
+                "Finike",
+                "Kemer",
+                "Antalya",
+              ].includes(marina)
+              ? [
+                  "Didim",
+                  "Bodrum",
+                  "Datça",
+                  "Marmaris",
+                  "Göcek",
+                  "Fethiye",
+                  "Kaş",
+                  "Finike",
+                  "Kemer",
+                  "Antalya",
+                ]
+              : [
+                  marina,
+                  "Didim",
+                  "Bodrum",
+                  "Datça",
+                  "Marmaris",
+                  "Göcek",
+                  "Fethiye",
+                  "Kaş",
+                  "Finike",
+                  "Kemer",
+                  "Antalya",
+                ]
             ).map((item) => (
               <option key={item} value={item} className="bg-slate-900">{item}</option>
             ))}
@@ -306,7 +341,7 @@ function SupplierProfile({ profile }: { profile: Profile }) {
       <button
         onClick={() => void save()}
         disabled={saving}
-        className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-cyan-400 font-semibold text-slate-950 disabled:opacity-60"
+        className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-amber-400 font-semibold text-slate-950 disabled:opacity-60"
       >
         {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
         {savedTick ? t("profile.saved") : t("profile.save")}
@@ -380,7 +415,7 @@ function ClientProfile({ profile }: { profile: Profile }) {
         <div>
           <label className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">{t("profile.account_type")}</label>
           <select value={accountType} onChange={(e) => setAccountType(e.target.value)}
-            className="mt-1 w-full h-11 rounded-xl bg-white/5 border border-white/10 text-white px-3 text-sm outline-none focus:border-sky-400/60">
+            className="mt-1 w-full h-11 rounded-xl bg-white/5 border border-white/10 text-white px-3 text-sm outline-none focus:border-amber-400/60">
             {ACCOUNT_TYPES.map((a) => (
               <option key={a} value={a} className="bg-slate-900">{t(`auth.account_${a.replace(/\s/g, "_").toLowerCase()}`, a)}</option>
             ))}
@@ -391,7 +426,7 @@ function ClientProfile({ profile }: { profile: Profile }) {
       <GlassPanel>
         <div className="flex items-center justify-between mb-2">
           <SectionHeader label={t("profile.vessels")} />
-          <button onClick={() => setAddingVessel(true)} className="text-[10px] font-semibold uppercase tracking-[0.14em] text-sky-300 inline-flex items-center gap-1">
+          <button onClick={() => setAddingVessel(true)} className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-300 inline-flex items-center gap-1">
             <Plus className="size-3.5" /> {t("profile.add_vessel")}
           </button>
         </div>
@@ -401,7 +436,7 @@ function ClientProfile({ profile }: { profile: Profile }) {
         <ul className="space-y-2">
           {vessels.map((v) => (
             <li key={v.id} className="flex items-start gap-2 rounded-xl bg-white/[0.03] border border-white/10 p-3">
-              <Ship className="size-4 mt-0.5 text-sky-300" />
+              <Ship className="size-4 mt-0.5 text-amber-300" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-white">{v.name} <span className="text-[10px] font-normal text-white/40 uppercase ml-1">{vesselCategoryLabel(v.category, t)}</span></p>
                 <p className="text-[11px] text-white/50">{vesselTypeLabel(v.vessel_type, t)} · {v.length_m ?? "?"} m · {fuelLabel(v.fuel_type, t)}</p>
@@ -432,7 +467,7 @@ function ClientProfile({ profile }: { profile: Profile }) {
       />
       <GlassPanel>
         <textarea value={healthNote} onChange={(e) => setHealthNote(e.target.value)} rows={3}
-          className="w-full rounded-xl bg-white/5 border border-white/10 text-white p-3 text-sm outline-none focus:border-sky-400/60" />
+          className="w-full rounded-xl bg-white/5 border border-white/10 text-white p-3 text-sm outline-none focus:border-amber-400/60" />
       </GlassPanel>
 
       <button onClick={save} disabled={saving}
@@ -466,7 +501,7 @@ function OnboardingReplayRow({ userId }: { userId: string }) {
         <span className="block text-sm font-semibold text-white">Replay welcome tour</span>
         <span className="block text-[11px] text-white/55">Re-open the THALVO first-run experience.</span>
       </span>
-      <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-300">Restart</span>
+      <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-300">Restart</span>
     </button>
   );
 }

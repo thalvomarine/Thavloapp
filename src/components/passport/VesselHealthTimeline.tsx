@@ -15,7 +15,7 @@ export interface TimelineEvent {
 const ICONS: Record<TimelineKind, { icon: React.ReactNode; tone: string }> = {
   sos:     { icon: <AlertOctagon className="size-3.5" />, tone: "text-rose-300 bg-rose-500/10 border-rose-500/30" },
   job:     { icon: <CheckCircle2 className="size-3.5" />, tone: "text-emerald-300 bg-emerald-400/10 border-emerald-400/25" },
-  part:    { icon: <Package className="size-3.5" />, tone: "text-sky-300 bg-sky-400/10 border-sky-400/25" },
+  part:    { icon: <Package className="size-3.5" />, tone: "text-amber-300 bg-amber-400/10 border-amber-400/25" },
   invoice: { icon: <Receipt className="size-3.5" />, tone: "text-amber-300 bg-amber-400/10 border-amber-400/25" },
   note:    { icon: <Wrench className="size-3.5" />, tone: "text-white/70 bg-white/5 border-white/10" },
 };

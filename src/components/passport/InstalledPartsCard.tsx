@@ -22,7 +22,7 @@ export function InstalledPartsCard({ parts }: Props) {
     <GlassPanel padded={false}>
       <div className="p-4 border-b border-white/10 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Package className="size-4 text-sky-300/80" />
+          <Package className="size-4 text-amber-300/80" />
           <p className="text-sm font-medium text-white/90">{t("passport.installed_parts")}</p>
         </div>
         <span className="text-[10px] text-white/40">{t("passport.parts_logged", { count: parts.length })}</span>

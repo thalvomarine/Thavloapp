@@ -65,7 +65,7 @@ export function AdminOpsTabs({
               className={
                 "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.08em] transition-colors " +
                 (active
-                  ? "border-cyan-300/60 bg-cyan-400/20 text-cyan-100 shadow-[0_0_16px_rgba(0,240,255,0.18)]"
+                  ? "border-amber-300/60 bg-amber-400/20 text-amber-100 shadow-[0_0_16px_rgba(245, 185, 66,0.18)]"
                   : "border-white/10 bg-white/[0.03] text-white/50 hover:bg-white/[0.08] hover:text-white/80")
               }
             >
@@ -74,7 +74,7 @@ export function AdminOpsTabs({
               <span
                 className={
                   "grid min-w-[18px] place-items-center rounded-full px-1 text-[9px] font-bold " +
-                  (active ? "bg-cyan-300/25 text-cyan-50" : "bg-white/10 text-white/50")
+                  (active ? "bg-amber-300/25 text-amber-50" : "bg-white/10 text-white/50")
                 }
               >
                 {tb.count}

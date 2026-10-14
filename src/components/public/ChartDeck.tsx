@@ -25,7 +25,7 @@ const SHELVES = [
 ] as const;
 
 const LEGEND = [
-  { id: "marina", color: "#22d3ee" },
+  { id: "marina", color: "#f5b942" },
   { id: "anchorage", color: "#fbbf24" },
   { id: "fuel", color: "#34d399" },
   { id: "hazard", color: "#fb7185" },
@@ -62,7 +62,7 @@ export function ChartDeck({ panel }: { panel?: ChartPanel }) {
             <span className="thalvo-display hidden text-[14px] tracking-[0.18em] text-white min-[420px]:inline">THALVO</span>
           </Link>
           <p className="hidden min-w-0 truncate text-[11px] text-white/40 sm:block">{t("public.panel_kicker")}</p>
-          <p className="thalvo-num hidden min-w-0 truncate text-[12px] text-cyan-100/90 md:block">{position}</p>
+          <p className="thalvo-num hidden min-w-0 truncate text-[12px] text-amber-100/90 md:block">{position}</p>
           <div className="ml-auto flex shrink-0 items-center gap-1.5">
             <LanguageSwitcher tone="dark" />
             <Link
@@ -86,14 +86,14 @@ export function ChartDeck({ panel }: { panel?: ChartPanel }) {
                 }}
                 className={
                   "h-9 shrink-0 border-b-2 px-3 text-[13px] font-semibold " +
-                  (on ? "border-cyan-300 text-white" : "border-transparent text-white/45")
+                  (on ? "border-amber-300 text-white" : "border-transparent text-white/45")
                 }
               >
                 {t(`public.coverage_${id}`)}
               </button>
             );
           })}
-          <p className="thalvo-num mb-2 ml-auto shrink-0 pr-2 text-[11px] text-cyan-100/80 md:hidden">{position}</p>
+          <p className="thalvo-num mb-2 ml-auto shrink-0 pr-2 text-[11px] text-amber-100/80 md:hidden">{position}</p>
         </div>
       </header>
 
@@ -122,7 +122,7 @@ export function ChartDeck({ panel }: { panel?: ChartPanel }) {
             disabled={locating}
             aria-label={t("chart.locate_me")}
             className={
-              "absolute right-3 z-[1100] grid size-11 place-items-center rounded-full border border-white/15 bg-[#071422]/92 text-[12px] text-cyan-100 disabled:opacity-60 " +
+              "absolute right-3 z-[1100] grid size-11 place-items-center rounded-full border border-white/15 bg-[#071422]/92 text-[12px] text-amber-100 disabled:opacity-60 " +
               (unconfirmed ? "top-16" : "top-3")
             }
           >
@@ -199,7 +199,7 @@ function DockLink({
       search={{ panel }}
       className={
         "flex h-full min-w-0 flex-col items-center justify-center gap-0.5 border-t-2 px-1 text-[11px] font-semibold " +
-        (active ? "border-cyan-300 text-cyan-100" : "border-transparent text-white/65")
+        (active ? "border-amber-300 text-amber-100" : "border-transparent text-white/65")
       }
     >
       {icon}
@@ -222,7 +222,7 @@ function PanelFrame({
     <aside className="pointer-events-auto absolute z-[1100] flex flex-col overflow-hidden border border-white/10 bg-[#071422]/96 shadow-2xl backdrop-blur-xl max-lg:inset-x-0 max-lg:bottom-0 max-lg:max-h-[78%] max-lg:rounded-t-2xl lg:bottom-3 lg:left-3 lg:top-3 lg:w-[400px] lg:rounded-2xl">
       <div className="flex items-start justify-between gap-3 px-5 pb-3 pt-4">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-cyan-200/80">{kicker}</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-amber-200/80">{kicker}</p>
           <h1 className="thalvo-display mt-1 text-[28px] leading-none text-white">{title}</h1>
         </div>
         <Link
@@ -263,7 +263,7 @@ function ServicesPanel() {
                 <Link
                   to="/auth"
                   search={NEXT_SERVICES ? { next: NEXT_SERVICES } : {}}
-                  className="block rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3.5 transition-colors hover:border-cyan-300/30 hover:bg-white/[0.06]"
+                  className="block rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3.5 transition-colors hover:border-amber-300/30 hover:bg-white/[0.06]"
                 >
                   <div className="flex items-baseline justify-between gap-3">
                     <p className="text-[15px] font-semibold text-white">
@@ -272,7 +272,7 @@ function ServicesPanel() {
                       })}
                     </p>
                     {pkg.base_duration_min != null && (
-                      <p className="thalvo-num shrink-0 text-[12px] text-cyan-100/80">
+                      <p className="thalvo-num shrink-0 text-[12px] text-amber-100/80">
                         {t("public.duration_min", { count: pkg.base_duration_min })}
                       </p>
                     )}
@@ -337,7 +337,7 @@ function PartsPanel() {
                         <Link
                           to="/auth"
                           search={NEXT_SHOP ? { next: NEXT_SHOP } : {}}
-                          className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 hover:border-cyan-300/30"
+                          className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 hover:border-amber-300/30"
                         >
                           <span className="min-w-0">
                             <span className="block truncate text-[14px] font-medium text-white">{row.name}</span>

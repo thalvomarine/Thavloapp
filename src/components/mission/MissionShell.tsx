@@ -307,7 +307,7 @@ export function MissionShell({ profile, children, fullBleed = false }: Props) {
         {welcomeBanner && (
           <div
             className={
-              "pointer-events-auto z-[60] flex items-start gap-2 border border-cyan-400/30 bg-[#0A192F]/95 px-3 py-2.5 text-[12px] leading-snug text-cyan-50 shadow-2xl backdrop-blur-md " +
+              "pointer-events-auto z-[60] flex items-start gap-2 border border-amber-400/30 bg-[#0A192F]/95 px-3 py-2.5 text-[12px] leading-snug text-amber-50 shadow-2xl backdrop-blur-md " +
               (fullBleed
                 ? "absolute inset-x-3 top-[calc(env(safe-area-inset-top)+3.5rem)] rounded-2xl"
                 : "mb-4 rounded-2xl")
@@ -318,7 +318,7 @@ export function MissionShell({ profile, children, fullBleed = false }: Props) {
               type="button"
               onClick={() => setWelcomeBanner(false)}
               aria-label={t("common.close")}
-              className="grid size-7 shrink-0 place-items-center rounded-full text-cyan-100/70 hover:bg-white/10 hover:text-white"
+              className="grid size-7 shrink-0 place-items-center rounded-full text-amber-100/70 hover:bg-white/10 hover:text-white"
             >
               <X className="size-3.5" />
             </button>
@@ -432,7 +432,7 @@ function NavTab({
       }
     >
       {active && (
-        <span className="absolute -top-0.5 h-1 w-6 rounded-full bg-sky-400 shadow-[0_0_12px_theme(colors.sky.400)]" />
+        <span className="absolute -top-0.5 h-1 w-6 rounded-full bg-amber-400 shadow-[0_0_12px_theme(colors.amber.400)]" />
       )}
       {icon}
       <span className="max-w-full truncate whitespace-nowrap leading-none">{label}</span>

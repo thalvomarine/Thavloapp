@@ -66,8 +66,8 @@ export function ActiveMissionCard({ job, problemLabel }: Props) {
         {/* Header row */}
         <div className="p-4 flex items-start gap-3">
           <span className={"size-11 rounded-xl grid place-items-center " + (isDiver
-            ? "bg-cyan-500/15 border border-cyan-400/30 text-cyan-300"
-            : "bg-sky-500/15 border border-sky-400/30 text-sky-300")}>
+            ? "bg-amber-500/15 border border-amber-400/30 text-amber-300"
+            : "bg-amber-500/15 border border-amber-400/30 text-amber-300")}>
             {isDiver ? <Anchor className="size-5" /> : <Wrench className="size-5" />}
           </span>
           <div className="flex-1 min-w-0">

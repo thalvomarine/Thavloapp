@@ -39,14 +39,14 @@ export function InstallAppButton() {
           if (res === "dismissed") setOutcome(t("pwa.install.dismissed"));
           if (res === "unavailable") setOutcome(t("pwa.install.unavailable"));
         }}
-        className="w-full rounded-2xl border border-sky-400/40 bg-sky-500/10 hover:bg-sky-500/15 transition-colors px-4 py-3 flex items-center gap-3 text-left"
+        className="w-full rounded-2xl border border-amber-400/40 bg-amber-500/10 hover:bg-amber-500/15 transition-colors px-4 py-3 flex items-center gap-3 text-left"
       >
-        <Download className="size-4 text-sky-300" />
+        <Download className="size-4 text-amber-300" />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-white">{t("pwa.install.title")}</p>
           <p className="text-[11px] text-white/60">{outcome ?? t("pwa.install.hint")}</p>
         </div>
-        <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-300">{t("pwa.install.cta")}</span>
+        <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-300">{t("pwa.install.cta")}</span>
       </button>
     );
   }
@@ -54,7 +54,7 @@ export function InstallAppButton() {
   if (iosHint) {
     return (
       <div className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 flex items-start gap-3">
-        <Info className="size-4 text-sky-300 mt-0.5 shrink-0" />
+        <Info className="size-4 text-amber-300 mt-0.5 shrink-0" />
         <div className="min-w-0">
           <p className="text-sm font-semibold text-white">{t("pwa.ios.title")}</p>
           <p className="text-[11px] text-white/60 mt-0.5">

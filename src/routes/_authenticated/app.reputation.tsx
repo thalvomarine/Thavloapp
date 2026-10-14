@@ -80,7 +80,7 @@ function ReputationInner({ userId }: { userId: string }) {
       <BoatPassportShell title={t("trust.captain_title")} eyebrow={t("trust.captain_eyebrow")}>
         <GlassPanel className="text-sm text-white/70">
           {t("trust.captain_notice_prefix")}{" "}
-          <Link to="/app/passport" className="text-sky-300 hover:text-sky-200">
+          <Link to="/app/passport" className="text-amber-300 hover:text-sky-200">
             {t("trust.captain_notice_link")}
           </Link>
           . {t("trust.captain_notice_suffix")}

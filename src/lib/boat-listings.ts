@@ -31,12 +31,23 @@ export const FEATURED_EQUIPMENT = [
 export type FeaturedEquipment = (typeof FEATURED_EQUIPMENT)[number];
 
 export const MARINA_PRESETS: { name: string; region: string; lat: number; lng: number }[] = [
-  { name: "Göcek D-Marin", region: "Göcek", lat: 36.7578, lng: 28.9412 },
-  { name: "Marmaris Yacht Marina", region: "Marmaris", lat: 36.851, lng: 28.274 },
-  { name: "Bodrum Milta", region: "Bodrum", lat: 37.0342, lng: 27.4298 },
-  { name: "Yalıkavak Marina", region: "Bodrum", lat: 37.1048, lng: 27.2916 },
-  { name: "Fethiye Ece Marina", region: "Fethiye", lat: 36.6275, lng: 29.1028 },
-  { name: "D-Marin Didim", region: "Didim", lat: 37.3522, lng: 27.2594 },
+  { name: "D-Marin Didim", region: "Didim", lat: 37.3372, lng: 27.2608 },
+  { name: "Yalıkavak Marina", region: "Bodrum", lat: 37.1065, lng: 27.2885 },
+  { name: "Turgutreis D-Marin", region: "Bodrum", lat: 37.0015, lng: 27.258 },
+  { name: "Bodrum Milta Marina", region: "Bodrum", lat: 37.0345, lng: 27.424 },
+  { name: "Palamutbükü Limanı", region: "Datça", lat: 36.671, lng: 27.505 },
+  { name: "Datça Şehir Limanı", region: "Datça", lat: 36.7215, lng: 27.689 },
+  { name: "Bozburun Limanı", region: "Bozburun", lat: 36.689, lng: 28.043 },
+  { name: "Netsel Marina Marmaris", region: "Marmaris", lat: 36.8525, lng: 28.278 },
+  { name: "D-Marin Göcek", region: "Göcek", lat: 36.7525, lng: 28.9428 },
+  { name: "Göcek Yakıt İskelesi", region: "Göcek", lat: 36.7485, lng: 28.938 },
+  { name: "Fethiye Ece Marina", region: "Fethiye", lat: 36.626, lng: 29.102 },
+  { name: "Kalkan Şehir İskelesi", region: "Kalkan", lat: 36.2625, lng: 29.416 },
+  { name: "Kaş Setur Marina", region: "Kaş", lat: 36.2045, lng: 29.626 },
+  { name: "Setur Finike Marina", region: "Finike", lat: 36.295, lng: 30.15 },
+  { name: "G-Marina Kemer", region: "Kemer", lat: 36.601, lng: 30.569 },
+  { name: "Setur Antalya Marina (Büyük Liman)", region: "Antalya", lat: 36.8335, lng: 30.608 },
+  { name: "Kaleiçi Yat Limanı (Antalya)", region: "Antalya", lat: 36.8845, lng: 30.7025 },
 ];
 
 export interface BoatListing {

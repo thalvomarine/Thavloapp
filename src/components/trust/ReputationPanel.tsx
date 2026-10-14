@@ -66,7 +66,7 @@ export function ReputationPanel({ report, subject, verified, extraStats, onActio
                 disabled={a.disabled}
                 className="w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/[0.04] disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                <span className="size-9 rounded-xl bg-white/5 border border-white/10 grid place-items-center text-sky-300 shrink-0">
+                <span className="size-9 rounded-xl bg-white/5 border border-white/10 grid place-items-center text-amber-300 shrink-0">
                   {a.icon}
                 </span>
                 <span className="min-w-0 flex-1">

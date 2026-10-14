@@ -28,7 +28,7 @@ export function OrderTimeline({ status, cancelled }: Props) {
                 (done
                   ? "bg-emerald-400 border-emerald-300"
                   : active
-                  ? "bg-sky-400 border-sky-300 shadow-[0_0_10px_theme(colors.sky.400)]"
+                  ? "bg-amber-400 border-sky-300 shadow-[0_0_10px_theme(colors.amber.400)]"
                   : "bg-white/5 border-white/15")
               }
             >

@@ -25,7 +25,7 @@ export function EscrowOpsPanel({ heldEscrow, commissionToDate, providerPayoutToD
         </p>
       </div>
       <div className="grid grid-cols-3 divide-x divide-white/[0.05]">
-        <Cell label="In escrow" value={tl(heldEscrow)} tone="text-sky-300" />
+        <Cell label="In escrow" value={tl(heldEscrow)} tone="text-amber-300" />
         <Cell label="Payouts" value={tl(providerPayoutToDate)} tone="text-white" />
         <Cell label="Commission" value={tl(commissionToDate)} tone="text-emerald-300" />
       </div>

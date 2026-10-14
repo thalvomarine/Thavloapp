@@ -232,7 +232,7 @@ function ThalvoChatLive({ showLauncher }: { showLauncher: boolean }) {
       type="button"
       onClick={() => setOpen(true)}
       aria-label="THALVO AI"
-      className="fixed right-4 z-[60] grid size-14 place-items-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
+      className="fixed right-4 z-[60] grid size-14 place-items-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
       style={{
         bottom: "calc(max(1rem, env(safe-area-inset-bottom)) + 4.6rem)",
         background:
@@ -262,12 +262,12 @@ function ThalvoChatLive({ showLauncher }: { showLauncher: boolean }) {
       >
         <header className="flex items-center justify-between border-b border-white/10 px-4 py-3">
           <div className="flex items-center gap-3">
-            <div className="grid size-10 place-items-center rounded-xl border border-cyan-300/40 bg-[#0F2440]">
+            <div className="grid size-10 place-items-center rounded-xl border border-amber-300/40 bg-[#0F2440]">
               <CompassMark size={22} />
             </div>
             <div>
               <p className="text-[13px] font-semibold tracking-wide text-white">THALVO AI</p>
-              <p className="text-[10px] uppercase tracking-[0.18em] text-cyan-100/70">
+              <p className="text-[10px] uppercase tracking-[0.18em] text-amber-100/70">
                 {lang === "en" ? "Chief engineer" : "Başmühendis"}
               </p>
             </div>
@@ -306,7 +306,7 @@ function ThalvoChatLive({ showLauncher }: { showLauncher: boolean }) {
                     key={pill}
                     type="button"
                     onClick={() => void send(pill)}
-                    className="rounded-xl border border-cyan-300/25 bg-white/[0.04] px-3 py-2.5 text-left text-[12.5px] leading-snug text-white/90 hover:bg-white/[0.08]"
+                    className="rounded-xl border border-amber-300/25 bg-white/[0.04] px-3 py-2.5 text-left text-[12.5px] leading-snug text-white/90 hover:bg-white/[0.08]"
                   >
                     {pill}
                   </button>
@@ -318,7 +318,7 @@ function ThalvoChatLive({ showLauncher }: { showLauncher: boolean }) {
             <MessageBubble key={message.id} message={message} />
           ))}
           {busy && (
-            <div className="flex items-center gap-2 text-xs text-cyan-100/70">
+            <div className="flex items-center gap-2 text-xs text-amber-100/70">
               <Loader2 className="size-3.5 animate-spin" />
               {t("ai.thinking")}
             </div>
@@ -351,7 +351,7 @@ function ThalvoChatLive({ showLauncher }: { showLauncher: boolean }) {
             onClick={() => fileRef.current?.click()}
             disabled={busy}
             aria-label={lang === "en" ? "Photograph a plate or part" : "Plaka veya parça fotoğrafı"}
-            className="grid size-11 shrink-0 place-items-center rounded-xl border border-white/10 text-cyan-100 hover:bg-white/10 disabled:opacity-40"
+            className="grid size-11 shrink-0 place-items-center rounded-xl border border-white/10 text-amber-100 hover:bg-white/10 disabled:opacity-40"
           >
             <Camera className="size-4" />
           </button>
@@ -366,13 +366,13 @@ function ThalvoChatLive({ showLauncher }: { showLauncher: boolean }) {
             }}
             maxLength={4000}
             placeholder={t("ai.placeholder")}
-            className="h-11 min-w-0 flex-1 rounded-xl border border-white/10 bg-white/[0.04] px-3.5 text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-cyan-300/50"
+            className="h-11 min-w-0 flex-1 rounded-xl border border-white/10 bg-white/[0.04] px-3.5 text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-amber-300/50"
           />
           <button
             type="submit"
             disabled={busy || !input.trim()}
             aria-label={t("common.send", { defaultValue: "Send" })}
-            className="grid size-11 place-items-center rounded-xl border border-cyan-300/50 text-white disabled:opacity-40"
+            className="grid size-11 place-items-center rounded-xl border border-amber-300/50 text-white disabled:opacity-40"
             style={{ background: "linear-gradient(160deg, rgba(0,180,216,0.35), rgba(0,180,216,0.12))" }}
           >
             <Send className="size-4" />
@@ -414,7 +414,7 @@ function MessageBubble({ message }: { message: ChatLine }) {
       <div
         className={
           mine
-            ? "max-w-[85%] rounded-2xl rounded-br-sm border border-cyan-300/35 bg-cyan-400/15 px-3.5 py-2.5 text-sm text-white"
+            ? "max-w-[85%] rounded-2xl rounded-br-sm border border-amber-300/35 bg-amber-400/15 px-3.5 py-2.5 text-sm text-white"
             : "max-w-[85%] text-sm text-white/90"
         }
       >
@@ -427,18 +427,18 @@ function MessageBubble({ message }: { message: ChatLine }) {
               "mb-2 rounded-xl border px-3 py-2 text-xs leading-relaxed " +
               (message.weather.alert === "storm" || message.weather.alert === "gale"
                 ? "border-rose-300/40 bg-rose-500/10 text-rose-50"
-                : "border-cyan-300/30 bg-cyan-400/10 text-cyan-50")
+                : "border-amber-300/30 bg-amber-400/10 text-amber-50")
             }
           >
             {message.weather.summary}
           </p>
         )}
         {message.route && (
-          <p className="mb-2 text-xs text-cyan-100">
+          <p className="mb-2 text-xs text-amber-100">
             {message.route}
           </p>
         )}
-        <div className="thalvo-md space-y-2 leading-relaxed [&_h2]:text-[15px] [&_h2]:font-semibold [&_h2]:text-cyan-100 [&_ol]:list-decimal [&_ol]:pl-4 [&_ul]:list-disc [&_ul]:pl-4 [&_strong]:text-white [&_code]:text-cyan-100">
+        <div className="thalvo-md space-y-2 leading-relaxed [&_h2]:text-[15px] [&_h2]:font-semibold [&_h2]:text-amber-100 [&_ol]:list-decimal [&_ol]:pl-4 [&_ul]:list-disc [&_ul]:pl-4 [&_strong]:text-white [&_code]:text-amber-100">
           <ReactMarkdown
             components={{
               a: ({ href, children }) => <SafeLink href={href}>{children}</SafeLink>,
@@ -460,7 +460,7 @@ function SafeLink({ href, children }: { href?: string; children?: ReactNode }) {
   const safe = typeof href === "string" && (/^https?:\/\//i.test(href) || (href.startsWith("/") && !href.startsWith("//")));
   if (!safe) return <span>{children}</span>;
   return (
-    <a href={href} target="_blank" rel="noreferrer noopener" className="text-cyan-200 underline">
+    <a href={href} target="_blank" rel="noreferrer noopener" className="text-amber-200 underline">
       {children}
     </a>
   );

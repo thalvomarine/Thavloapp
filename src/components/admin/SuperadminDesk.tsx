@@ -340,7 +340,7 @@ export function SuperadminDesk() {
                 className={
                   "h-8 rounded-full border px-3 text-[10px] font-bold uppercase tracking-[0.12em] " +
                   (filter === id
-                    ? "border-cyan-300/50 bg-cyan-400/20 text-cyan-50"
+                    ? "border-amber-300/50 bg-amber-400/20 text-amber-50"
                     : "border-white/10 bg-white/[0.04] text-white/50")
                 }
               >

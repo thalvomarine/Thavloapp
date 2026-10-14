@@ -101,7 +101,7 @@ export function CartSheet({ onClose, onCatalogReload }: Props) {
           <Link
             to="/app/orders"
             onClick={onClose}
-            className="block w-full h-12 rounded-2xl bg-sky-500 hover:bg-sky-400 text-slate-900 text-sm font-semibold tracking-tight grid place-items-center transition-colors"
+            className="block w-full h-12 rounded-2xl bg-sky-500 hover:bg-amber-400 text-slate-900 text-sm font-semibold tracking-tight grid place-items-center transition-colors"
           >
             {t("shop_cart.open_order_tracking")}
           </Link>
@@ -114,7 +114,7 @@ export function CartSheet({ onClose, onCatalogReload }: Props) {
   return (
     <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="thalvo-dark flex max-h-[90dvh] w-full flex-col rounded-t-3xl border border-cyan-500/20 bg-[oklch(0.18_0.02_250)] shadow-2xl sm:mx-auto sm:max-w-lg sm:rounded-3xl"
+        className="thalvo-dark flex max-h-[90dvh] w-full flex-col rounded-t-3xl border border-amber-500/20 bg-[oklch(0.18_0.02_250)] shadow-2xl sm:mx-auto sm:max-w-lg sm:rounded-3xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-white/10">
@@ -184,7 +184,7 @@ export function CartSheet({ onClose, onCatalogReload }: Props) {
                   <div>
                     <label className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/40">{t("shop_cart.destination_vessel")}</label>
                     <select value={vesselId} onChange={(e) => setVesselId(e.target.value)}
-                      className="mt-1.5 w-full h-11 rounded-xl bg-white/5 border border-white/10 text-white text-sm px-3 outline-none focus:border-sky-400/60">
+                      className="mt-1.5 w-full h-11 rounded-xl bg-white/5 border border-white/10 text-white text-sm px-3 outline-none focus:border-amber-400/60">
                       {vessels.map((v) => (
                         <option key={v.id} value={v.id} className="bg-slate-900">{v.boat_name ?? t("shop_cart.vessel_fallback")}</option>
                       ))}
@@ -195,7 +195,7 @@ export function CartSheet({ onClose, onCatalogReload }: Props) {
                 <div>
                   <label className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/40">{t("shop_cart.marina")}</label>
                   <input value={marina} onChange={(e) => setMarina(e.target.value)}
-                    className="mt-1.5 w-full h-11 rounded-xl bg-white/5 border border-white/10 text-white text-sm px-3 outline-none focus:border-sky-400/60" />
+                    className="mt-1.5 w-full h-11 rounded-xl bg-white/5 border border-white/10 text-white text-sm px-3 outline-none focus:border-amber-400/60" />
                 </div>
 
                 <div>
@@ -204,14 +204,14 @@ export function CartSheet({ onClose, onCatalogReload }: Props) {
                   </label>
                   <input value={dropOff} onChange={(e) => setDropOff(e.target.value)}
                     placeholder={deliveryMethod === "marina_pickup" ? t("shop_cart.pickup_placeholder") : t("shop_cart.berth_placeholder")}
-                    className="mt-1.5 w-full h-11 rounded-xl bg-white/5 border border-white/10 text-white text-sm px-3 placeholder:text-white/30 outline-none focus:border-sky-400/60" />
+                    className="mt-1.5 w-full h-11 rounded-xl bg-white/5 border border-white/10 text-white text-sm px-3 placeholder:text-white/30 outline-none focus:border-amber-400/60" />
                 </div>
 
                 <div>
                   <label className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/40">{t("shop_cart.operational_notes")}</label>
                   <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2}
                     placeholder={t("shop_cart.notes_placeholder")}
-                    className="mt-1.5 w-full rounded-xl bg-white/5 border border-white/10 text-white text-sm p-3 placeholder:text-white/30 outline-none focus:border-sky-400/60" />
+                    className="mt-1.5 w-full rounded-xl bg-white/5 border border-white/10 text-white text-sm p-3 placeholder:text-white/30 outline-none focus:border-amber-400/60" />
                 </div>
 
                 <OrderSecurityNotice compact />
@@ -232,7 +232,7 @@ export function CartSheet({ onClose, onCatalogReload }: Props) {
             </div>
             <button
               onClick={() => setPay(true)}
-              className="w-full h-12 rounded-2xl bg-sky-500 hover:bg-sky-400 text-slate-900 text-sm font-semibold tracking-tight transition-colors"
+              className="w-full h-12 rounded-2xl bg-sky-500 hover:bg-amber-400 text-slate-900 text-sm font-semibold tracking-tight transition-colors"
             >
               {t("shop_cart.confirm_order")}
             </button>

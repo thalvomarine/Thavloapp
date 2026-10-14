@@ -25,7 +25,7 @@ interface Props {
 function Field({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <div className="flex items-start gap-2.5 rounded-xl border border-white/10 bg-white/[0.03] p-3">
-      <div className="mt-0.5 text-sky-300/80">{icon}</div>
+      <div className="mt-0.5 text-amber-300/80">{icon}</div>
       <div className="min-w-0">
         <p className="text-[10px] uppercase tracking-[0.18em] text-white/40">{label}</p>
         <p className="text-sm font-medium text-white/90 truncate">{value}</p>
@@ -44,7 +44,7 @@ export function VesselIdentityCard({ vessel, ownerName }: Props) {
       <div className="p-5 border-b border-white/10 bg-gradient-to-br from-sky-500/10 via-transparent to-transparent">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-sky-300/80">{t("passport.digital_passport")}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-amber-300/80">{t("passport.digital_passport")}</p>
             <h2 className="mt-1 text-2xl font-semibold text-white tracking-tight truncate">{displayName}</h2>
             <p className="text-sm text-white/60 truncate">{line2}</p>
             {ownerName && (

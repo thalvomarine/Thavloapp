@@ -84,7 +84,7 @@ export function EscrowPanel({
         <button
           type="button"
           onClick={onSecure}
-          className="w-full h-12 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-900 text-sm font-semibold inline-flex items-center justify-center gap-2 transition-colors"
+          className="w-full h-12 rounded-xl bg-sky-500 hover:bg-amber-400 text-slate-900 text-sm font-semibold inline-flex items-center justify-center gap-2 transition-colors"
         >
           <ShieldCheck className="size-4" />
           {t("escrow.secure_cta")}

@@ -34,13 +34,13 @@ export const ReportMiniMap = memo(function ReportMiniMap({ lat, lng, height = 16
   }, []);
   if (!isMounted) {
     return (
-      <div className="overflow-hidden rounded-lg border border-cyan-500/25" style={{ height }}>
+      <div className="overflow-hidden rounded-lg border border-amber-500/25" style={{ height }}>
         <MapPlaceholder className="min-h-0" style={{ height, minHeight: height }} />
       </div>
     );
   }
   return (
-    <div className="overflow-hidden rounded-lg border border-cyan-500/25" style={{ height }}>
+    <div className="overflow-hidden rounded-lg border border-amber-500/25" style={{ height }}>
       <MapContainer
         center={[lat, lng]}
         zoom={14}

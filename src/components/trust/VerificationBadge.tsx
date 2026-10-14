@@ -12,7 +12,7 @@ export function VerificationBadge({ verified, label, className = "" }: Props) {
   const { t } = useTranslation();
   const text = label ?? (verified ? t("trust.verification.verified") : t("trust.verification.unverified"));
   const styles = verified
-    ? "border-sky-400/30 bg-sky-400/10 text-sky-300"
+    ? "border-amber-400/30 bg-amber-400/10 text-amber-300"
     : "border-amber-400/30 bg-amber-400/10 text-amber-300";
   return (
     <span

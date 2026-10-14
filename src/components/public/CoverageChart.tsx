@@ -21,7 +21,7 @@ import {
 const COVERAGE_KINDS = new Set<MarineZoneKind>(["marina", "anchorage", "fuel", "hazard"]);
 
 const KIND_COLOR: Record<MarineZoneKind, string> = {
-  marina: "#22d3ee",
+  marina: "#f5b942",
   anchorage: "#fbbf24",
   fuel: "#34d399",
   hazard: "#fb7185",
@@ -177,7 +177,7 @@ export function CoverageChart({
 
   return (
     <div
-      className={fill ? "h-full w-full" : "overflow-hidden rounded-2xl border border-cyan-500/25"}
+      className={fill ? "h-full w-full" : "overflow-hidden rounded-2xl border border-amber-500/25"}
       style={fill ? undefined : { height: 420 }}
     >
       <MapContainer

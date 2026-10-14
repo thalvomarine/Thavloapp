@@ -99,7 +99,7 @@ export function DealerOrderQueue({ rows, currency, onReload }: Props) {
               className={
                 "shrink-0 h-8 px-3 rounded-full text-[11px] font-semibold uppercase tracking-[0.14em] border transition-colors inline-flex items-center gap-1.5 " +
                 (on
-                  ? "bg-sky-400 text-slate-900 border-sky-300"
+                  ? "bg-amber-400 text-slate-900 border-sky-300"
                   : "bg-white/5 text-white/70 border-white/10 hover:bg-white/10")
               }
             >
@@ -295,12 +295,12 @@ function DealerRow({
               onChange={(e) => setNote(e.target.value)}
               rows={2}
               placeholder={t("dealer.dealer_note_placeholder")}
-              className="w-full rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/40 text-[12px] p-2 outline-none focus:border-sky-400/60"
+              className="w-full rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/40 text-[12px] p-2 outline-none focus:border-amber-400/60"
             />
             <button
               onClick={saveNote}
               disabled={busy}
-              className="text-[11px] font-semibold uppercase tracking-[0.14em] text-sky-300 hover:text-sky-200 disabled:opacity-40"
+              className="text-[11px] font-semibold uppercase tracking-[0.14em] text-amber-300 hover:text-sky-200 disabled:opacity-40"
             >
               {t("dealer.save_note")}
             </button>
@@ -311,7 +311,7 @@ function DealerRow({
               <button
                 onClick={advance}
                 disabled={busy}
-                className="h-10 px-4 rounded-2xl bg-sky-500 hover:bg-sky-400 text-slate-900 font-semibold text-[12px] uppercase tracking-[0.14em] disabled:opacity-40"
+                className="h-10 px-4 rounded-2xl bg-sky-500 hover:bg-amber-400 text-slate-900 font-semibold text-[12px] uppercase tracking-[0.14em] disabled:opacity-40"
               >
                 {t(ctaKey)}
               </button>

@@ -14,6 +14,7 @@ import { emitEvent } from "@/lib/events";
 import { sanitizeMultiline } from "@/lib/sanitize";
 import { CockpitHeader } from "@/components/core/CockpitHeader";
 import { GlassPanel } from "@/components/mission/GlassPanel";
+import { COAST_MARINAS } from "@/lib/coast-marinas";
 
 
 const searchSchema = z.object({ cat: z.enum(["mechanic", "diver"]).default("mechanic") });
@@ -24,7 +25,7 @@ export const Route = createFileRoute("/_authenticated/app/report")({
   component: ReportPage,
 });
 
-const MARINAS = ["Göcek D-Marin", "Bodrum Milta", "Marmaris Netsel", "Fethiye Ece", "Kaş Setur"];
+const MARINAS = [...COAST_MARINAS];
 
 function ReportPage() {
   const { cat } = Route.useSearch();
@@ -139,7 +140,7 @@ function ReportPage() {
                 <button key={p} onClick={() => setProblem(p)}
                   className={"px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors " +
                     (problem === p
-                      ? (isDiver ? "bg-sky-500/20 border-sky-400/50 text-sky-100" : "bg-sky-500/20 border-sky-400/50 text-sky-100")
+                      ? (isDiver ? "bg-amber-500/20 border-amber-400/50 text-amber-100" : "bg-amber-500/20 border-amber-400/50 text-amber-100")
                       : "bg-white/[0.03] border-white/10 text-white/70 hover:bg-white/10")}>
                   {t(`problems.${p}`)}
                 </button>
@@ -149,14 +150,14 @@ function ReportPage() {
           <div>
             <label className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">{t("owner.marina")}</label>
             <select value={marina} onChange={(e) => setMarina(e.target.value)}
-              className="mt-1 w-full h-11 rounded-xl bg-white/5 border border-white/10 text-white px-3 text-sm outline-none focus:border-sky-400/60">
+              className="mt-1 w-full h-11 rounded-xl bg-white/5 border border-white/10 text-white px-3 text-sm outline-none focus:border-amber-400/60">
               {MARINAS.map((m) => <option key={m} className="bg-slate-900">{m}</option>)}
             </select>
           </div>
           <div>
             <label className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">{t("owner.describe")}</label>
             <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3}
-              className="mt-1 w-full rounded-xl bg-white/5 border border-white/10 text-white p-3 text-sm outline-none focus:border-sky-400/60" />
+              className="mt-1 w-full rounded-xl bg-white/5 border border-white/10 text-white p-3 text-sm outline-none focus:border-amber-400/60" />
           </div>
         </GlassPanel>
 

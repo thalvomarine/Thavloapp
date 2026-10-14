@@ -105,7 +105,7 @@ export function OnboardingOverlay({ profile, isAdmin, onComplete }: Props) {
               key={i}
               className={
                 "h-1 rounded-full transition-all " +
-                (i === step ? "w-8 bg-sky-400" : i < step ? "w-4 bg-white/60" : "w-4 bg-white/15")
+                (i === step ? "w-8 bg-amber-400" : i < step ? "w-4 bg-white/60" : "w-4 bg-white/15")
               }
             />
           ))}
@@ -129,7 +129,7 @@ export function OnboardingOverlay({ profile, isAdmin, onComplete }: Props) {
           >
             <ul className="mt-6 space-y-3 text-sm text-white/80">
               <Bullet icon={<RescueMark size={18} />}>Report emergencies with a single tap.</Bullet>
-              <Bullet icon={<Compass className="size-4 text-sky-300" />}>Compare certified professionals in seconds.</Bullet>
+              <Bullet icon={<Compass className="size-4 text-amber-300" />}>Compare certified professionals in seconds.</Bullet>
               <Bullet icon={<PassportMark size={18} />}>Manage your vessel — parts, history, documents.</Bullet>
               <Bullet icon={<Sparkles className="size-4 text-amber-300" />}>Every payment stays protected by THALVO Escrow.</Bullet>
             </ul>
@@ -231,9 +231,9 @@ export function OnboardingOverlay({ profile, isAdmin, onComplete }: Props) {
             <div className="mt-6 grid grid-cols-2 gap-3">
               <button
                 onClick={() => { finish(); navigate({ to: "/app/profile" }); }}
-                className="rounded-2xl border border-sky-400/40 bg-sky-500/10 p-5 text-left hover:bg-sky-500/15 transition-colors"
+                className="rounded-2xl border border-amber-400/40 bg-amber-500/10 p-5 text-left hover:bg-amber-500/15 transition-colors"
               >
-                <Ship className="size-5 text-sky-300" />
+                <Ship className="size-5 text-amber-300" />
                 <p className="mt-3 text-sm font-semibold">Yes — set up my vessel</p>
                 <p className="mt-1 text-xs text-white/60">Guides you to Boat Passport setup.</p>
               </button>
@@ -252,7 +252,7 @@ export function OnboardingOverlay({ profile, isAdmin, onComplete }: Props) {
         {currentKey === "tour" && (
           <StepShell eyebrow="Step 5" title="Meet Mission Control" subtitle="Everything you need lives one tap away.">
             <ul className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <TourItem icon={<MapPin className="size-4 text-sky-300" />} title="Map" body="See responders live around you." />
+              <TourItem icon={<MapPin className="size-4 text-amber-300" />} title="Map" body="See responders live around you." />
               <TourItem icon={<RescueMark size={18} />} title="SOS" body="One tap dispatches the nearest help." />
               <TourItem icon={<Compass className="size-4 text-amber-300" />} title="Compass" body="Your THALVO AI copilot, anywhere." />
               <TourItem icon={<MarketplaceMark size={18} />} title="Marketplace" body="Dealer parts and in-app order flow." />
@@ -278,7 +278,7 @@ function StepShell({
 }: { eyebrow: string; title: string; subtitle?: string; id?: string; children: ReactNode }) {
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-sky-300/80">{eyebrow}</p>
+      <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-amber-300/80">{eyebrow}</p>
       <h2 id={id} className="mt-2 text-3xl sm:text-4xl font-black tracking-tight text-white">{title}</h2>
       {subtitle && <p className="mt-3 text-sm sm:text-base text-white/70 max-w-lg">{subtitle}</p>}
       {children}
@@ -305,16 +305,16 @@ function RoleCard({ active, onClick, icon, label, hint }: {
       className={
         "text-left rounded-2xl border p-4 min-h-[96px] transition-all " +
         (active
-          ? "border-sky-400/60 bg-sky-500/15 shadow-[0_10px_40px_-10px_rgba(56,189,248,0.45)]"
+          ? "border-amber-400/60 bg-amber-500/15 shadow-[0_10px_40px_-10px_rgba(56,189,248,0.45)]"
           : "border-white/10 bg-white/[0.04] hover:bg-white/[0.08]")
       }
     >
       <div className="flex items-center gap-2">
-        <span className={"grid place-items-center size-9 rounded-xl " + (active ? "bg-sky-500/30 text-sky-100" : "bg-white/5 text-white/80")}>
+        <span className={"grid place-items-center size-9 rounded-xl " + (active ? "bg-amber-500/30 text-amber-100" : "bg-white/5 text-white/80")}>
           {icon}
         </span>
         <span className="text-sm font-bold">{label}</span>
-        {active && <Check className="ml-auto size-4 text-sky-300" />}
+        {active && <Check className="ml-auto size-4 text-amber-300" />}
       </div>
       <p className="mt-2 text-[12px] text-white/60">{hint}</p>
     </button>
@@ -331,13 +331,13 @@ function LangCard({ active, onClick, label, hint }: {
       className={
         "text-left rounded-2xl border p-5 min-h-[96px] transition-all " +
         (active
-          ? "border-sky-400/60 bg-sky-500/15"
+          ? "border-amber-400/60 bg-amber-500/15"
           : "border-white/10 bg-white/[0.04] hover:bg-white/[0.08]")
       }
     >
       <p className="text-lg font-bold">{label}</p>
       <p className="mt-1 text-xs text-white/60">{hint}</p>
-      {active && <span className="mt-3 inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-sky-300"><Check className="size-3" /> Selected</span>}
+      {active && <span className="mt-3 inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-300"><Check className="size-3" /> Selected</span>}
     </button>
   );
 }
@@ -347,7 +347,7 @@ function PermCard({ icon, label, body, onEnable }: {
 }) {
   return (
     <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-      <span className="grid place-items-center size-10 rounded-xl bg-white/5 text-sky-300 shrink-0">{icon}</span>
+      <span className="grid place-items-center size-10 rounded-xl bg-white/5 text-amber-300 shrink-0">{icon}</span>
       <div className="min-w-0 flex-1">
         <p className="text-sm font-semibold">{label}</p>
         <p className="text-[12px] text-white/60">{body}</p>

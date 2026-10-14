@@ -91,7 +91,7 @@ function BoatshowPage() {
 
         {/* Hero — brand first, one job */}
         <section className="flex flex-1 flex-col justify-center px-5 pb-10 pt-12 sm:px-8">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-cyan-300/90">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-amber-300/90">
             {t("boatshow.kicker")}
           </p>
           <h1 className="thalvo-display mt-3 max-w-xl text-[clamp(2.4rem,8vw,4.2rem)] leading-[0.95] tracking-tight text-white">
@@ -103,7 +103,7 @@ function BoatshowPage() {
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <Link
               to="/chart"
-              className="inline-flex h-12 items-center justify-center rounded-2xl bg-cyan-400 px-6 text-sm font-bold text-slate-950"
+              className="inline-flex h-12 items-center justify-center rounded-2xl bg-amber-400 px-6 text-sm font-bold text-slate-950"
             >
               {t("boatshow.cta_chart")}
             </Link>
@@ -125,10 +125,10 @@ function BoatshowPage() {
           <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <a
               href="#partner"
-              className="block border border-white/10 bg-white/[0.03] px-4 py-4 transition-colors hover:border-cyan-300/40 hover:bg-white/[0.06]"
+              className="block border border-white/10 bg-white/[0.03] px-4 py-4 transition-colors hover:border-amber-300/40 hover:bg-white/[0.06]"
             >
               <div className="flex items-center gap-2 text-[13px] font-semibold text-white">
-                <Ship className="size-4 text-cyan-300" />
+                <Ship className="size-4 text-amber-300" />
                 {t("boatshow.path_brand")}
               </div>
               <p className="mt-1.5 text-[12px] leading-snug text-white/55">{t("boatshow.path_brand_body")}</p>
@@ -136,21 +136,21 @@ function BoatshowPage() {
             <PathLink
               to="/auth"
               search={{ intent: "dealer", next: "/app/dealer" }}
-              icon={<Store className="size-4 text-cyan-300" />}
+              icon={<Store className="size-4 text-amber-300" />}
               title={t("boatshow.path_dealer")}
               body={t("boatshow.path_dealer_body")}
             />
             <PathLink
               to="/auth"
               search={{ intent: "captain" }}
-              icon={<Anchor className="size-4 text-cyan-300" />}
+              icon={<Anchor className="size-4 text-amber-300" />}
               title={t("boatshow.path_captain")}
               body={t("boatshow.path_captain_body")}
             />
             <PathLink
               to="/auth"
               search={{ intent: "provider" }}
-              icon={<Wrench className="size-4 text-cyan-300" />}
+              icon={<Wrench className="size-4 text-amber-300" />}
               title={t("boatshow.path_tech")}
               body={t("boatshow.path_tech_body")}
             />
@@ -192,13 +192,13 @@ function BoatshowPage() {
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                   rows={3}
-                  className="rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-cyan-300/50"
+                  className="rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-amber-300/50"
                 />
               </label>
               <button
                 type="submit"
                 disabled={busy}
-                className="mt-1 inline-flex h-12 items-center justify-center rounded-2xl bg-cyan-400 text-sm font-bold text-slate-950 disabled:opacity-60"
+                className="mt-1 inline-flex h-12 items-center justify-center rounded-2xl bg-amber-400 text-sm font-bold text-slate-950 disabled:opacity-60"
               >
                 {busy ? t("common.loading") : t("boatshow.lead_submit")}
               </button>
@@ -252,7 +252,7 @@ function Field({
         value={value}
         required={required}
         onChange={(e) => onChange(e.target.value)}
-        className="h-11 rounded-xl border border-white/15 bg-white/5 px-3 text-sm text-white outline-none focus:border-cyan-300/50"
+        className="h-11 rounded-xl border border-white/15 bg-white/5 px-3 text-sm text-white outline-none focus:border-amber-300/50"
       />
     </label>
   );
@@ -275,7 +275,7 @@ function PathLink({
     <Link
       to={to}
       search={search}
-      className="block border border-white/10 bg-white/[0.03] px-4 py-4 transition-colors hover:border-cyan-300/40 hover:bg-white/[0.06]"
+      className="block border border-white/10 bg-white/[0.03] px-4 py-4 transition-colors hover:border-amber-300/40 hover:bg-white/[0.06]"
     >
       <div className="flex items-center gap-2 text-[13px] font-semibold text-white">
         {icon}

@@ -3,7 +3,7 @@ import type { StatusTone } from "@/types/marine";
 
 const DOT: Record<StatusTone, string> = {
   neutral: "bg-white/25",
-  info: "bg-sky-400 shadow-[0_0_10px_theme(colors.sky.400)]",
+  info: "bg-amber-400 shadow-[0_0_10px_theme(colors.amber.400)]",
   success: "bg-emerald-400 shadow-[0_0_10px_theme(colors.emerald.400)]",
   warning: "bg-amber-400 shadow-[0_0_10px_theme(colors.amber.400)]",
   danger: "bg-rose-500 shadow-[0_0_10px_theme(colors.rose.500)]",
