@@ -14,11 +14,12 @@ const KINDS: BoatshowLeadKind[] = ["brand", "dealer", "marina", "captain", "tech
 
 /**
  * Concept B — brand-first public home.
- * Piri Reis–inspired chart hero + partner desk. Partner ol → #partner.
+ * Piri Reis–inspired chart hero. Partner ol → partner desk modal.
  */
 export function BrandLanding() {
   const { t } = useTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [partnerOpen, setPartnerOpen] = useState(false);
   const [name, setName] = useState("");
   const [company, setCompany] = useState("");
   const [phone, setPhone] = useState("");
@@ -28,14 +29,37 @@ export function BrandLanding() {
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
 
+  const openPartner = () => {
+    setMenuOpen(false);
+    setPartnerOpen(true);
+  };
+
+  const closePartner = () => setPartnerOpen(false);
+
   useEffect(() => {
-    if (!menuOpen) return;
+    if (typeof window === "undefined") return;
+    if (window.location.hash === "#partner") setPartnerOpen(true);
+  }, []);
+
+  useEffect(() => {
+    if (!menuOpen && !partnerOpen) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setMenuOpen(false);
+      if (e.key !== "Escape") return;
+      if (partnerOpen) closePartner();
+      else setMenuOpen(false);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [menuOpen]);
+  }, [menuOpen, partnerOpen]);
+
+  useEffect(() => {
+    if (!partnerOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [partnerOpen]);
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -67,6 +91,13 @@ export function BrandLanding() {
       setBusy(false);
     }
   };
+
+  const aboutParagraphs = [
+    t("landing.about_p1"),
+    t("landing.about_p2"),
+    t("landing.about_p3"),
+    t("landing.about_p4"),
+  ];
 
   return (
     <div className="thalvo-dark min-h-dvh overflow-x-hidden bg-[#06101c] text-white">
@@ -139,9 +170,9 @@ export function BrandLanding() {
               {t("landing.cta_chart")}
               <ArrowUpRight className="size-4 opacity-80" aria-hidden />
             </Link>
-            <a href="#partner" className="landing-cta-secondary">
+            <button type="button" onClick={openPartner} className="landing-cta-secondary">
               {t("landing.cta_partner")}
-            </a>
+            </button>
           </div>
         </div>
 
@@ -170,166 +201,19 @@ export function BrandLanding() {
 
       {/* ——— ABOUT ——— */}
       <section id="about" className="scroll-mt-24 border-t border-white/[0.07] px-5 py-20 sm:px-8 lg:px-12">
-        <div className="mx-auto max-w-5xl lg:grid lg:grid-cols-[1fr_1.1fr] lg:gap-16 lg:items-end">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/40">
-              {t("landing.nav_about")}
-            </p>
-            <h2 className="thalvo-display mt-3 text-[clamp(1.8rem,4vw,2.6rem)] leading-tight tracking-wide text-white">
-              {t("landing.about_title")}
-            </h2>
-          </div>
-          <p className="mt-5 text-[15px] leading-relaxed text-white/65 lg:mt-0 lg:text-base">
-            {t("landing.about_body")}
+        <div className="mx-auto max-w-5xl">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#F5B942]/80">
+            {t("landing.nav_about")}
           </p>
-        </div>
-      </section>
-
-      {/* ——— PARTNER DESK ——— */}
-      <section id="partner" className="relative scroll-mt-24 overflow-hidden border-t border-[#D4AF37]/15">
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.07]"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle at 12% 20%, #F5B942 0.6px, transparent 0.7px), radial-gradient(circle at 88% 70%, #F5B942 0.5px, transparent 0.6px)",
-            backgroundSize: "28px 28px, 36px 36px",
-          }}
-        />
-        <div className="pointer-events-none absolute -right-24 top-10 size-[28rem] rounded-full bg-[#F5B942]/[0.04] blur-3xl" />
-        <div className="pointer-events-none absolute -left-16 bottom-0 size-[22rem] rounded-full bg-[#F5B942]/[0.04] blur-3xl" />
-
-        <div className="relative mx-auto max-w-6xl px-5 py-20 sm:px-8 lg:px-12 lg:py-24">
-          <div className="mb-12 flex flex-col gap-4 border-b border-white/[0.08] pb-10 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-xl">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#F5B942]">
-                {t("landing.partner_kicker")}
+          <h2 className="thalvo-display mt-3 text-[clamp(1.8rem,4vw,2.6rem)] leading-tight tracking-wide text-white">
+            {t("landing.about_title")}
+          </h2>
+          <div className="mt-8 max-w-3xl space-y-5">
+            {aboutParagraphs.map((p) => (
+              <p key={p.slice(0, 40)} className="text-[15px] leading-relaxed text-white/65 sm:text-base">
+                {p}
               </p>
-              <h2 className="thalvo-display mt-3 text-[clamp(2rem,4.2vw,3rem)] leading-[1.05] tracking-wide text-white">
-                {t("landing.partner_title")}
-              </h2>
-              <p className="mt-4 max-w-md text-[15px] leading-relaxed text-white/58">
-                {t("landing.partner_lede")}
-              </p>
-            </div>
-            <ol className="grid gap-3 sm:grid-cols-3 lg:max-w-md lg:gap-4">
-              {[
-                t("landing.partner_point_1"),
-                t("landing.partner_point_2"),
-                t("landing.partner_point_3"),
-              ].map((line, i) => (
-                <li
-                  key={line}
-                  className="border-l border-[#D4AF37]/35 pl-3 text-[12px] leading-snug text-white/55"
-                >
-                  <span className="thalvo-num block text-[10px] tracking-[0.2em] text-[#F5B942]/70">
-                    0{i + 1}
-                  </span>
-                  <span className="mt-1 block">{line}</span>
-                </li>
-              ))}
-            </ol>
-          </div>
-
-          <div className="relative overflow-hidden rounded-[1.25rem] border border-[#D4AF37]/20 bg-[#0a1628]/95 shadow-[inset_0_1px_0_rgba(212,175,55,0.12)]">
-            <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-[#F5B942]/55 to-transparent" />
-            <div className="pointer-events-none absolute left-0 top-0 h-full w-px bg-gradient-to-b from-[#F5B942]/35 via-transparent to-[#F5B942]/20" />
-
-            {sent ? (
-              <div className="flex min-h-[320px] flex-col justify-center px-6 py-14 sm:px-10">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#F5B942]/80">
-                  {t("landing.partner_kicker")}
-                </p>
-                <p className="thalvo-display mt-3 text-3xl text-white">
-                  {t("landing.partner_thanks_title")}
-                </p>
-                <p className="mt-3 max-w-lg text-sm leading-relaxed text-white/65">
-                  {t("boatshow.lead_thanks")}
-                </p>
-              </div>
-            ) : (
-              <form onSubmit={onSubmit} className="grid gap-0 lg:grid-cols-[0.85fr_1.15fr]">
-                <div className="border-b border-white/[0.07] px-6 py-8 sm:px-8 lg:border-b-0 lg:border-r lg:border-white/[0.07] lg:py-10">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/40">
-                    {t("boatshow.field_kind")}
-                  </p>
-                  <p className="mt-2 text-sm text-white/55">{t("landing.partner_kind_hint")}</p>
-                  <div className="mt-6 grid gap-2">
-                    {KINDS.map((k) => {
-                      const on = kind === k;
-                      return (
-                        <button
-                          key={k}
-                          type="button"
-                          onClick={() => setKind(k)}
-                          className={
-                            "flex items-center justify-between rounded-lg px-3.5 py-3 text-left text-[13px] font-semibold transition " +
-                            (on
-                              ? "bg-[#F5B942] text-[#1A1406]"
-                              : "border border-white/[0.08] bg-white/[0.02] text-white/70 hover:border-[#D4AF37]/35 hover:text-white")
-                          }
-                        >
-                          <span>{t(`boatshow.kind_${k}`)}</span>
-                          <span
-                            className={
-                              "size-1.5 rounded-full " + (on ? "bg-[#06101c]" : "bg-white/25")
-                            }
-                          />
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div className="grid gap-5 px-6 py-8 sm:px-8 lg:py-10">
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <Field label={t("boatshow.field_name")} value={name} onChange={setName} required />
-                    <Field
-                      label={t("boatshow.field_company")}
-                      value={company}
-                      onChange={setCompany}
-                    />
-                    <Field
-                      label={t("boatshow.field_phone")}
-                      value={phone}
-                      onChange={setPhone}
-                      required
-                    />
-                    <Field
-                      label={t("boatshow.field_email")}
-                      value={email}
-                      onChange={setEmail}
-                      type="email"
-                    />
-                  </div>
-
-                  <label className="grid gap-1.5">
-                    <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/45">
-                      {t("boatshow.field_note")}
-                    </span>
-                    <textarea
-                      value={note}
-                      onChange={(e) => setNote(e.target.value)}
-                      rows={4}
-                      className="landing-field min-h-[6.5rem] resize-none py-3"
-                    />
-                  </label>
-
-                  <div className="mt-1 flex flex-col gap-4 border-t border-white/[0.07] pt-6 sm:flex-row sm:items-center sm:justify-between">
-                    <button
-                      type="submit"
-                      disabled={busy}
-                      className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-[#F5B942] px-8 text-sm font-bold text-[#1A1406] transition hover:bg-[#ffc857] disabled:opacity-55 sm:min-w-[14rem]"
-                    >
-                      {busy ? t("common.loading") : t("boatshow.lead_submit")}
-                      <ArrowUpRight className="size-4 opacity-80" aria-hidden />
-                    </button>
-                    <p className="text-[11px] leading-snug text-white/38 sm:max-w-[18rem] sm:text-right">
-                      {t("boatshow.lead_privacy", { email: OPS_CONTACT_EMAIL })}
-                    </p>
-                  </div>
-                </div>
-              </form>
-            )}
+            ))}
           </div>
         </div>
       </section>
@@ -337,6 +221,168 @@ export function BrandLanding() {
       <div className="border-t border-white/[0.07]">
         <PublicFooter />
       </div>
+
+      {/* ——— PARTNER DESK MODAL ——— */}
+      {partnerOpen ? (
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/70 p-0 backdrop-blur-[3px] sm:items-center sm:p-6">
+          <button
+            type="button"
+            className="absolute inset-0 cursor-default"
+            aria-label={t("common.close")}
+            onClick={closePartner}
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="partner-desk-title"
+            className="relative z-10 flex max-h-[min(92dvh,52rem)] w-full max-w-5xl flex-col overflow-hidden rounded-t-2xl border border-[#D4AF37]/25 bg-[#0a1628] shadow-[0_24px_80px_rgba(0,0,0,0.55)] sm:rounded-2xl"
+          >
+            <div className="flex shrink-0 items-start justify-between gap-4 border-b border-white/[0.08] px-5 py-4 sm:px-7">
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#F5B942]">
+                  {t("landing.partner_kicker")}
+                </p>
+                <h2
+                  id="partner-desk-title"
+                  className="thalvo-display mt-1.5 text-[clamp(1.5rem,3vw,2rem)] tracking-wide text-white"
+                >
+                  {t("landing.partner_title")}
+                </h2>
+                <p className="mt-2 max-w-xl text-[13px] leading-relaxed text-white/55">
+                  {t("landing.partner_lede")}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closePartner}
+                className="grid size-10 shrink-0 place-items-center rounded-md border border-white/12 text-white/70 hover:text-white"
+                aria-label={t("common.close")}
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              <div className="border-b border-white/[0.06] px-5 py-4 sm:px-7">
+                <ol className="grid gap-3 sm:grid-cols-3 sm:gap-4">
+                  {[
+                    t("landing.partner_point_1"),
+                    t("landing.partner_point_2"),
+                    t("landing.partner_point_3"),
+                  ].map((line, i) => (
+                    <li
+                      key={line}
+                      className="border-l border-[#D4AF37]/35 pl-3 text-[12px] leading-snug text-white/55"
+                    >
+                      <span className="thalvo-num block text-[10px] tracking-[0.2em] text-[#F5B942]/70">
+                        0{i + 1}
+                      </span>
+                      <span className="mt-1 block">{line}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+
+              {sent ? (
+                <div className="flex min-h-[240px] flex-col justify-center px-6 py-12 sm:px-10">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#F5B942]/80">
+                    {t("landing.partner_kicker")}
+                  </p>
+                  <p className="thalvo-display mt-3 text-3xl text-white">
+                    {t("landing.partner_thanks_title")}
+                  </p>
+                  <p className="mt-3 max-w-lg text-sm leading-relaxed text-white/65">
+                    {t("boatshow.lead_thanks")}
+                  </p>
+                </div>
+              ) : (
+                <form onSubmit={onSubmit} className="grid gap-0 lg:grid-cols-[0.85fr_1.15fr]">
+                  <div className="border-b border-white/[0.07] px-5 py-6 sm:px-7 lg:border-b-0 lg:border-r lg:border-white/[0.07] lg:py-8">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/40">
+                      {t("boatshow.field_kind")}
+                    </p>
+                    <p className="mt-2 text-sm text-white/55">{t("landing.partner_kind_hint")}</p>
+                    <div className="mt-5 grid gap-2">
+                      {KINDS.map((k) => {
+                        const on = kind === k;
+                        return (
+                          <button
+                            key={k}
+                            type="button"
+                            onClick={() => setKind(k)}
+                            className={
+                              "flex items-center justify-between rounded-lg px-3.5 py-3 text-left text-[13px] font-semibold transition " +
+                              (on
+                                ? "bg-[#F5B942] text-[#1A1406]"
+                                : "border border-white/[0.08] bg-white/[0.02] text-white/70 hover:border-[#D4AF37]/35 hover:text-white")
+                            }
+                          >
+                            <span>{t(`boatshow.kind_${k}`)}</span>
+                            <span
+                              className={
+                                "size-1.5 rounded-full " + (on ? "bg-[#06101c]" : "bg-white/25")
+                              }
+                            />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 px-5 py-6 sm:px-7 lg:py-8">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <Field label={t("boatshow.field_name")} value={name} onChange={setName} required />
+                      <Field
+                        label={t("boatshow.field_company")}
+                        value={company}
+                        onChange={setCompany}
+                      />
+                      <Field
+                        label={t("boatshow.field_phone")}
+                        value={phone}
+                        onChange={setPhone}
+                        required
+                      />
+                      <Field
+                        label={t("boatshow.field_email")}
+                        value={email}
+                        onChange={setEmail}
+                        type="email"
+                      />
+                    </div>
+
+                    <label className="grid gap-1.5">
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/45">
+                        {t("boatshow.field_note")}
+                      </span>
+                      <textarea
+                        value={note}
+                        onChange={(e) => setNote(e.target.value)}
+                        rows={3}
+                        className="landing-field min-h-[5.5rem] resize-none py-3"
+                      />
+                    </label>
+
+                    <div className="mt-1 flex flex-col gap-4 border-t border-white/[0.07] pt-5 sm:flex-row sm:items-center sm:justify-between">
+                      <button
+                        type="submit"
+                        disabled={busy}
+                        className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-[#F5B942] px-8 text-sm font-bold text-[#1A1406] transition hover:bg-[#ffc857] disabled:opacity-55 sm:min-w-[14rem]"
+                      >
+                        {busy ? t("common.loading") : t("boatshow.lead_submit")}
+                        <ArrowUpRight className="size-4 opacity-80" aria-hidden />
+                      </button>
+                      <p className="text-[11px] leading-snug text-white/38 sm:max-w-[18rem] sm:text-right">
+                        {t("boatshow.lead_privacy", { email: OPS_CONTACT_EMAIL })}
+                      </p>
+                    </div>
+                  </div>
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {menuOpen ? (
         <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-[2px]">
@@ -367,9 +413,13 @@ export function BrandLanding() {
               <MenuLink href="#about" onClick={() => setMenuOpen(false)}>
                 {t("landing.nav_about")}
               </MenuLink>
-              <MenuLink href="#partner" onClick={() => setMenuOpen(false)}>
+              <button
+                type="button"
+                onClick={openPartner}
+                className="rounded-md px-3 py-3.5 text-left text-sm font-semibold text-white/85 hover:bg-white/[0.04]"
+              >
                 {t("landing.cta_partner")}
-              </MenuLink>
+              </button>
               <Link
                 to="/chart"
                 onClick={() => setMenuOpen(false)}

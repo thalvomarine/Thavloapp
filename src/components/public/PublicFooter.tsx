@@ -8,9 +8,6 @@ export function PublicFooter() {
   return (
     <footer className="relative z-10 px-5 py-6 text-center">
       <nav className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
-        <Link to="/boatshow" className={linkCls}>
-          {t("boatshow.footer_link")}
-        </Link>
         <Link to="/chart" className={linkCls}>
           {t("public.footer_coverage")}
         </Link>
