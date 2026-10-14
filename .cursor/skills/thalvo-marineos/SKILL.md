@@ -10,7 +10,7 @@ description: >-
 
 - Stack: React, Vite, Tailwind, Leaflet, Supabase. Cockpit colours are navy `#0A192F`, cyan `#00F0FF`, amber `#F5B942`.
 - Units: knots, nautical miles, metres. Coordinates use `formatDm` (`DD°MM.MM'`).
-- Public chart tiles: Esri World Dark Gray plus OpenSeaMap. Do not use deprecated CartoDB key endpoints. Do not put live boat or technician pins on the public chart.
+- Public home `/` is the brand landing (Concept B). The public coast chart lives at `/chart`. Chart tiles: Esri World Dark Gray plus OpenSeaMap. Do not use deprecated CartoDB key endpoints. Do not put live boat or technician pins on the public chart. Partner ol scrolls to `#partner` lead form on the landing.
 - The cockpit does not draw routes and has no north-lock control. The desktop control panel is the only layer menu; the layers button is for narrow screens.
 - Coverage copy is Aegean and Mediterranean. Marina names stay as real places.
 - An open SOS stays on Görevler until the captain cancels it or it is completed. Cancel and live position use `cancel_own_call` and `refresh_own_call_position` in `20261008143000_cancel_and_live_call.sql`.

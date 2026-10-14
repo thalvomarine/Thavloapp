@@ -102,7 +102,7 @@ function BoatshowPage() {
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <Link
-              to="/"
+              to="/chart"
               className="inline-flex h-12 items-center justify-center rounded-2xl bg-cyan-400 px-6 text-sm font-bold text-slate-950"
             >
               {t("boatshow.cta_chart")}

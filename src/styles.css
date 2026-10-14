@@ -516,17 +516,136 @@ html[data-thalvo-theme="night"] .thalvo-desk {
 .thalvo-map-gpu {
   /* Avoid will-change:transform — it allocates a full-screen compositor
      layer and multiplies tile GPU memory on mobile WebViews. */
-  transform: translateZ(0);
   backface-visibility: hidden;
 }
+/* Desktop only: promote the chart. translateZ on iOS WebKit + seamark
+   overlays has blanked the Leaflet tile pane to the navy void. */
+@media (pointer: fine) {
+  .thalvo-map-gpu,
+  .thalvo-map-gpu .leaflet-container {
+    transform: translateZ(0);
+  }
+}
 .thalvo-map-gpu .leaflet-container {
-  transform: translateZ(0);
   backface-visibility: hidden;
 }
 .thalvo-display {
   font-family: "Barlow Condensed", "Avenir Next Condensed", "Barlow", Inter, ui-sans-serif, system-ui, sans-serif;
   font-weight: 600;
   letter-spacing: 0.01em;
+}
+
+/* ——— Public brand landing (Concept B) ——— */
+.landing-nav-link {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 0.72);
+  transition: color 160ms ease;
+}
+.landing-nav-link:hover {
+  color: rgb(255 255 255 / 1);
+}
+.landing-nav-menu {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #f5b942;
+}
+.landing-cta-primary {
+  display: inline-flex;
+  height: 3rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border-radius: 0.5rem;
+  background: #f5b942;
+  padding: 0 1.75rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #1a1406;
+  transition: background 160ms ease, transform 160ms ease;
+}
+.landing-cta-primary:hover {
+  background: #ffc857;
+}
+.landing-cta-primary:disabled {
+  opacity: 0.55;
+}
+.landing-cta-secondary {
+  display: inline-flex;
+  height: 3rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  border: 1px solid rgb(255 255 255 / 0.28);
+  background: rgb(255 255 255 / 0.06);
+  padding: 0 1.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #fff;
+  backdrop-filter: blur(8px);
+  transition: border-color 160ms ease, background 160ms ease;
+}
+.landing-cta-secondary:hover {
+  border-color: rgb(255 255 255 / 0.5);
+  background: rgb(255 255 255 / 0.1);
+}
+.landing-field {
+  height: 2.75rem;
+  width: 100%;
+  border-radius: 0.5rem;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  background: rgb(255 255 255 / 0.04);
+  padding: 0 0.85rem;
+  font-size: 0.875rem;
+  color: #fff;
+  outline: none;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+.landing-field:focus {
+  border-color: rgb(245 185 66 / 0.55);
+  background: rgb(255 255 255 / 0.06);
+}
+.landing-hero-img {
+  animation: landing-ken 28s ease-in-out infinite alternate;
+  will-change: transform;
+}
+.landing-fade-up {
+  animation: landing-fade-up 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.landing-fade-up-delay {
+  animation: landing-fade-up 700ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
+}
+@keyframes landing-fade-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+@keyframes landing-ken {
+  from {
+    transform: scale(1.02);
+  }
+  to {
+    transform: scale(1.08);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-hero-img,
+  .landing-fade-up,
+  .landing-fade-up-delay {
+    animation: none !important;
+  }
 }
 .thalvo-num {
   font-variant-numeric: tabular-nums;
@@ -563,15 +682,19 @@ html[data-thalvo-theme="night"] .thalvo-desk {
 .leaflet-marker-shadow {
   transition: none !important;
 }
+/* Legacy inverted-OSM class — unused. Kept inert so old caches cannot
+   reintroduce WebKit blank-map compositing under seamark overlays. */
 .thalvo-dark-tiles {
-  /* OSM Carto → Dark Matter-grade night chart, no API key. */
-  filter: invert(1) hue-rotate(180deg) brightness(0.88) contrast(1.08) saturate(0.45);
+  filter: none;
 }
 .thalvo-seamark-tiles,
 .thalvo-seamark-tiles img {
   pointer-events: none !important;
+  background: transparent !important;
   /* No CSS filter here — filter forces an offscreen bitmap per tile and
-     OOMs Capacitor WebViews when stacked on satellite/OSM. */
+     blanks the basemap under seamarks on iOS Safari / Chrome. */
+  isolation: isolate;
+  mix-blend-mode: normal;
 }
 .leaflet-marker-pane,
 .leaflet-tooltip-pane,
@@ -712,7 +835,12 @@ html[data-thalvo-theme="day"] .thalvo-dark textarea {
   background-color: #ffffff !important;
   border-color: rgb(15 23 42 / 0.22) !important;
 }
-html[data-thalvo-theme="day"] .thalvo-dark button {
+/*
+ * Bare buttons inherit desk ink on day paper. Do NOT override buttons that
+ * already set a text-* utility (e.g. desk accent CTAs with white on navy) —
+ * that produced solid navy "blacked out" chips in the marketplace.
+ */
+html[data-thalvo-theme="day"] .thalvo-dark button:not([class*="text-"]) {
   color: inherit;
 }
 html[data-thalvo-theme="day"] .thalvo-dark input::placeholder,
@@ -938,6 +1066,76 @@ html[data-thalvo-theme="day"] .leaflet-control-attribution a {
 }
 html[data-thalvo-theme="day"] .bg-deep {
   background-color: #f4f7fb !important;
+}
+
+/*
+ * Surfaces that stay dark on day mode (chart HUD, FABs, photo badges).
+ * Restore light ink + navy fills the global day remaps would flatten.
+ */
+html[data-thalvo-theme="day"] .thalvo-on-dark {
+  color-scheme: dark;
+  color: #f8fafc;
+}
+html[data-thalvo-theme="day"] .thalvo-on-dark .text-white,
+html[data-thalvo-theme="day"] .thalvo-on-dark .text-white\/90,
+html[data-thalvo-theme="day"] .thalvo-on-dark .text-white\/85 {
+  color: #ffffff !important;
+}
+html[data-thalvo-theme="day"] .thalvo-on-dark .text-white\/80,
+html[data-thalvo-theme="day"] .thalvo-on-dark .text-white\/75,
+html[data-thalvo-theme="day"] .thalvo-on-dark .text-white\/70,
+html[data-thalvo-theme="day"] .thalvo-on-dark .text-white\/65 {
+  color: rgb(255 255 255 / 0.78) !important;
+}
+html[data-thalvo-theme="day"] .thalvo-on-dark .text-white\/60,
+html[data-thalvo-theme="day"] .thalvo-on-dark .text-white\/55,
+html[data-thalvo-theme="day"] .thalvo-on-dark .text-white\/50,
+html[data-thalvo-theme="day"] .thalvo-on-dark .text-white\/45,
+html[data-thalvo-theme="day"] .thalvo-on-dark .text-white\/40,
+html[data-thalvo-theme="day"] .thalvo-on-dark .text-white\/35 {
+  color: rgb(255 255 255 / 0.55) !important;
+}
+html[data-thalvo-theme="day"] .thalvo-on-dark .text-cyan-50,
+html[data-thalvo-theme="day"] .thalvo-on-dark .text-cyan-100,
+html[data-thalvo-theme="day"] .thalvo-on-dark .text-cyan-100\/90,
+html[data-thalvo-theme="day"] .thalvo-on-dark .text-cyan-100\/80,
+html[data-thalvo-theme="day"] .thalvo-on-dark .text-cyan-100\/70,
+html[data-thalvo-theme="day"] .thalvo-on-dark .text-cyan-200,
+html[data-thalvo-theme="day"] .thalvo-on-dark .text-cyan-200\/90,
+html[data-thalvo-theme="day"] .thalvo-on-dark .text-cyan-200\/80,
+html[data-thalvo-theme="day"] .thalvo-on-dark .text-cyan-200\/70 {
+  color: #a5f3fc !important;
+}
+html[data-thalvo-theme="day"] .thalvo-on-dark .text-cyan-300,
+html[data-thalvo-theme="day"] .thalvo-on-dark .text-cyan-300\/90,
+html[data-thalvo-theme="day"] .thalvo-on-dark .text-cyan-300\/85,
+html[data-thalvo-theme="day"] .thalvo-on-dark .text-cyan-300\/80,
+html[data-thalvo-theme="day"] .thalvo-on-dark .text-cyan-300\/70,
+html[data-thalvo-theme="day"] .thalvo-on-dark .text-cyan-300\/55 {
+  color: rgb(103 232 249 / 0.85) !important;
+}
+html[data-thalvo-theme="day"] .thalvo-on-dark .text-cyan-400\/50 {
+  color: rgb(34 211 238 / 0.55) !important;
+}
+html[data-thalvo-theme="day"] .thalvo-on-dark .bg-\[\#0A192F\],
+html[data-thalvo-theme="day"] .thalvo-on-dark .bg-\[\#0a192f\],
+html[data-thalvo-theme="day"] .thalvo-on-dark .bg-\[\#071422\],
+html[data-thalvo-theme="day"] .thalvo-on-dark .bg-\[\#06101c\] {
+  background-color: #0a192f !important;
+}
+html[data-thalvo-theme="day"] .thalvo-on-dark .bg-\[\#0A192F\]\/90,
+html[data-thalvo-theme="day"] .thalvo-on-dark .bg-\[\#0a192f\]\/90,
+html[data-thalvo-theme="day"] .thalvo-on-dark .bg-\[\#0a192f\]\/92,
+html[data-thalvo-theme="day"] .thalvo-on-dark .bg-\[\#0A192F\]\/95,
+html[data-thalvo-theme="day"] .thalvo-on-dark .bg-\[\#0a192f\]\/95 {
+  background-color: rgb(10 25 47 / 0.92) !important;
+}
+html[data-thalvo-theme="day"] .thalvo-on-dark .border-white\/5,
+html[data-thalvo-theme="day"] .thalvo-on-dark .border-white\/10,
+html[data-thalvo-theme="day"] .thalvo-on-dark .border-white\/12,
+html[data-thalvo-theme="day"] .thalvo-on-dark .border-white\/15,
+html[data-thalvo-theme="day"] .thalvo-on-dark .border-white\/20 {
+  border-color: rgb(255 255 255 / 0.18) !important;
 }
 
 /* Auth / premium crest: logo art is drawn for dark seas — seat it on ink. */

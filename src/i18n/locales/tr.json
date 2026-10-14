@@ -1856,5 +1856,33 @@
     "accept_failed": "Seçim kaydedilemedi.",
     "captains_only_title": "Yalnızca kaptan hesapları",
     "captains_only_body": "Transfer kaptan masası kaptan (Client) hesabı ile kullanılır."
+  },
+  "landing": {
+    "nav_solutions": "Çözümler",
+    "nav_about": "Hakkımızda",
+    "nav_menu": "Menü",
+    "slogan": "Marine Operating System",
+    "lede": "Denizde güvenli seyir işletim sistemi.",
+    "coverage": "Ege ve Akdeniz · SOS, teknisyen, yedek parça",
+    "cta_chart": "Canlı haritayı aç",
+    "cta_partner": "Partner ol",
+    "solutions_title": "Çözümler",
+    "solutions_body": "Acil çağrı, yedek parça ve kıyı haritası tek yerde — kaptan, bayi ve teknisyen için.",
+    "feat_sos_title": "SOS ve teknisyen",
+    "feat_sos_body": "Konumlu acil çağrı; doğrulanmış ustalar görevi alır.",
+    "feat_parts_title": "Yedek parça",
+    "feat_parts_body": "Bayi stokunu göz atın; sipariş için giriş yeterli.",
+    "feat_chart_title": "Kıyı haritası",
+    "feat_chart_body": "Ege ve Akdeniz kapsama — canlı tekne pini yok.",
+    "about_title": "Hakkımızda",
+    "about_body": "THALVO, Türkiye kıyısı ve Akdeniz için denizcilik işletim sistemidir. Pilot sürümde ödemeler demo modundadır.",
+    "partner_title": "Partner masası",
+    "partner_lede": "Katalog, stok veya müdahale ortaklığı için kısa form. Spam yok — yalnızca THALVO ops.",
+    "partner_kicker": "Ortaklık",
+    "partner_point_1": "Hesap açmadan lead bırakın",
+    "partner_point_2": "Marka, marina, bayi veya teknisyen",
+    "partner_point_3": "Pilot ekip 24 saat içinde döner",
+    "partner_thanks_title": "Teşekkürler",
+    "partner_kind_hint": "Rolünüzü seçin — form buna göre kayda geçer."
   }
 }

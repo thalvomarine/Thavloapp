@@ -64,7 +64,7 @@ export function ChartSearchBar({
     <div className="pointer-events-none absolute inset-x-0 top-0 z-[500] flex flex-col gap-1.5 px-3 pt-[calc(env(safe-area-inset-top)+0.5rem)]">
       <LeafletPointerGuard className="pointer-events-none relative z-[10] flex min-w-0 items-center gap-2">
         <div className="pointer-events-auto relative z-0 min-w-0 flex-1">
-          <div className="flex h-11 min-w-0 items-center gap-2.5 overflow-hidden rounded-xl border border-white/15 bg-[#0a192f]/92 px-3 shadow-2xl backdrop-blur-md">
+          <div className="thalvo-on-dark flex h-11 min-w-0 items-center gap-2.5 overflow-hidden rounded-xl border border-white/15 bg-[#0a192f]/92 px-3 shadow-2xl backdrop-blur-md">
             {headerLeft ? (
               <>
                 <div className="flex shrink-0 items-center gap-1.5">
@@ -108,7 +108,7 @@ export function ChartSearchBar({
           </div>
 
           {showDropdown && (
-            <div className="mt-1.5 max-h-[40vh] overflow-y-auto rounded-xl border border-white/12 bg-[#0a192f]/95 shadow-2xl backdrop-blur-md">
+            <div className="thalvo-on-dark mt-1.5 max-h-[40vh] overflow-y-auto rounded-xl border border-white/12 bg-[#0a192f]/95 shadow-2xl backdrop-blur-md">
               {results.length === 0 ? (
                 <p className="px-3.5 py-3 text-[11px] text-white/40">
                   {t("chart.search_no_results")}

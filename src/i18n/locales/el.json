@@ -1857,5 +1857,33 @@
     "accept_failed": "Could not save selection.",
     "captains_only_title": "Captain accounts only",
     "captains_only_body": "The transfer captain desk is for captain (Client) accounts."
+  },
+  "landing": {
+    "nav_solutions": "Λύσεις",
+    "nav_about": "Σχετικά",
+    "nav_menu": "Μενού",
+    "slogan": "Marine Operating System",
+    "lede": "Το λειτουργικό σύστημα για ασφαλή πλεύση στη θάλασσα.",
+    "coverage": "Αιγαίο και Μεσόγειος · SOS, τεχνικοί, ανταλλακτικά",
+    "cta_chart": "Άνοιγμα χάρτη",
+    "cta_partner": "Γίνετε συνεργάτης",
+    "solutions_title": "Λύσεις",
+    "solutions_body": "Κλήση έκτακτης ανάγκης, ανταλλακτικά και παράκτιος χάρτης σε ένα μέρος.",
+    "feat_sos_title": "SOS και τεχνικοί",
+    "feat_sos_body": "Κλήση με τοποθεσία· επαληθευμένοι τεχνικοί αναλαμβάνουν.",
+    "feat_parts_title": "Ανταλλακτικά",
+    "feat_parts_body": "Δείτε απόθεμα· σύνδεση μόνο για παραγγελία.",
+    "feat_chart_title": "Παράκτιος χάρτης",
+    "feat_chart_body": "Κάλυψη Αιγαίου και Μεσογείου — χωρίς ζωντανές πινέζες σκαφών.",
+    "about_title": "Σχετικά",
+    "about_body": "Το THALVO είναι το ναυτικό λειτουργικό για τις τουρκικές ακτές και τη Μεσόγειο. Στην πιλοτική φάση οι πληρωμές παραμένουν demo.",
+    "partner_title": "Partner desk",
+    "partner_lede": "Σύντομη φόρμα για κατάλογο, απόθεμα ή συνεργασία απόκρισης.",
+    "partner_kicker": "Συνεργασία",
+    "partner_point_1": "Αφήστε lead χωρίς λογαριασμό",
+    "partner_point_2": "Μάρκα, μαρίνα, έμπορος ή τεχνικός",
+    "partner_point_3": "Απάντηση εντός 24 ωρών",
+    "partner_thanks_title": "Ευχαριστούμε",
+    "partner_kind_hint": "Επιλέξτε ρόλο — το lead καταγράφεται ανάλογα."
   }
 }

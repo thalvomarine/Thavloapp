@@ -80,7 +80,7 @@ export function MetoceanHud() {
       : "—";
 
   const panel = (
-    <div className="w-[232px] max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-2xl border border-white/12 bg-[#0a192f]/90 text-xs shadow-2xl backdrop-blur-md">
+    <div className="thalvo-on-dark w-[232px] max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-2xl border border-white/12 bg-[#0a192f]/90 text-xs shadow-2xl backdrop-blur-md">
       <div className="p-2.5">
         <div className="flex items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-1.5">
@@ -175,7 +175,7 @@ export function MetoceanHud() {
             onClick={() => setExpanded(true)}
             aria-expanded={false}
             title={t("chart.metocean_title")}
-            className="flex max-w-[min(220px,calc(100vw-5.5rem))] items-center gap-1.5 rounded-xl border border-white/12 bg-[#0a192f]/90 px-2.5 py-1.5 shadow-2xl backdrop-blur-md"
+            className="thalvo-on-dark flex max-w-[min(220px,calc(100vw-5.5rem))] items-center gap-1.5 rounded-xl border border-white/12 bg-[#0a192f]/90 px-2.5 py-1.5 shadow-2xl backdrop-blur-md"
           >
             <Navigation2 className="size-3 shrink-0 text-cyan-300" />
             <span className="truncate font-mono text-[10px] tabular-nums text-white/90">

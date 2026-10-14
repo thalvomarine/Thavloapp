@@ -11,7 +11,7 @@ export function PublicFooter() {
         <Link to="/boatshow" className={linkCls}>
           {t("boatshow.footer_link")}
         </Link>
-        <Link to="/coverage" className={linkCls}>
+        <Link to="/chart" className={linkCls}>
           {t("public.footer_coverage")}
         </Link>
         <Link to="/privacy" className={linkCls}>

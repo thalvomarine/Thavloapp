@@ -57,7 +57,7 @@ export function ChartDeck({ panel }: { panel?: ChartPanel }) {
     <div className="thalvo-dark flex h-svh max-h-svh w-full max-w-[100vw] flex-col overflow-hidden bg-[#06101c] text-white">
       <header className="z-[1100] shrink-0 overflow-hidden border-b border-white/[0.08] bg-[#071422] pt-[env(safe-area-inset-top)]">
         <div className="flex h-11 min-w-0 items-center gap-2 px-2">
-          <Link to="/" search={{ panel: undefined }} className="flex min-w-0 shrink items-center gap-2">
+          <Link to="/" className="flex min-w-0 shrink items-center gap-2">
             <Wordmark size="sm" className="text-white" decorative />
             <span className="thalvo-display hidden text-[14px] tracking-[0.18em] text-white min-[420px]:inline">THALVO</span>
           </Link>
@@ -195,7 +195,7 @@ function DockLink({
 }) {
   return (
     <Link
-      to="/"
+      to="/chart"
       search={{ panel }}
       className={
         "flex h-full min-w-0 flex-col items-center justify-center gap-0.5 border-t-2 px-1 text-[11px] font-semibold " +
@@ -226,7 +226,7 @@ function PanelFrame({
           <h1 className="thalvo-display mt-1 text-[28px] leading-none text-white">{title}</h1>
         </div>
         <Link
-          to="/"
+          to="/chart"
           search={{ panel: undefined }}
           aria-label={t("common.close")}
           className="grid size-9 place-items-center rounded-full border border-white/10 text-white/70 hover:bg-white/10"

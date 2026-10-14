@@ -386,7 +386,7 @@ export function ChartHud({
   return (
     <LeafletPointerGuard className="pointer-events-auto absolute top-[calc(env(safe-area-inset-top)+4.75rem)] right-3 z-[500] hidden items-start gap-2 lg:flex">
       {open ? (
-        <div className="w-[min(260px,calc(100vw-6.5rem))] overflow-hidden rounded-2xl border border-white/12 bg-[#0a192f]/92 text-xs shadow-2xl backdrop-blur-md">
+        <div className="thalvo-on-dark w-[min(260px,calc(100vw-6.5rem))] overflow-hidden rounded-2xl border border-white/12 bg-[#0a192f]/92 text-xs shadow-2xl backdrop-blur-md">
           <div className="p-3">
             <p className="mb-2.5 text-[12px] font-semibold text-white">{t("chart.hud_title")}</p>
             <ChartHudBody
@@ -410,7 +410,7 @@ export function ChartHud({
         </div>
       ) : null}
 
-      <div className="flex w-[52px] flex-col items-center gap-2 rounded-2xl border border-white/12 bg-[#0a192f]/92 p-2 shadow-2xl backdrop-blur-md">
+      <div className="thalvo-on-dark flex w-[52px] flex-col items-center gap-2 rounded-2xl border border-white/12 bg-[#0a192f]/92 p-2 shadow-2xl backdrop-blur-md">
         <button
           type="button"
           onPointerDown={stopMapEvent}
@@ -565,7 +565,7 @@ export function ChartReadout({
   return (
     <div
       className={
-        "z-[50] rounded-xl border border-white/12 bg-[#0a192f]/90 px-3 py-2 shadow-lg backdrop-blur-md transition-opacity duration-200 " +
+        "thalvo-on-dark z-[50] rounded-xl border border-white/12 bg-[#0a192f]/90 px-3 py-2 shadow-lg backdrop-blur-md transition-opacity duration-200 " +
         (concealed ? "pointer-events-none opacity-0" : "pointer-events-auto opacity-100") +
         " " +
         (viewportPinned
@@ -686,7 +686,7 @@ export function ChartFabStack({
         <LeafletPointerGuard className="pointer-events-auto lg:hidden">
           <div
             ref={menuRef}
-            className="w-[min(252px,calc(100vw-5.5rem))] overflow-hidden rounded-2xl border border-white/12 bg-[#0a192f]/95 text-xs shadow-2xl backdrop-blur-md"
+            className="thalvo-on-dark w-[min(252px,calc(100vw-5.5rem))] overflow-hidden rounded-2xl border border-white/12 bg-[#0a192f]/95 text-xs shadow-2xl backdrop-blur-md"
           >
             <div className="p-3">
               <p className="mb-2.5 text-[12px] font-semibold text-white">
