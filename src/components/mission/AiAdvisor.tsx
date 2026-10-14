@@ -16,7 +16,7 @@ interface Props {
 }
 
 const TONE_DOT: Record<NonNullable<AiRecommendation["tone"]>, string> = {
-  info:    "bg-sky-400",
+  info:    "bg-amber-400",
   warning: "bg-amber-400",
   success: "bg-emerald-400",
 };
@@ -34,7 +34,7 @@ export function AiAdvisor({ recommendations, title = "THALVO AI · Advisor" }: P
         onClick={() => setOpen((v) => !v)}
         className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/[0.03] transition-colors"
       >
-        <span className="relative grid place-items-center size-8 rounded-lg bg-sky-500/10 border border-sky-400/20 text-sky-300">
+        <span className="relative grid place-items-center size-8 rounded-lg bg-amber-500/10 border border-amber-400/20 text-amber-300">
           <Sparkle className="size-4" />
         </span>
         <div className="flex-1 text-left">
@@ -55,7 +55,7 @@ export function AiAdvisor({ recommendations, title = "THALVO AI · Advisor" }: P
                 {r.action && (
                   <button
                     onClick={r.action.onClick}
-                    className="mt-2 text-[11px] font-semibold uppercase tracking-wider text-sky-300 hover:text-sky-200"
+                    className="mt-2 text-[11px] font-semibold uppercase tracking-wider text-amber-300 hover:text-sky-200"
                   >
                     {r.action.label} →
                   </button>

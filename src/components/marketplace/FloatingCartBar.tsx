@@ -31,14 +31,14 @@ export function FloatingCartBar({ onOpen }: Props) {
       type="button"
       onClick={onOpen}
       aria-label={t("marketplace.cart_aria")}
-      className="pointer-events-auto fixed z-[55] inline-flex items-center gap-2 rounded-full border border-cyan-400/45 bg-[#0A192F]/95 px-3 py-2 text-left shadow-[0_10px 28px_-10px_rgba(0,240,255,0.45)] backdrop-blur-md transition-transform active:scale-95"
+      className="pointer-events-auto fixed z-[55] inline-flex items-center gap-2 rounded-full border border-amber-400/45 bg-[#0A192F]/95 px-3 py-2 text-left shadow-[0_10px 28px_-10px_rgba(245, 185, 66,0.45)] backdrop-blur-md transition-transform active:scale-95"
       style={{
         // AI launcher: right 1rem + 3.5rem wide. Leave 0.75rem gap, then this pill.
         right: "calc(1rem + 3.5rem + 0.75rem)",
         bottom: "calc(max(1rem, env(safe-area-inset-bottom)) + 4.6rem)",
       }}
     >
-      <span className="relative grid size-8 place-items-center rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 text-white">
+      <span className="relative grid size-8 place-items-center rounded-full bg-gradient-to-br from-amber-400 to-blue-600 text-white">
         <ShoppingCart className="size-3.5" />
         {cart.count > 0 && (
           <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-amber-400 px-1 text-[9px] font-bold text-slate-900">
@@ -47,7 +47,7 @@ export function FloatingCartBar({ onOpen }: Props) {
         )}
       </span>
       <span className="pr-0.5">
-        <span className="block text-[9px] font-semibold uppercase tracking-[0.14em] text-cyan-200/80">
+        <span className="block text-[9px] font-semibold uppercase tracking-[0.14em] text-amber-200/80">
           {t("shop.cart")}
         </span>
         <span className="block text-[12px] font-bold tabular-nums text-amber-300">

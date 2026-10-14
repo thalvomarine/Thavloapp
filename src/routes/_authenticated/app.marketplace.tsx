@@ -434,11 +434,11 @@ Answer in three short bullets (max 2 sentences each):
       >
         <div className="p-4 flex items-start justify-between gap-3 border-b border-white/10">
           <div className="flex items-center gap-2 min-w-0">
-            <span className="size-8 rounded-lg bg-sky-400/15 border border-sky-400/30 grid place-items-center text-sky-300">
+            <span className="size-8 rounded-lg bg-amber-400/15 border border-amber-400/30 grid place-items-center text-amber-300">
               <Sparkles className="size-4" />
             </span>
             <div className="min-w-0">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-300">{t("marketplace.ai_thalvo")}</p>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-300">{t("marketplace.ai_thalvo")}</p>
               <p className="text-sm font-semibold text-white truncate">{part.name}</p>
             </div>
           </div>

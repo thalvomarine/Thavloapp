@@ -618,7 +618,7 @@ function ClientJob({ job, meId }: { job: Job; meId: string }) {
           </p>
           {offers.length === 0 ? (
             <GlassPanel className="text-center">
-              <Loader2 className="mx-auto size-5 animate-spin text-sky-300 mb-2" />
+              <Loader2 className="mx-auto size-5 animate-spin text-amber-300 mb-2" />
               <p className="text-sm text-white/60">{t("owner.no_offers")}</p>
               <p className="text-[11px] text-white/40 mt-1">{t("mission.broadcasting_hint")}</p>
             </GlassPanel>

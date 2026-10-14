@@ -193,7 +193,7 @@ function Passport({ userId }: { userId: string }) {
     return (
       <BoatPassportShell title={t("passport.title")} eyebrow={t("passport.eyebrow")}>
         <GlassPanel className="text-center py-8">
-          <div className="mx-auto mb-4 grid size-14 place-items-center rounded-2xl border border-cyan-300/25 bg-cyan-400/10 text-cyan-200">
+          <div className="mx-auto mb-4 grid size-14 place-items-center rounded-2xl border border-amber-300/25 bg-amber-400/10 text-amber-200">
             <Ship className="size-6" />
           </div>
           <h2 className="text-lg font-semibold text-white">{t("passport.no_vessel_title")}</h2>
@@ -238,7 +238,7 @@ function Passport({ userId }: { userId: string }) {
         <button
           type="button"
           onClick={() => setRegistryOpen((open) => !open)}
-          className="h-10 rounded-full border border-cyan-300/30 px-4 text-[12px] font-semibold text-cyan-100"
+          className="h-10 rounded-full border border-amber-300/30 px-4 text-[12px] font-semibold text-amber-100"
         >
           {t(registryOpen ? "common.close" : "vessel.edit")}
         </button>
@@ -275,7 +275,7 @@ function Passport({ userId }: { userId: string }) {
             <Link
               to="/app/job/$id"
               params={{ id: activeJobs[0].id }}
-              className="mt-3 block text-xs text-sky-300 hover:text-sky-200"
+              className="mt-3 block text-xs text-amber-300 hover:text-sky-200"
             >
               {t("passport.open_latest_mission")}
             </Link>

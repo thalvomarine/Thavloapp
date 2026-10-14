@@ -16,7 +16,7 @@ const TONE: Record<StatusTone, string> = {
   success: "text-emerald-300",
   warning: "text-amber-300",
   danger: "text-rose-300",
-  info: "text-sky-300",
+  info: "text-amber-300",
 };
 
 /**

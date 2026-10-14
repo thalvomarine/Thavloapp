@@ -73,7 +73,7 @@ export function LogisticsOrderCard(p: LogisticsOrder) {
           {p.onOpen ? (
             <button
               onClick={p.onOpen}
-              className="text-[11px] font-semibold uppercase tracking-[0.14em] text-sky-300 hover:text-sky-200"
+              className="text-[11px] font-semibold uppercase tracking-[0.14em] text-amber-300 hover:text-sky-200"
             >
               {t("orders.open_tracking")}
             </button>

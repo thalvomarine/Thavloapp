@@ -4,7 +4,6 @@ import { toast } from "sonner";
 import { Loader2, Radio, Ship } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { VesselRange } from "@/components/mission/VesselRange";
-import { GlassPanel } from "@/components/mission/GlassPanel";
 import {
   asCoordinate,
   EMERGENCY_CATEGORY_LABEL_KEYS,
@@ -114,20 +113,25 @@ export function EmergencyCallRadar({ userId, hideChart = false }: Props) {
   return (
     <section
       className={
-        "space-y-3 rounded-2xl border p-3 transition-shadow " +
+        "thalvo-chart-sheet space-y-3 rounded-2xl border p-3 transition-shadow " +
         (flash
           ? "border-red-400/70 bg-red-500/10 shadow-[0_0_40px_-8px_rgba(239,68,68,0.7)]"
-          : "border-cyan-400/20 bg-white/[0.02]")
+          : "")
       }
     >
       <div className="flex items-center justify-between gap-2">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-300/80">
+          <p
+            className="text-[10px] font-semibold uppercase tracking-[0.2em]"
+            style={{ color: "var(--sheet-active-ink)" }}
+          >
             {t("esvc.radar_eyebrow")}
           </p>
-          <h2 className="text-sm font-semibold text-white">{t("esvc.radar_title")}</h2>
+          <h2 className="text-sm font-semibold" style={{ color: "var(--sheet-ink)" }}>
+            {t("esvc.radar_title")}
+          </h2>
         </div>
-        <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-300">
+        <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-400">
           <span className="relative flex size-1.5">
             <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-70" />
             <span className="relative size-1.5 rounded-full bg-emerald-400" />
@@ -141,7 +145,16 @@ export function EmergencyCallRadar({ userId, hideChart = false }: Props) {
       )}
 
       {pending.length === 0 && mine.length === 0 ? (
-        <GlassPanel className="text-sm text-white/50">{t("esvc.radar_empty")}</GlassPanel>
+        <div
+          className="rounded-xl border px-3 py-3 text-sm"
+          style={{
+            borderColor: "var(--sheet-border)",
+            background: "var(--sheet-chip)",
+            color: "var(--sheet-muted)",
+          }}
+        >
+          {t("esvc.radar_empty")}
+        </div>
       ) : (
         <ul className="space-y-2">
           {mine.map((row) => (
@@ -195,22 +208,26 @@ function CallCard({
       : null;
 
   return (
-    <article className="rounded-2xl border border-white/10 bg-[#0A192F]/80 px-4 py-3">
+    <article
+      className="rounded-2xl border px-4 py-3"
+      style={{ borderColor: "var(--sheet-border)", background: "var(--sheet-chip)" }}
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-white">
+          <p className="truncate text-sm font-semibold" style={{ color: "var(--sheet-ink)" }}>
             {row.vessel_name || t("esvc.unnamed_vessel")}
           </p>
-          <p className="mt-0.5 text-[12px] text-cyan-200/90">
+          <p className="mt-0.5 text-[12px]" style={{ color: "var(--sheet-active-ink)" }}>
             {t(EMERGENCY_CATEGORY_LABEL_KEYS[row.category])}
           </p>
-          <p className="mt-0.5 truncate text-[11px] text-white/50">
+          <p className="mt-0.5 truncate text-[11px]" style={{ color: "var(--sheet-muted)" }}>
             {row.bay_name ? `⚓ ${row.bay_name}` : t("esvc.open_water")}
           </p>
           {position ? (
             <button
               type="button"
-              className="mt-1 font-mono text-[11px] text-cyan-100 underline-offset-2 hover:underline"
+              className="mt-1 font-mono text-[11px] underline-offset-2 hover:underline"
+              style={{ color: "var(--sheet-active-ink)" }}
               onClick={() => {
                 if (lat == null || lng == null) return;
                 requestMapFocus({
@@ -237,7 +254,9 @@ function CallCard({
         </span>
       </div>
       <div className="mt-2 flex items-center justify-between gap-2">
-        <p className="font-mono text-[12px] text-cyan-100">{eta?.label ?? t("esvc.eta_waiting_fix")}</p>
+        <p className="font-mono text-[12px]" style={{ color: "var(--sheet-active-ink)" }}>
+          {eta?.label ?? t("esvc.eta_waiting_fix")}
+        </p>
         {assigned ? (
           <span className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-emerald-300">
             <Ship className="size-3.5" />
@@ -248,7 +267,7 @@ function CallCard({
             type="button"
             onClick={onAccept}
             disabled={busy}
-            className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-cyan-400 px-3 text-[11px] font-black uppercase tracking-wider text-[#0A192F] disabled:opacity-50"
+            className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-amber-400 px-3 text-[11px] font-black uppercase tracking-wider text-[#0A192F] disabled:opacity-50"
           >
             {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Radio className="size-3.5" />}
             {t("esvc.accept")}

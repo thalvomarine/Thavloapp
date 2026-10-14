@@ -71,11 +71,11 @@ interface Props {
 }
 
 const LAYER_ROWS: Array<{ key: ChartLayerKey; labelKey: string; dot: string }> = [
-  { key: "seamarks", labelKey: "chart.layer_seamarks", dot: "bg-cyan-300" },
+  { key: "seamarks", labelKey: "chart.layer_seamarks", dot: "bg-amber-300" },
   { key: "hazards", labelKey: "chart.layer_hazards", dot: "bg-red-400" },
   { key: "moorings", labelKey: "chart.layer_moorings", dot: "bg-emerald-300" },
   { key: "reports", labelKey: "chart.layer_reports", dot: "bg-amber-300" },
-  { key: "fleet", labelKey: "chart.layer_fleet", dot: "bg-sky-300" },
+  { key: "fleet", labelKey: "chart.layer_fleet", dot: "bg-slate-300" },
 ];
 
 function Switch({ on }: { on: boolean }) {
@@ -594,7 +594,7 @@ export function ChartReadout({
   return (
     <div
       className={
-        "thalvo-on-dark z-[50] rounded-xl border border-white/12 bg-[#0a192f]/90 px-3 py-2 shadow-lg backdrop-blur-md transition-opacity duration-200 " +
+        "thalvo-chart-sheet z-[50] rounded-xl border px-3 py-2 shadow-lg backdrop-blur-md transition-opacity duration-200 " +
         (concealed ? "pointer-events-none opacity-0" : "pointer-events-auto opacity-100") +
         " " +
         (viewportPinned
@@ -605,27 +605,47 @@ export function ChartReadout({
       {latPart && lonPart ? (
         <div className="flex items-start gap-3.5">
           <div className="min-w-0">
-            <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-white/40">
+            <p
+              className="text-[9px] font-semibold uppercase tracking-[0.12em]"
+              style={{ color: "var(--sheet-faint)" }}
+            >
               {t("chart.coord_lat")}
             </p>
-            <p className="mt-0.5 font-mono text-[11px] font-semibold tabular-nums leading-tight text-white">
+            <p
+              className="mt-0.5 font-mono text-[11px] font-semibold tabular-nums leading-tight"
+              style={{ color: "var(--sheet-ink)" }}
+            >
               {latPart}
             </p>
           </div>
           <div className="min-w-0">
-            <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-white/40">
+            <p
+              className="text-[9px] font-semibold uppercase tracking-[0.12em]"
+              style={{ color: "var(--sheet-faint)" }}
+            >
               {t("chart.coord_lon")}
             </p>
-            <p className="mt-0.5 font-mono text-[11px] font-semibold tabular-nums leading-tight text-white">
+            <p
+              className="mt-0.5 font-mono text-[11px] font-semibold tabular-nums leading-tight"
+              style={{ color: "var(--sheet-ink)" }}
+            >
               {lonPart}
             </p>
           </div>
         </div>
       ) : (
-        <p className="font-mono text-[11px] tabular-nums leading-tight text-white">{formatted}</p>
+        <p
+          className="font-mono text-[11px] tabular-nums leading-tight"
+          style={{ color: "var(--sheet-ink)" }}
+        >
+          {formatted}
+        </p>
       )}
       {scaleNm != null ? (
-        <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.1em] text-white/40">
+        <p
+          className="mt-1 font-mono text-[9px] uppercase tracking-[0.1em]"
+          style={{ color: "var(--sheet-faint)" }}
+        >
           {t("common.distance")} ·{" "}
           {t("chart.scale_nm", { value: scaleNm.toFixed(scaleNm < 1 ? 2 : 1) })}
         </p>
@@ -635,7 +655,7 @@ export function ChartReadout({
 }
 
 const FAB_BTN =
-  "grid size-11 place-items-center rounded-full border border-cyan-500/30 bg-[#0a192f]/90 text-cyan-200 shadow-2xl backdrop-blur-md transition-colors hover:bg-cyan-400/15 hover:text-cyan-100 disabled:opacity-60";
+  "thalvo-chart-sheet grid size-11 place-items-center rounded-full border shadow-2xl backdrop-blur-md transition-colors hover:opacity-90 disabled:opacity-60 text-[color:var(--sheet-active-ink)]";
 
 /**
  * Bottom-right FAB stack — compass, layers, locate.
@@ -880,10 +900,17 @@ export function ChartFilterChips({
               onToggle(key);
             }}
             className={
-              "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-[10px] font-semibold backdrop-blur-md transition-colors " +
-              (on
-                ? "border-cyan-400/45 bg-cyan-400/20 text-cyan-50"
-                : "border-white/15 bg-[#0a192f]/75 text-white/45")
+              "thalvo-chart-sheet inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-[10px] font-semibold backdrop-blur-md transition-colors " +
+              (on ? "" : "opacity-60")
+            }
+            style={
+              on
+                ? {
+                    borderColor: "var(--sheet-active-border)",
+                    background: "var(--sheet-active-bg)",
+                    color: "var(--sheet-active-ink)",
+                  }
+                : undefined
             }
           >
             <Icon className="size-3 shrink-0" />

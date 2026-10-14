@@ -58,7 +58,7 @@ function Option({
       className={
         "text-left rounded-2xl border px-3 py-2.5 transition-colors disabled:opacity-40 " +
         (active
-          ? "border-sky-400/60 bg-sky-400/10 text-white"
+          ? "border-amber-400/60 bg-amber-400/10 text-white"
           : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10")
       }
     >

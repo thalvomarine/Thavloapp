@@ -39,7 +39,7 @@ export class CockpitErrorBoundary extends Component<
           ) : null}
           <button
             type="button"
-            className="rounded-full border border-cyan-400/40 bg-cyan-400/10 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-cyan-100"
+            className="rounded-full border border-amber-400/40 bg-amber-400/10 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-amber-100"
             onClick={() => this.setState({ hasError: false, message: "", stack: "" })}
           >
             Haritayı yeniden dene

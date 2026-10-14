@@ -98,7 +98,7 @@ function Shop() {
         subtitle={t("shop.subtitle")}
         actions={
           <button onClick={() => setCartOpen(true)}
-            className="relative size-11 grid place-items-center rounded-2xl bg-sky-500/20 border border-sky-400/40 text-sky-100 hover:bg-sky-500/30 transition-colors">
+            className="relative size-11 grid place-items-center rounded-2xl bg-amber-500/20 border border-amber-400/40 text-amber-100 hover:bg-amber-500/30 transition-colors">
             <ShoppingCart className="size-5" />
             {cart.count > 0 && (
               <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full amber-gradient text-warning-foreground text-[10px] font-black grid place-items-center">
@@ -112,15 +112,15 @@ function Shop() {
       <div className="relative">
         <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("shop.search")}
-          className="w-full h-11 pl-9 pr-3 rounded-2xl bg-white/5 border border-white/10 text-white placeholder:text-white/40 text-sm outline-none focus:border-sky-400/60" />
+          className="w-full h-11 pl-9 pr-3 rounded-2xl bg-white/5 border border-white/10 text-white placeholder:text-white/40 text-sm outline-none focus:border-amber-400/60" />
       </div>
 
       <label className="block">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-cyan-200/70">{t("shop.all_brands")}</span>
+        <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-200/70">{t("shop.all_brands")}</span>
         <select
           value={brand}
           onChange={(e) => setBrand(e.target.value)}
-          className="mt-1.5 h-11 w-full rounded-xl border border-cyan-400/25 bg-[#071422] px-3 text-sm text-white outline-none focus:border-cyan-300"
+          className="mt-1.5 h-11 w-full rounded-xl border border-amber-400/25 bg-[#071422] px-3 text-sm text-white outline-none focus:border-amber-300"
         >
           <option value="">{t("shop.all_brands")}</option>
           {PART_BRANDS.map((item) => (
@@ -152,7 +152,7 @@ function Shop() {
                 className="glass-panel rounded-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-500">
                 {p.image_url && <img src={p.image_url} alt={p.name} className="w-full h-24 object-cover" />}
                 <div className="p-3 space-y-1.5">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-sky-300/80">{p.brand}</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-300/80">{p.brand}</p>
                   <p className="text-sm font-semibold text-white line-clamp-2 leading-tight">{p.name}</p>
 
                   <div className="pt-1 space-y-0.5 border-t border-white/10">

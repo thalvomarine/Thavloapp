@@ -20,8 +20,8 @@ export interface VesselSpec {
 }
 
 const fieldClass =
-  "mt-1.5 h-11 w-full rounded-xl border border-cyan-400/25 bg-[#071422] px-3 text-sm text-white outline-none focus:border-cyan-300";
-const labelClass = "text-[10px] font-semibold uppercase tracking-[0.16em] text-cyan-200/70";
+  "mt-1.5 h-11 w-full rounded-xl border border-amber-400/25 bg-[#071422] px-3 text-sm text-white outline-none focus:border-amber-300";
+const labelClass = "text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-200/70";
 
 export function VesselSpecForm({
   value,
@@ -40,9 +40,9 @@ export function VesselSpecForm({
   const patch = (partial: Partial<VesselSpec>) => onChange({ ...value, ...partial });
 
   return (
-    <div className="space-y-4 rounded-2xl border border-cyan-400/20 bg-[#071422] p-4">
+    <div className="space-y-4 rounded-2xl border border-amber-400/20 bg-[#071422] p-4">
       <div>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-300">{t("vessel.registry")}</p>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-300">{t("vessel.registry")}</p>
         <p className="mt-1 text-[12px] leading-snug text-white/50">{t("vessel.registry_sub")}</p>
       </div>
 
@@ -132,7 +132,7 @@ export function VesselSpecForm({
           type="button"
           onClick={onSave}
           disabled={saving}
-          className="h-11 flex-1 rounded-xl bg-cyan-300 text-xs font-semibold uppercase tracking-[0.12em] text-slate-950 disabled:opacity-60"
+          className="h-11 flex-1 rounded-xl bg-[#f5b942] text-xs font-semibold uppercase tracking-[0.12em] text-[#0a192f] disabled:opacity-60"
         >
           {t("common.save")}
         </button>
@@ -165,7 +165,7 @@ function ChipGroup({
               onClick={() => onChange(option.id)}
               className={
                 "h-9 rounded-full border px-3 text-[12px] font-semibold " +
-                (on ? "border-cyan-200 bg-white text-slate-900" : "border-white/15 bg-white/[0.03] text-white/75")
+                (on ? "border-amber-200 bg-white text-slate-900" : "border-white/15 bg-white/[0.03] text-white/75")
               }
             >
               {option.label}

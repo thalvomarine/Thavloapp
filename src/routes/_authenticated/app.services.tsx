@@ -63,12 +63,12 @@ function Services() {
       <div className="flex gap-2">
         <button onClick={() => setFilter("mechanic")}
           className={"flex-1 h-11 rounded-2xl text-sm font-semibold uppercase tracking-[0.14em] inline-flex items-center justify-center gap-2 border transition-colors " +
-            (filter === "mechanic" ? "bg-sky-500/20 border-sky-400/50 text-sky-100" : "bg-white/[0.03] border-white/10 text-white/60 hover:bg-white/10")}>
+            (filter === "mechanic" ? "bg-amber-500/20 border-amber-400/50 text-amber-100" : "bg-white/[0.03] border-white/10 text-white/60 hover:bg-white/10")}>
           <Wrench className="size-4" /> {t("services.filter_mech")}
         </button>
         <button onClick={() => setFilter("diver")}
           className={"flex-1 h-11 rounded-2xl text-sm font-semibold uppercase tracking-[0.14em] inline-flex items-center justify-center gap-2 border transition-colors " +
-            (filter === "diver" ? "bg-cyan-500/20 border-cyan-400/50 text-cyan-100" : "bg-white/[0.03] border-white/10 text-white/60 hover:bg-white/10")}>
+            (filter === "diver" ? "bg-amber-500/20 border-amber-400/50 text-amber-100" : "bg-white/[0.03] border-white/10 text-white/60 hover:bg-white/10")}>
           <Anchor className="size-4" /> {t("services.filter_diver")}
         </button>
       </div>
@@ -86,7 +86,7 @@ function Services() {
           {visible.map((p) => (
             <li key={p.id}>
               <button onClick={() => setSelected(p)}
-                className="w-full text-left glass-panel rounded-2xl p-4 flex items-center justify-between hover:border-sky-400/40 transition-colors">
+                className="w-full text-left glass-panel rounded-2xl p-4 flex items-center justify-between hover:border-amber-400/40 transition-colors">
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-white truncate">{label(p)}</p>
                   <p className="text-[11px] text-white/50 inline-flex items-center gap-1 mt-0.5"><Clock className="size-3" /> ~{p.base_duration_min} {t("common.min")}</p>

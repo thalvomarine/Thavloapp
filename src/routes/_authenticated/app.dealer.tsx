@@ -241,7 +241,7 @@ function DealerConsole({ userId, businessName, marina }: { userId: string; busin
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t("dealer.search_placeholder")}
-              className="h-11 min-w-0 flex-1 rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-cyan-300/50"
+              className="h-11 min-w-0 flex-1 rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-amber-300/50"
             />
             <div className="flex shrink-0 gap-1.5">
               {(["all", "low", "out"] as const).map((key) => (
@@ -252,7 +252,7 @@ function DealerConsole({ userId, businessName, marina }: { userId: string; busin
                   className={
                     "h-11 rounded-xl border px-3 text-[12px] font-semibold " +
                     (stockFilter === key
-                      ? "border-cyan-300 bg-cyan-400/15 text-cyan-50"
+                      ? "border-amber-300 bg-amber-400/15 text-amber-50"
                       : "border-white/10 bg-white/5 text-white/60")
                   }
                 >
@@ -263,7 +263,7 @@ function DealerConsole({ userId, businessName, marina }: { userId: string; busin
           </div>
           <button
             onClick={() => { setEditing(null); setShowForm(true); }}
-            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-cyan-400 text-sm font-semibold text-slate-950 transition-colors hover:bg-cyan-300"
+            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-amber-400 text-sm font-semibold text-slate-950 transition-colors hover:bg-amber-300"
           >
             <Plus className="size-4" /> {t("dealer.add_part")}
           </button>
@@ -316,7 +316,7 @@ function TabPill({ active, onClick, icon, children, badge }: { active: boolean; 
       className={
         "h-9 px-3 rounded-full text-[11px] font-semibold uppercase tracking-[0.14em] border transition-colors inline-flex items-center gap-1.5 " +
         (active
-          ? "bg-sky-400 text-slate-900 border-sky-300"
+          ? "bg-amber-400 text-slate-900 border-sky-300"
           : "bg-white/5 text-white/70 border-white/10 hover:bg-white/10")
       }
     >
@@ -386,10 +386,10 @@ function PartForm({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={onClose}>
-      <div className="thalvo-dark w-full max-w-lg rounded-3xl bg-[#071422] border border-cyan-400/25 shadow-2xl overflow-hidden max-h-[90dvh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-        <div className="p-4 flex items-center justify-between border-b border-cyan-400/15">
+      <div className="thalvo-dark w-full max-w-lg rounded-3xl bg-[#071422] border border-amber-400/25 shadow-2xl overflow-hidden max-h-[90dvh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div className="p-4 flex items-center justify-between border-b border-amber-400/15">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-300">THALVO</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-300">THALVO</p>
             <p className="text-sm font-semibold text-white">{existing ? t("dealer.edit_part") : t("dealer.add_part")}</p>
           </div>
           <button onClick={onClose} className="size-8 grid place-items-center rounded-lg text-white/60 hover:bg-white/10">
@@ -447,7 +447,7 @@ function PartForm({
                   className={
                     "h-10 rounded-xl border text-[12px] font-semibold " +
                     (condition === item
-                      ? "border-cyan-300 bg-cyan-400/15 text-cyan-100"
+                      ? "border-amber-300 bg-amber-400/15 text-amber-100"
                       : "border-white/10 bg-white/5 text-white/70")
                   }
                 >
@@ -515,7 +515,7 @@ function PartForm({
         </div>
         <div className="p-4 border-t border-white/10 flex gap-2">
           <button onClick={onClose} className="flex-1 h-11 rounded-xl border border-white/10 text-white/70 text-sm font-semibold">{t("common.cancel")}</button>
-          <button onClick={save} disabled={busy} className="flex-1 h-11 rounded-xl bg-cyan-400 hover:bg-cyan-300 disabled:opacity-50 text-slate-950 text-sm font-semibold inline-flex items-center justify-center gap-2">
+          <button onClick={save} disabled={busy} className="flex-1 h-11 rounded-xl bg-amber-400 hover:bg-amber-300 disabled:opacity-50 text-slate-950 text-sm font-semibold inline-flex items-center justify-center gap-2">
             {busy && <Loader2 className="size-4 animate-spin" />}
             {existing ? t("dealer.save") : t("dealer.add_sku")}
           </button>
@@ -525,7 +525,7 @@ function PartForm({
   );
 }
 
-const inputCls = "w-full h-11 rounded-xl border border-cyan-400/25 bg-[#0A192F] text-white placeholder:text-white/35 px-3 text-sm outline-none focus:border-cyan-300";
+const inputCls = "w-full h-11 rounded-xl border border-amber-400/25 bg-[#0A192F] text-white placeholder:text-white/35 px-3 text-sm outline-none focus:border-amber-300";
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (

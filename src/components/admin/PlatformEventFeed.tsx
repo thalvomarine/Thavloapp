@@ -14,7 +14,7 @@ export interface PlatformEvent {
 
 const ICON: Record<PlatformEventKind, ReactNode> = {
   sos:     <AlertTriangle className="size-3.5 text-rose-300" />,
-  mission: <Ship className="size-3.5 text-sky-300" />,
+  mission: <Ship className="size-3.5 text-amber-300" />,
   offer:   <Activity className="size-3.5 text-white/70" />,
   escrow:  <Wallet className="size-3.5 text-emerald-300" />,
   stock:   <Package className="size-3.5 text-amber-300" />,

@@ -13,8 +13,8 @@ const WEATHER_REGIONS: Array<{ key: ChartRegion; lat: number; lng: number; label
 const REFRESH_MS = 10 * 60_000;
 
 /**
- * Instant sea-state widget — Quiet Glass (B): three-column telemetry,
- * soft borders, calm title. Phones collapse to a chip.
+ * Instant sea-state widget — follows appearance tokens via thalvo-chart-sheet
+ * (system / day / night), matching the right-hand control panel.
  */
 export function MetoceanHud() {
   const { t } = useTranslation();
@@ -80,11 +80,11 @@ export function MetoceanHud() {
       : "—";
 
   const panel = (
-    <div className="thalvo-on-dark w-[232px] max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-2xl border border-white/12 bg-[#0a192f]/90 text-xs shadow-2xl backdrop-blur-md">
+    <div className="thalvo-chart-sheet w-[232px] max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-2xl border text-xs shadow-2xl backdrop-blur-md">
       <div className="p-2.5">
         <div className="flex items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-1.5">
-            <p className="truncate text-[12px] font-semibold text-white">
+            <p className="truncate text-[12px] font-semibold" style={{ color: "var(--sheet-ink)" }}>
               {t("chart.metocean_title_short")}
             </p>
             <button
@@ -93,7 +93,12 @@ export function MetoceanHud() {
                 setRegion((r) => (r === "aegean" ? "mediterranean" : "aegean"));
               }}
               title={t("chart.metocean_switch_region")}
-              className="shrink-0 rounded-full border border-white/12 bg-white/[0.06] px-2 py-0.5 text-[9px] font-semibold text-white/70 hover:bg-white/[0.1] hover:text-white"
+              className="shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-semibold"
+              style={{
+                borderColor: "var(--sheet-active-border)",
+                background: "var(--sheet-active-bg)",
+                color: "var(--sheet-active-ink)",
+              }}
             >
               {regionLabel}
             </button>
@@ -104,14 +109,21 @@ export function MetoceanHud() {
               setRegion((r) => (r === "aegean" ? "mediterranean" : "aegean"));
             }}
             title={t("chart.metocean_switch_region")}
-            className="grid size-6 shrink-0 place-items-center rounded-lg border border-white/10 bg-white/[0.05] text-white/60 hover:bg-white/[0.1] hover:text-white/90"
+            className="grid size-6 shrink-0 place-items-center rounded-lg border"
+            style={{
+              borderColor: "var(--sheet-border)",
+              background: "var(--sheet-chip)",
+              color: "var(--sheet-muted)",
+            }}
           >
             <RefreshCw className={"size-2.5 " + (loading ? "animate-spin" : "")} />
           </button>
         </div>
 
         {failed && !snapshot ? (
-          <p className="mt-2.5 text-[10px] text-white/40">{t("chart.metocean_unavailable")}</p>
+          <p className="mt-2.5 text-[10px]" style={{ color: "var(--sheet-faint)" }}>
+            {t("chart.metocean_unavailable")}
+          </p>
         ) : (
           <div className="mt-2.5 grid grid-cols-3 gap-1.5">
             {(
@@ -123,14 +135,22 @@ export function MetoceanHud() {
             ).map(([label, value, sub]) => (
               <div
                 key={label}
-                className="rounded-xl bg-white/[0.05] px-1.5 py-2 text-center"
+                className="rounded-xl px-1.5 py-2 text-center"
+                style={{ background: "var(--sheet-chip)" }}
               >
-                <div className="truncate text-[9px] text-white/45">{label}</div>
-                <div className="mt-0.5 truncate text-[12px] font-semibold tabular-nums text-white">
+                <div className="truncate text-[9px]" style={{ color: "var(--sheet-faint)" }}>
+                  {label}
+                </div>
+                <div
+                  className="mt-0.5 truncate text-[12px] font-semibold tabular-nums"
+                  style={{ color: "var(--sheet-ink)" }}
+                >
                   {value}
                 </div>
                 {sub ? (
-                  <div className="mt-0.5 truncate text-[9px] text-white/40">{sub}</div>
+                  <div className="mt-0.5 truncate text-[9px]" style={{ color: "var(--sheet-faint)" }}>
+                    {sub}
+                  </div>
                 ) : null}
               </div>
             ))}
@@ -138,16 +158,16 @@ export function MetoceanHud() {
         )}
 
         {shelter && (
-          <p className="mt-2 truncate text-[10px] text-white/45">
+          <p className="mt-2 truncate text-[10px]" style={{ color: "var(--sheet-muted)" }}>
             {t("chart.metocean_shelter_label")}:{" "}
             <span
               className={
-                shelter.sheltered ? "font-medium text-emerald-200/90" : "font-medium text-amber-200/90"
+                shelter.sheltered ? "font-medium text-emerald-500" : "font-medium text-amber-500"
               }
             >
               {t(shelter.labelKey)}
             </span>
-            {windDir ? <span className="text-white/35"> · {windDir}</span> : null}
+            {windDir ? <span style={{ color: "var(--sheet-faint)" }}> · {windDir}</span> : null}
           </p>
         )}
       </div>
@@ -163,7 +183,8 @@ export function MetoceanHud() {
               type="button"
               onClick={() => setExpanded(false)}
               aria-label={t("common.close")}
-              className="absolute -right-1 -top-1 z-10 grid size-5 place-items-center rounded-full border border-white/15 bg-[#0a192f] text-white/70"
+              className="thalvo-chart-sheet absolute -right-1 -top-1 z-10 grid size-5 place-items-center rounded-full border"
+              style={{ color: "var(--sheet-muted)" }}
             >
               <ChevronDown className="size-3 rotate-180" />
             </button>
@@ -175,10 +196,13 @@ export function MetoceanHud() {
             onClick={() => setExpanded(true)}
             aria-expanded={false}
             title={t("chart.metocean_title")}
-            className="thalvo-on-dark flex max-w-[min(220px,calc(100vw-5.5rem))] items-center gap-1.5 rounded-xl border border-white/12 bg-[#0a192f]/90 px-2.5 py-1.5 shadow-2xl backdrop-blur-md"
+            className="thalvo-chart-sheet flex max-w-[min(220px,calc(100vw-5.5rem))] items-center gap-1.5 rounded-xl border px-2.5 py-1.5 shadow-2xl backdrop-blur-md"
           >
-            <Navigation2 className="size-3 shrink-0 text-cyan-300" />
-            <span className="truncate font-mono text-[10px] tabular-nums text-white/90">
+            <Navigation2 className="size-3 shrink-0" style={{ color: "var(--sheet-active-ink)" }} />
+            <span
+              className="truncate font-mono text-[10px] tabular-nums"
+              style={{ color: "var(--sheet-ink)" }}
+            >
               {failed && !snapshot
                 ? t("chart.metocean_unavailable")
                 : `${windLabel} · ${waveLabel}`}

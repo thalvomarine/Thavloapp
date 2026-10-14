@@ -1481,15 +1481,15 @@ function LiveMapCanvas({
 
             {tileProgress && (
               <div className="pointer-events-none absolute top-[calc(env(safe-area-inset-top)+0.75rem)] left-1/2 z-[460] -translate-x-1/2 px-3">
-                <div className="pointer-events-auto rounded-full border border-cyan-400/35 bg-[#0B1528]/92 px-3.5 py-1.5 font-mono text-[11px] text-cyan-100 shadow-2xl backdrop-blur-md">
+                <div className="pointer-events-auto rounded-full border border-amber-400/35 bg-[#0B1528]/92 px-3.5 py-1.5 font-mono text-[11px] text-amber-100 shadow-2xl backdrop-blur-md">
                   {tileProgress.percent >= 100 && !tileProgress.cancelled
                     ? t("chart.offline_download_done")
                     : t("chart.offline_download_progress", {
                         percent: tileProgress.percent,
                       })}
-                  <span className="ml-2 inline-block h-1.5 w-16 overflow-hidden rounded-full bg-cyan-950 align-middle">
+                  <span className="ml-2 inline-block h-1.5 w-16 overflow-hidden rounded-full bg-amber-950 align-middle">
                     <span
-                      className="block h-full rounded-full bg-cyan-400 transition-[width] duration-200"
+                      className="block h-full rounded-full bg-amber-400 transition-[width] duration-200"
                       style={{ width: `${Math.min(100, tileProgress.percent)}%` }}
                     />
                   </span>

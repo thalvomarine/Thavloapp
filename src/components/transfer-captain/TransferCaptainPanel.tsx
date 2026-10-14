@@ -139,7 +139,7 @@ export function TransferCaptainPanel() {
             onClick={() => setTab(key)}
             className={
               "h-9 rounded-xl text-[11px] font-semibold uppercase tracking-[0.12em] transition-colors " +
-              (tab === key ? "bg-cyan-500/20 text-cyan-100" : "text-white/50 hover:text-white/80")
+              (tab === key ? "bg-amber-500/20 text-amber-100" : "text-white/50 hover:text-white/80")
             }
           >
             {label}
@@ -148,7 +148,7 @@ export function TransferCaptainPanel() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-10 text-cyan-200/70">
+        <div className="flex justify-center py-10 text-amber-200/70">
           <Loader2 className="size-5 animate-spin" />
         </div>
       ) : tab === "board" ? (
@@ -299,10 +299,10 @@ function RequestCard({
 }) {
   const { t } = useTranslation();
   return (
-    <article className="overflow-hidden rounded-2xl border border-cyan-500/20 bg-[#0a192f]/90">
+    <article className="overflow-hidden rounded-2xl border border-amber-500/20 bg-[#0a192f]/90">
       <div className="flex items-start justify-between gap-3 border-b border-white/[0.06] px-4 py-3">
         <div className="min-w-0">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-300/80">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-300/80">
             {request.marina || t("transfer.marina_unknown")}
           </p>
           <h3 className="mt-1 truncate text-[15px] font-semibold text-white">
@@ -329,7 +329,7 @@ function RequestCard({
         <button
           type="button"
           onClick={onAction}
-          className="h-9 rounded-xl border border-cyan-400/40 bg-cyan-500/15 px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-cyan-100"
+          className="h-9 rounded-xl border border-amber-400/40 bg-amber-500/15 px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-amber-100"
         >
           {actionLabel}
         </button>
@@ -454,7 +454,7 @@ function CreateRequestSheet({
         {busy && <Loader2 className="size-4 animate-spin" />}
         {t("transfer.publish")}
       </button>
-      <style>{`.field{width:100%;border-radius:1rem;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.25);padding:.7rem .9rem;font-size:13px;color:#fff;outline:none}.field:focus{border-color:rgba(0,240,255,.45)}`}</style>
+      <style>{`.field{width:100%;border-radius:1rem;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.25);padding:.7rem .9rem;font-size:13px;color:#fff;outline:none}.field:focus{border-color:rgba(245, 185, 66,.45)}`}</style>
     </SheetFrame>
   );
 }
@@ -591,12 +591,12 @@ function ApplySheet({
         type="button"
         disabled={busy}
         onClick={() => void submit()}
-        className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-cyan-400/40 bg-cyan-500/20 text-[12px] font-semibold uppercase tracking-[0.14em] text-cyan-50 disabled:opacity-50"
+        className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-amber-400/40 bg-amber-500/20 text-[12px] font-semibold uppercase tracking-[0.14em] text-amber-50 disabled:opacity-50"
       >
         {busy && <Loader2 className="size-4 animate-spin" />}
         {t("transfer.send_application")}
       </button>
-      <style>{`.field{width:100%;border-radius:1rem;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.25);padding:.7rem .9rem;font-size:13px;color:#fff;outline:none}.field:focus{border-color:rgba(0,240,255,.45)}`}</style>
+      <style>{`.field{width:100%;border-radius:1rem;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.25);padding:.7rem .9rem;font-size:13px;color:#fff;outline:none}.field:focus{border-color:rgba(245, 185, 66,.45)}`}</style>
     </SheetFrame>
   );
 }
@@ -626,7 +626,7 @@ function ReviewSheet({
     <SheetFrame title={t("transfer.review_apps")} onClose={onClose}>
       {loading ? (
         <div className="flex justify-center py-8">
-          <Loader2 className="size-5 animate-spin text-cyan-200/70" />
+          <Loader2 className="size-5 animate-spin text-amber-200/70" />
         </div>
       ) : apps.length === 0 ? (
         <p className="py-6 text-center text-[13px] text-white/50">{t("transfer.no_apps_yet")}</p>
@@ -646,7 +646,7 @@ function ReviewSheet({
                       ? ` · ${app.experience_years} ${t("transfer.years")}`
                       : ""}
                   </p>
-                  {app.phone && <p className="text-[11px] text-cyan-200/80">{app.phone}</p>}
+                  {app.phone && <p className="text-[11px] text-amber-200/80">{app.phone}</p>}
                 </div>
                 <StatusChip tone={APP_STATUS_TONE[app.status]}>
                   {t(`transfer.app_status_${app.status}`)}
@@ -699,7 +699,7 @@ function DocLink({ path, label }: { path: string; label: string }) {
         const ok = await openTransferDoc(path);
         if (!ok) toast.error(label);
       }}
-      className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-[11px] text-cyan-100"
+      className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-[11px] text-amber-100"
     >
       <FileText className="size-3" />
       {label}
@@ -731,10 +731,10 @@ function FilePick({
       <button
         type="button"
         onClick={() => ref.current?.click()}
-        className="flex h-11 w-full items-center justify-between gap-2 rounded-2xl border border-dashed border-cyan-400/30 bg-cyan-500/5 px-3 text-left text-[12px] text-white/80"
+        className="flex h-11 w-full items-center justify-between gap-2 rounded-2xl border border-dashed border-amber-400/30 bg-amber-500/5 px-3 text-left text-[12px] text-white/80"
       >
         <span className="truncate">{file ? file.name : "PDF / JPG / PNG"}</span>
-        <Upload className="size-3.5 shrink-0 text-cyan-300" />
+        <Upload className="size-3.5 shrink-0 text-amber-300" />
       </button>
       <input
         ref={ref}
@@ -775,7 +775,7 @@ function SheetFrame({
         onKeyDown={() => undefined}
         role="presentation"
       />
-      <div className="relative z-[1] max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-3xl border border-cyan-500/25 bg-[#0a192f] p-4 shadow-2xl">
+      <div className="relative z-[1] max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-3xl border border-amber-500/25 bg-[#0a192f] p-4 shadow-2xl">
         <div className="mb-3 flex items-center justify-between gap-2">
           <h2 className="text-[15px] font-semibold text-white">{title}</h2>
           <button

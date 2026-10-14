@@ -28,7 +28,7 @@ interface Props {
 }
 
 const fieldClass =
-  "w-full h-9 rounded-lg border border-cyan-500/25 bg-[#0a192f]/70 px-2.5 text-[12px] text-white outline-none focus:border-cyan-400/70";
+  "w-full h-9 rounded-lg border border-amber-500/25 bg-[#0a192f]/70 px-2.5 text-[12px] text-white outline-none focus:border-amber-400/70";
 
 /** Admin-only "draw a new chart point" modal, writing to `marine_zones`. */
 export function AdminZoneDialog({ open, onOpenChange, position, onSaved }: Props) {
@@ -84,7 +84,7 @@ export function AdminZoneDialog({ open, onOpenChange, position, onSaved }: Props
         if (!pending) onOpenChange(v);
       }}
     >
-      <DialogContent className="thalvo-dark border-cyan-500/30 bg-[#0a192f]/95 text-white backdrop-blur-xl sm:max-w-[440px]">
+      <DialogContent className="thalvo-dark border-amber-500/30 bg-[#0a192f]/95 text-white backdrop-blur-xl sm:max-w-[440px]">
         <DialogHeader>
           <DialogTitle className="text-white">{t("chart.zone_title")}</DialogTitle>
           <DialogDescription className="text-white/60">
@@ -93,13 +93,13 @@ export function AdminZoneDialog({ open, onOpenChange, position, onSaved }: Props
         </DialogHeader>
 
         <div className="space-y-3">
-          <p className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-2 font-mono text-[11px] text-cyan-100">
+          <p className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-2 font-mono text-[11px] text-amber-100">
             {position ? formatDegrees(position.lat, position.lng) : t("chart.report_no_position")}
           </p>
 
           <div className="grid grid-cols-2 gap-2">
             <label className="block">
-              <span className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.16em] text-cyan-300/70">
+              <span className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-300/70">
                 {t("chart.zone_kind")}
               </span>
               <select
@@ -115,7 +115,7 @@ export function AdminZoneDialog({ open, onOpenChange, position, onSaved }: Props
               </select>
             </label>
             <label className="block">
-              <span className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.16em] text-cyan-300/70">
+              <span className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-300/70">
                 {t("chart.zone_name")}
               </span>
               <input
@@ -126,7 +126,7 @@ export function AdminZoneDialog({ open, onOpenChange, position, onSaved }: Props
               />
             </label>
             <label className="block">
-              <span className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.16em] text-cyan-300/70">
+              <span className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-300/70">
                 {t("chart.zone_vhf")}
               </span>
               <input
@@ -137,7 +137,7 @@ export function AdminZoneDialog({ open, onOpenChange, position, onSaved }: Props
               />
             </label>
             <label className="block">
-              <span className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.16em] text-cyan-300/70">
+              <span className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-300/70">
                 {t("chart.zone_depth")}
               </span>
               <input
@@ -156,7 +156,7 @@ export function AdminZoneDialog({ open, onOpenChange, position, onSaved }: Props
           </div>
 
           <label className="block">
-            <span className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.16em] text-cyan-300/70">
+            <span className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-300/70">
               {t("chart.zone_description")}
             </span>
             <textarea
@@ -164,7 +164,7 @@ export function AdminZoneDialog({ open, onOpenChange, position, onSaved }: Props
               maxLength={600}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full rounded-lg border border-cyan-500/25 bg-[#0a192f]/70 p-2.5 text-[12px] text-white outline-none focus:border-cyan-400/70"
+              className="w-full rounded-lg border border-amber-500/25 bg-[#0a192f]/70 p-2.5 text-[12px] text-white outline-none focus:border-amber-400/70"
             />
           </label>
 
@@ -188,7 +188,7 @@ export function AdminZoneDialog({ open, onOpenChange, position, onSaved }: Props
             type="button"
             onClick={() => void save()}
             disabled={pending}
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-cyan-400 px-4 text-[11px] font-bold uppercase tracking-[0.1em] text-[#0a192f] disabled:opacity-50"
+            className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-amber-400 px-4 text-[11px] font-bold uppercase tracking-[0.1em] text-[#0a192f] disabled:opacity-50"
           >
             {pending && <Loader2 className="size-3.5 animate-spin" />}
             {t("chart.zone_save")}

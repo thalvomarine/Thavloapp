@@ -159,7 +159,7 @@ function CaptainOrders({ userId }: { userId: string }) {
             <button
               type="button"
               onClick={() => setReloadToken((n) => n + 1)}
-              className="inline-block h-10 px-4 rounded-2xl bg-sky-500 hover:bg-sky-400 text-slate-900 font-semibold text-[12px] uppercase tracking-[0.14em] leading-10"
+              className="inline-block h-10 px-4 rounded-2xl bg-sky-500 hover:bg-amber-400 text-slate-900 font-semibold text-[12px] uppercase tracking-[0.14em] leading-10"
             >
               {t("shell.auth_error.retry")}
             </button>
@@ -173,7 +173,7 @@ function CaptainOrders({ userId }: { userId: string }) {
           action={
             <Link
               to="/app/marketplace"
-              className="inline-block h-10 px-4 rounded-2xl bg-sky-500 hover:bg-sky-400 text-slate-900 font-semibold text-[12px] uppercase tracking-[0.14em] leading-10"
+              className="inline-block h-10 px-4 rounded-2xl bg-sky-500 hover:bg-amber-400 text-slate-900 font-semibold text-[12px] uppercase tracking-[0.14em] leading-10"
             >
               {t("orders.open_marketplace")}
             </Link>

@@ -240,8 +240,8 @@ function AuthPage() {
           <p className="mx-auto mt-4 max-w-md text-[15px] leading-relaxed text-white/65 lg:mx-0">
             {t("auth.subtitle")}
           </p>
-          <p className="mt-5 hidden text-[11px] font-semibold tracking-[0.18em] text-white/35 lg:block">
-            {t("auth.coverage_ports", { defaultValue: "Göcek · Marmaris · Bodrum" })}
+          <p className="mt-5 hidden text-[11px] font-semibold tracking-[0.22em] text-[color:var(--pm-gold)] lg:block">
+            {t("auth.coverage_ports", { defaultValue: "Ege · Akdeniz" })}
           </p>
         </section>
 
@@ -315,10 +315,10 @@ function AuthPage() {
                     <button
                       type="button"
                       onClick={() => setRoleReady(false)}
-                      className="inline-flex items-center gap-1.5 rounded-full border border-cyan-300/25 bg-cyan-400/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-cyan-100"
+                      className="inline-flex items-center gap-1.5 rounded-full border border-amber-300/25 bg-amber-400/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-amber-100"
                     >
                       {roleLabel}
-                      <span className="text-cyan-100/50">·</span>
+                      <span className="text-amber-100/50">·</span>
                       {t("auth.change_role")}
                     </button>
 
@@ -436,7 +436,18 @@ function AuthPage() {
                             onChange={(e) => setHomeMarina(e.target.value)}
                             className="auth-field"
                           >
-                            {["Göcek", "Marmaris", "Bodrum", "Fethiye", "Kaş"].map((m) => (
+                            {[
+                              "Didim",
+                              "Bodrum",
+                              "Datça",
+                              "Marmaris",
+                              "Göcek",
+                              "Fethiye",
+                              "Kaş",
+                              "Finike",
+                              "Kemer",
+                              "Antalya",
+                            ].map((m) => (
                               <option key={m}>{m}</option>
                             ))}
                           </select>
@@ -526,8 +537,11 @@ function AuthPage() {
           </div>
         </section>
 
-        <p className="auth-rise text-center text-[11px] font-semibold tracking-[0.18em] text-white/35 lg:hidden" style={{ animationDelay: "120ms" }}>
-          {t("auth.coverage_ports", { defaultValue: "Göcek · Marmaris · Bodrum" })}
+        <p
+          className="auth-rise mx-auto inline-flex items-center justify-center rounded-xl border border-[color:var(--pm-gold)]/35 bg-black/25 px-4 py-2 text-center text-[11px] font-semibold tracking-[0.22em] text-[color:var(--pm-gold)] lg:hidden"
+          style={{ animationDelay: "120ms" }}
+        >
+          {t("auth.coverage_ports", { defaultValue: "Ege · Akdeniz" })}
         </p>
       </main>
     </div>

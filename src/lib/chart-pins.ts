@@ -1,13 +1,13 @@
 export type ChartPinKind = "marina" | "anchorage" | "fuel" | "hazard" | "lighthouse" | "restaurant" | "own";
 
 const FILL: Record<ChartPinKind, string> = {
-  marina: "#22d3ee",
+  marina: "#f5b942",
   anchorage: "#34d399",
   fuel: "#fbbf24",
   hazard: "#fb7185",
   lighthouse: "#fde68a",
   restaurant: "#c4b5fd",
-  own: "#67e8f9",
+  own: "#f5b942",
 };
 
 const GLYPH: Record<ChartPinKind, string> = {

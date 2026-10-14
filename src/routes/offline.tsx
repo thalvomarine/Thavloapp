@@ -28,9 +28,9 @@ function OfflinePage() {
 
       <div className="relative">
         <div className="mx-auto grid place-items-center size-20 rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-xl shadow-[0_20px_60px_-20px_rgba(0,0,0,0.7)]">
-          <WifiOff className="size-8 text-sky-300" />
+          <WifiOff className="size-8 text-amber-300" />
         </div>
-        <p className="mt-6 text-[10px] font-semibold uppercase tracking-[0.28em] text-sky-300/80">{t("offline.eyebrow")}</p>
+        <p className="mt-6 text-[10px] font-semibold uppercase tracking-[0.28em] text-amber-300/80">{t("offline.eyebrow")}</p>
         <h1 className="mt-2 text-3xl sm:text-4xl font-black tracking-tight">{t("offline.title")}</h1>
         <p className="mt-3 max-w-md mx-auto text-sm text-white/70">
           {t("offline.body")}

@@ -30,7 +30,7 @@ export function PublicBrowseShell({
       className={
         "px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors " +
         (active === key
-          ? "bg-sky-500/20 border-sky-400/50 text-sky-100"
+          ? "bg-amber-500/20 border-amber-400/50 text-amber-100"
           : "bg-white/[0.03] border-white/10 text-white/70 hover:bg-white/10")
       }
     >

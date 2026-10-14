@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 
 const BAR_TONE: Record<string, string> = {
   reliable: "bg-emerald-400",
-  building: "bg-sky-400",
+  building: "bg-amber-400",
   watch:    "bg-amber-400",
   risk:     "bg-rose-400",
 };

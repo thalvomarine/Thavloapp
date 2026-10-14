@@ -21,7 +21,7 @@ import {
 const COVERAGE_KINDS = new Set<MarineZoneKind>(["marina", "anchorage", "fuel", "hazard"]);
 
 const KIND_COLOR: Record<MarineZoneKind, string> = {
-  marina: "#22d3ee",
+  marina: "#f5b942",
   anchorage: "#fbbf24",
   fuel: "#34d399",
   hazard: "#fb7185",
@@ -177,7 +177,7 @@ export function CoverageChart({
 
   return (
     <div
-      className={fill ? "h-full w-full" : "overflow-hidden rounded-2xl border border-cyan-500/25"}
+      className={fill ? "h-full w-full" : "overflow-hidden rounded-2xl border border-amber-500/25"}
       style={fill ? undefined : { height: 420 }}
     >
       <MapContainer
@@ -216,7 +216,7 @@ export function CoverageChart({
           <CircleMarker
             center={[own.lat, own.lng]}
             radius={8}
-            pathOptions={{ color: "#67e8f9", fillColor: "#67e8f9", fillOpacity: 0.95, weight: 2 }}
+            pathOptions={{ color: "#f5b942", fillColor: "#f5b942", fillOpacity: 0.95, weight: 2 }}
           >
             <Popup>
               <p className="text-sm font-semibold text-slate-900">{t("chart.locate_me")}</p>

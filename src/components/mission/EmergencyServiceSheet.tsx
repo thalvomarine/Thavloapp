@@ -118,12 +118,12 @@ export function EmergencyServiceSheet({
       <div
         role="dialog"
         aria-modal="true"
-        className="absolute inset-x-0 bottom-0 mx-auto flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl border border-cyan-400/25 bg-[#0A192F] shadow-[0_-20px_60px_-20px_rgba(0,0,0,0.8)]"
+        className="absolute inset-x-0 bottom-0 mx-auto flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl border border-amber-400/25 bg-[#0A192F] shadow-[0_-20px_60px_-20px_rgba(0,0,0,0.8)]"
         style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
       >
         <div className="flex items-start justify-between gap-3 border-b border-white/10 px-4 py-3">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-300/80">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-300/80">
               {t("esvc.eyebrow")}
             </p>
             <h2 className="text-base font-semibold text-white">{t("esvc.title")}</h2>
@@ -150,14 +150,14 @@ export function EmergencyServiceSheet({
                   className={
                     "flex h-16 items-center gap-2.5 rounded-2xl border px-3 text-left transition-colors " +
                     (active
-                      ? "border-cyan-300/50 bg-cyan-400/15 text-cyan-50"
+                      ? "border-amber-300/50 bg-amber-400/15 text-amber-50"
                       : "border-white/10 bg-white/[0.03] text-white/80 hover:bg-white/[0.06]")
                   }
                 >
                   <span
                     className={
                       "grid size-9 shrink-0 place-items-center rounded-xl " +
-                      (active ? "bg-cyan-400/20" : "bg-white/10")
+                      (active ? "bg-amber-400/20" : "bg-white/10")
                     }
                   >
                     <Icon className="size-4" />
@@ -175,7 +175,7 @@ export function EmergencyServiceSheet({
               {t("esvc.position")}
             </p>
             <div className="mt-1 flex items-center justify-between gap-2">
-              <p className="min-w-0 truncate font-mono text-[12px] text-cyan-100">
+              <p className="min-w-0 truncate font-mono text-[12px] text-amber-100">
                 {coords
                   ? `${coords.lat.toFixed(5)} N  ${coords.lng.toFixed(5)} E`
                   : locating
@@ -186,7 +186,7 @@ export function EmergencyServiceSheet({
                 type="button"
                 onClick={() => void locate()}
                 disabled={locating}
-                className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border border-cyan-400/30 px-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-cyan-200"
+                className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border border-amber-400/30 px-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-amber-200"
               >
                 {locating ? <Loader2 className="size-3.5 animate-spin" /> : <MapPin className="size-3.5" />}
                 GPS
@@ -207,7 +207,7 @@ export function EmergencyServiceSheet({
               rows={3}
               maxLength={2000}
               placeholder={t("esvc.note_ph")}
-              className="w-full rounded-xl border border-cyan-500/25 bg-[#0a192f]/70 px-3 py-2 text-[13px] text-white outline-none focus:border-cyan-400/70"
+              className="w-full rounded-xl border border-amber-500/25 bg-[#0a192f]/70 px-3 py-2 text-[13px] text-white outline-none focus:border-amber-400/70"
             />
           </label>
 
@@ -239,7 +239,7 @@ export function EmergencyServiceSheet({
             disabled={sending || locating || !coords}
             className="flex h-12 w-full items-center justify-center gap-2 rounded-xl text-[13px] font-black uppercase tracking-wider text-white disabled:opacity-50"
             style={{
-              background: "linear-gradient(135deg, #00F0FF 0%, #0891b2 100%)",
+              background: "linear-gradient(135deg, #F5B942 0%, #0891b2 100%)",
               color: "#0A192F",
             }}
           >

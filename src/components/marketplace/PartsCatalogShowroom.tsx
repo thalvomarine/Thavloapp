@@ -344,7 +344,7 @@ export function PartsCatalogShowroom({
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
                   placeholder={t("marketplace.catalog.quick_search_placeholder")}
-                  className="h-10 w-full rounded-xl border border-white/10 bg-white/5 pl-8 pr-3 text-[13px] text-white outline-none placeholder:text-white/35 focus:border-cyan-400/50"
+                  className="h-10 w-full rounded-xl border border-white/10 bg-white/5 pl-8 pr-3 text-[13px] text-white outline-none placeholder:text-white/35 focus:border-amber-400/50"
                 />
               </div>
             </div>
@@ -354,7 +354,7 @@ export function PartsCatalogShowroom({
                 type="checkbox"
                 checked={inStockOnly}
                 onChange={(e) => setInStockOnly(e.target.checked)}
-                className="size-3.5 rounded border-white/20 bg-white/5 text-cyan-400 focus:ring-cyan-400/40"
+                className="size-3.5 rounded border-white/20 bg-white/5 text-amber-400 focus:ring-amber-400/40"
               />
               {t("marketplace.catalog.in_stock_only")}
             </label>
@@ -368,7 +368,7 @@ export function PartsCatalogShowroom({
                   <button
                     type="button"
                     onClick={() => setCategory("")}
-                    className="inline-flex items-center gap-0.5 text-[11px] font-semibold text-cyan-300/90"
+                    className="inline-flex items-center gap-0.5 text-[11px] font-semibold text-amber-300/90"
                   >
                     <ChevronLeft className="size-3" />
                     {t("marketplace.all_categories")}
@@ -382,7 +382,7 @@ export function PartsCatalogShowroom({
                     onClick={() => setCategory("")}
                     className={
                       "flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left text-[13px] " +
-                      (!category ? "bg-cyan-400/15 text-cyan-100" : "text-white/75 hover:bg-white/5")
+                      (!category ? "bg-amber-400/15 text-amber-100" : "text-white/75 hover:bg-white/5")
                     }
                   >
                     <span className="font-medium">{t("marketplace.all_categories")}</span>
@@ -397,7 +397,7 @@ export function PartsCatalogShowroom({
                       className={
                         "flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left text-[13px] " +
                         (category === g.id
-                          ? "bg-cyan-400/15 text-cyan-100"
+                          ? "bg-amber-400/15 text-amber-100"
                           : "text-white/75 hover:bg-white/5")
                       }
                     >
@@ -418,7 +418,7 @@ export function PartsCatalogShowroom({
                   <button
                     type="button"
                     onClick={() => setBrands([])}
-                    className="text-[11px] font-semibold text-cyan-300/90"
+                    className="text-[11px] font-semibold text-amber-300/90"
                   >
                     {t("marketplace.catalog.clear_brands")}
                   </button>
@@ -437,7 +437,7 @@ export function PartsCatalogShowroom({
                             type="checkbox"
                             checked={checked}
                             onChange={() => toggleBrand(brand)}
-                            className="size-3.5 rounded border-white/20 bg-white/5 text-cyan-400 focus:ring-cyan-400/40"
+                            className="size-3.5 rounded border-white/20 bg-white/5 text-amber-400 focus:ring-amber-400/40"
                           />
                           <span className="min-w-0 flex-1 truncate font-medium uppercase tracking-wide">
                             {brand}
@@ -480,7 +480,7 @@ export function PartsCatalogShowroom({
           className="pointer-events-none absolute inset-0 opacity-[0.1] sm:opacity-[0.12]"
           style={{
             backgroundImage:
-              "linear-gradient(rgba(0,240,255,0.35) 1px, transparent 1px), linear-gradient(90deg, rgba(0,240,255,0.35) 1px, transparent 1px)",
+              "linear-gradient(rgba(245, 185, 66,0.35) 1px, transparent 1px), linear-gradient(90deg, rgba(245, 185, 66,0.35) 1px, transparent 1px)",
             backgroundSize: "28px 28px",
           }}
         />
@@ -494,14 +494,14 @@ export function PartsCatalogShowroom({
             <button
               type="button"
               onClick={() => setCategory("")}
-              className="truncate text-white/70 hover:text-cyan-200"
+              className="truncate text-white/70 hover:text-amber-200"
             >
               {t("marketplace.category.spare_parts")}
             </button>
             {category ? (
               <>
                 <span aria-hidden>/</span>
-                <span className="truncate font-semibold text-cyan-200">{categoryLabelFn(t, category)}</span>
+                <span className="truncate font-semibold text-amber-200">{categoryLabelFn(t, category)}</span>
               </>
             ) : null}
           </nav>
@@ -543,7 +543,7 @@ export function PartsCatalogShowroom({
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder={t("marketplace.search_placeholder")}
-                className="h-11 w-full rounded-xl border border-white/15 bg-black/25 pl-10 pr-10 text-sm text-white outline-none placeholder:text-white/35 focus:border-cyan-400/50"
+                className="h-11 w-full rounded-xl border border-white/15 bg-black/25 pl-10 pr-10 text-sm text-white outline-none placeholder:text-white/35 focus:border-amber-400/50"
               />
               {q ? (
                 <button
@@ -570,7 +570,7 @@ export function PartsCatalogShowroom({
             <button
               type="button"
               onClick={() => setBrands([])}
-              className="text-[11px] font-semibold text-cyan-300/90 hover:text-cyan-200"
+              className="text-[11px] font-semibold text-amber-300/90 hover:text-amber-200"
             >
               {t("marketplace.catalog.clear_brands")}
             </button>
@@ -654,10 +654,10 @@ export function PartsCatalogShowroom({
                   setQ(p.name);
                   setCategory(p.category);
                 }}
-                className="relative flex min-w-[14.5rem] max-w-[16rem] shrink-0 gap-2.5 overflow-hidden rounded-xl border border-white/10 bg-[#0c1a2e] p-2.5 text-left transition-colors hover:border-cyan-400/35 sm:min-w-[16rem] sm:max-w-[18rem] sm:gap-3 sm:rounded-2xl sm:p-3"
+                className="relative flex min-w-[14.5rem] max-w-[16rem] shrink-0 gap-2.5 overflow-hidden rounded-xl border border-white/10 bg-[#0c1a2e] p-2.5 text-left transition-colors hover:border-amber-400/35 sm:min-w-[16rem] sm:max-w-[18rem] sm:gap-3 sm:rounded-2xl sm:p-3"
               >
                 <span className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-[color:var(--mos-cyan)] to-[color:var(--mos-amber)]" />
-                <div className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-lg bg-[#132337] text-cyan-300/80 sm:size-14 sm:rounded-xl">
+                <div className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-lg bg-[#132337] text-amber-300/80 sm:size-14 sm:rounded-xl">
                   {p.imageUrl ? (
                     <img src={p.imageUrl} alt="" className="size-full object-cover" />
                   ) : (
@@ -665,7 +665,7 @@ export function PartsCatalogShowroom({
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-cyan-300/80">
+                  <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-amber-300/80">
                     {t("marketplace.catalog.featured_n", { n: i + 1 })} · {p.brand}
                   </p>
                   <p className="mt-0.5 line-clamp-2 text-[12px] font-semibold leading-snug text-white">{p.name}</p>
@@ -686,7 +686,7 @@ export function PartsCatalogShowroom({
               type="checkbox"
               checked={inStockOnly}
               onChange={(e) => setInStockOnly(e.target.checked)}
-              className="size-3.5 rounded border-white/20 bg-white/5 text-cyan-400 focus:ring-cyan-400/40"
+              className="size-3.5 rounded border-white/20 bg-white/5 text-amber-400 focus:ring-amber-400/40"
             />
             {t("marketplace.catalog.in_stock_only")}
           </label>
@@ -720,7 +720,7 @@ export function PartsCatalogShowroom({
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value as PartsSortId)}
-            className="h-9 min-w-0 flex-1 rounded-xl border border-white/10 bg-[#0f1c2e] px-2.5 text-[12px] font-semibold text-white outline-none focus:border-cyan-400/50 sm:flex-none"
+            className="h-9 min-w-0 flex-1 rounded-xl border border-white/10 bg-[#0f1c2e] px-2.5 text-[12px] font-semibold text-white outline-none focus:border-amber-400/50 sm:flex-none"
             aria-label={t("marketplace.catalog.sort_label")}
           >
             <option value="recommended">{t("marketplace.catalog.sort_recommended")}</option>
@@ -848,7 +848,7 @@ function ShowroomCard({
         {part.imageUrl ? (
           <img src={part.imageUrl} alt={part.name} loading="lazy" className="h-full w-full object-cover" />
         ) : (
-          <div className="flex h-full flex-col items-center justify-center gap-2 text-cyan-200/50">
+          <div className="flex h-full flex-col items-center justify-center gap-2 text-amber-200/50">
             <Ship className="size-10 sm:size-12" />
             <span className="text-[10px] font-semibold uppercase tracking-[0.18em]">
               {part.brand || t("marketplace.product.no_image")}
@@ -957,7 +957,7 @@ function DeskRow({
   return (
     <li className="flex flex-col gap-2.5 rounded-xl border border-white/10 bg-[#091525]/90 p-3 sm:flex-row sm:items-center sm:gap-3 sm:rounded-2xl">
       <div className="flex min-w-0 flex-1 items-center gap-3">
-        <div className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-xl bg-[#132337] text-cyan-300/70 sm:size-14">
+        <div className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-xl bg-[#132337] text-amber-300/70 sm:size-14">
           {part.imageUrl ? (
             <img src={part.imageUrl} alt="" className="size-full object-cover" />
           ) : (
@@ -965,7 +965,7 @@ function DeskRow({
           )}
         </div>
         <div className="min-w-0">
-          <p className="truncate text-[10px] font-bold uppercase tracking-[0.16em] text-cyan-300/80">
+          <p className="truncate text-[10px] font-bold uppercase tracking-[0.16em] text-amber-300/80">
             {part.brand}
             {part.emergencyCompatible ? (
               <span className="ml-2 rounded bg-rose-500/20 px-1.5 py-0.5 text-[9px] text-rose-200">SOS</span>
@@ -994,7 +994,7 @@ function DeskRow({
           <button
             type="button"
             onClick={() => onAskAi(part)}
-            className="grid size-9 place-items-center rounded-lg border border-white/10 text-cyan-200"
+            className="grid size-9 place-items-center rounded-lg border border-white/10 text-amber-200"
             aria-label={t("marketplace.ai_thalvo")}
           >
             <Sparkles className="size-3.5" />

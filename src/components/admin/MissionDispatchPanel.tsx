@@ -102,8 +102,8 @@ export function MissionDispatchPanel({
                   const eta = etaByMission[m.id];
                   if (!eta) return null;
                   return (
-                    <div className="mt-2 flex items-center justify-between gap-2 rounded-lg border border-cyan-400/25 bg-cyan-400/[0.06] px-2.5 py-1.5">
-                      <p className="truncate font-mono text-[10px] text-cyan-100">
+                    <div className="mt-2 flex items-center justify-between gap-2 rounded-lg border border-amber-400/25 bg-amber-400/[0.06] px-2.5 py-1.5">
+                      <p className="truncate font-mono text-[10px] text-amber-100">
                         {formatRouteEta(
                           eta,
                           t("admin.dispatch.eta_distance"),
@@ -111,7 +111,7 @@ export function MissionDispatchPanel({
                         )}
                       </p>
                       {onSpeedChange && (
-                        <label className="flex shrink-0 items-center gap-1 text-[9px] text-cyan-200/70">
+                        <label className="flex shrink-0 items-center gap-1 text-[9px] text-amber-200/70">
                           <Gauge className="size-3 shrink-0" />
                           <input
                             type="number"
@@ -122,7 +122,7 @@ export function MissionDispatchPanel({
                               const next = Number(e.target.value);
                               if (Number.isFinite(next) && next > 0) onSpeedChange(m, next);
                             }}
-                            className="h-5 w-11 rounded border border-cyan-300/30 bg-[#0a192f] px-1 text-right font-mono text-[10px] text-cyan-100 outline-none focus:border-cyan-300/70"
+                            className="h-5 w-11 rounded border border-amber-300/30 bg-[#0a192f] px-1 text-right font-mono text-[10px] text-amber-100 outline-none focus:border-amber-300/70"
                           />
                           kts
                         </label>

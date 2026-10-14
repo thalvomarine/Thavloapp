@@ -27,7 +27,7 @@ export function MaintenanceDueCard({ lastServiceAt, nextDueAt, engineHours }: Pr
     <GlassPanel>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <CalendarClock className="size-4 text-sky-300/80" />
+          <CalendarClock className="size-4 text-amber-300/80" />
           <p className="text-sm font-medium text-white/90">{t("passport.maintenance")}</p>
         </div>
         <StatusChip tone={tone as never}>{status}</StatusChip>

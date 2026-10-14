@@ -164,11 +164,11 @@ function CaptainCockpit({ profile }: { profile: Profile }) {
     <Link
       to="/app/job/$id"
       params={{ id: primaryMission.id }}
-      className="flex items-center gap-2 rounded-full border border-sky-400/30 bg-sky-500/15 px-3 py-1.5 text-[10px] font-semibold text-sky-100 shadow-2xl backdrop-blur-md"
+      className="flex items-center gap-2 rounded-full border border-amber-400/30 bg-amber-500/15 px-3 py-1.5 text-[10px] font-semibold text-amber-100 shadow-2xl backdrop-blur-md"
     >
       <span className="relative flex size-1.5 shrink-0">
-        <span className="absolute inset-0 rounded-full bg-sky-400 animate-ping opacity-70" />
-        <span className="relative size-1.5 rounded-full bg-sky-400" />
+        <span className="absolute inset-0 rounded-full bg-amber-400 animate-ping opacity-70" />
+        <span className="relative size-1.5 rounded-full bg-amber-400" />
       </span>
       <span className="truncate">
         {t(`status.${primaryMission.status}`, { defaultValue: primaryMission.status })}
@@ -372,10 +372,13 @@ function OperatorCockpit({ profile }: { profile: Profile }) {
         headerRight={headerRight}
       />
       <div className="pointer-events-none absolute inset-x-0 bottom-28 z-[50] flex justify-center px-16">
-        <details className="pointer-events-auto w-full max-w-[20rem] overflow-hidden rounded-2xl border border-cyan-400/25 bg-[#0A192F]/92 shadow-2xl backdrop-blur-md">
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan-100">
+        <details className="thalvo-chart-sheet pointer-events-auto w-full max-w-[20rem] overflow-hidden rounded-2xl border shadow-2xl backdrop-blur-md">
+          <summary
+            className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.16em]"
+            style={{ color: "var(--sheet-active-ink)" }}
+          >
             <span>{t("ops_alerts.pool_title")}</span>
-            <ChevronRight className="size-4 shrink-0 text-cyan-200/70" />
+            <ChevronRight className="size-4 shrink-0 opacity-70" />
           </summary>
           {alerts[0] && (
             <div className="px-3 pt-2">
@@ -459,7 +462,7 @@ function OperatorCockpit({ profile }: { profile: Profile }) {
                     label={t("ops_alerts.active_jobs")}
                     value={activeJobs.length}
                     icon={<Activity className="size-4" />}
-                    accent="text-sky-300"
+                    accent="text-amber-300"
                   />
                   <StatCard
                     label={t("ops_alerts.open_requests")}
@@ -596,8 +599,8 @@ function RequestCard({
           className={
             "size-10 rounded-xl grid place-items-center " +
             (isDiver
-              ? "bg-cyan-500/15 border border-cyan-400/30 text-cyan-300"
-              : "bg-sky-500/15 border border-sky-400/30 text-sky-300")
+              ? "bg-amber-500/15 border border-amber-400/30 text-amber-300"
+              : "bg-amber-500/15 border border-amber-400/30 text-amber-300")
           }
         >
           {isDiver ? <Anchor className="size-5" /> : <Wrench className="size-5" />}
@@ -647,7 +650,7 @@ function RequestCard({
               }}
               inputMode="numeric"
               placeholder={t("provider.your_price")}
-              className="h-10 rounded-xl border border-white/15 bg-white/5 text-white placeholder:text-white/40 px-3 text-sm outline-none focus:border-sky-400/60"
+              className="h-10 rounded-xl border border-white/15 bg-white/5 text-white placeholder:text-white/40 px-3 text-sm outline-none focus:border-amber-400/60"
             />
             <input
               value={eta}
@@ -660,14 +663,14 @@ function RequestCard({
               }}
               inputMode="numeric"
               placeholder={t("provider.your_eta")}
-              className="h-10 rounded-xl border border-white/15 bg-white/5 text-white placeholder:text-white/40 px-3 text-sm outline-none focus:border-sky-400/60"
+              className="h-10 rounded-xl border border-white/15 bg-white/5 text-white placeholder:text-white/40 px-3 text-sm outline-none focus:border-amber-400/60"
             />
           </div>
           <input
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder={t("provider.note")}
-            className="w-full h-10 rounded-xl border border-white/15 bg-white/5 text-white placeholder:text-white/40 px-3 text-sm outline-none focus:border-sky-400/60"
+            className="w-full h-10 rounded-xl border border-white/15 bg-white/5 text-white placeholder:text-white/40 px-3 text-sm outline-none focus:border-amber-400/60"
           />
           <div className="flex gap-2">
             <button
@@ -705,7 +708,7 @@ function RequestCard({
             <button
               onClick={submit}
               disabled={busy}
-              className="flex-1 h-10 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-900 text-sm font-semibold inline-flex items-center justify-center gap-1.5"
+              className="flex-1 h-10 rounded-xl bg-sky-500 hover:bg-amber-400 text-slate-900 text-sm font-semibold inline-flex items-center justify-center gap-1.5"
             >
               {busy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}{" "}
               {t("provider.submit_offer")}
