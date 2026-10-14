@@ -23,8 +23,8 @@ const CSS = `
 }
 .ap-beam{
   transform-origin:18% 58%;
-  background:conic-gradient(from 210deg at 18% 58%, transparent 0deg, rgba(245,185,66,.11) 14deg, transparent 36deg);
-  animation:ap-sweep 28s linear infinite;
+  background:conic-gradient(from 210deg at 18% 58%, transparent 0deg, rgba(245,185,66,.16) 16deg, transparent 40deg);
+  animation:ap-sweep 32s linear infinite;
 }
 .ap-star{animation:ap-twinkle 4.8s ease-in-out infinite}
 .ap-star2{animation-duration:6.2s;animation-delay:-1.8s}
