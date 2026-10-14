@@ -2,16 +2,16 @@ import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Public ops contact (mailto / boatshow copy). Not an authorization capability —
- * admin access is `user_roles.admin` only (seeded by migration).
+ * Public ops contact (mailto / partner + boatshow copy).
+ * Not an authorization capability — admin access is `user_roles.admin`.
  */
-export const OPS_CONTACT_EMAIL = "ismailtolgasler@gmail.com";
+export const OPS_CONTACT_EMAIL = "support@thalvo.org";
 
-/** @deprecated Prefer OPS_CONTACT_EMAIL — kept for existing i18n call sites. */
-export const SUPERADMIN_EMAIL = OPS_CONTACT_EMAIL;
+/** Platform operator identity for `/admin` route lock — not shown on public forms. */
+export const SUPERADMIN_EMAIL = "ismailtolgasler@gmail.com";
 
 export function isSuperAdminEmail(email: string | null | undefined): boolean {
-  return (email ?? "").trim().toLowerCase() === OPS_CONTACT_EMAIL;
+  return (email ?? "").trim().toLowerCase() === SUPERADMIN_EMAIL;
 }
 
 export async function userHasAdminRole(userId: string): Promise<boolean> {
