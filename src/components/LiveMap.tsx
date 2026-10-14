@@ -369,11 +369,13 @@ function ChartRasterLayers({
   showSeamarks: boolean;
 }) {
   const map = useMap();
-  const satelliteLayerRef = useRef<L.TileLayer | null>(null);
-  const seaLayerRef = useRef<L.TileLayer | null>(null);
-  const darkLayerRef = useRef<L.TileLayer | null>(null);
-  const seamarkLayerRef = useRef<L.TileLayer | null>(null);
-  const activeBasemapRef = useRef<L.TileLayer | null>(null);
+  const layersRef = useRef<{
+    sat: L.TileLayer | null;
+    sea: L.TileLayer | null;
+    dark: L.TileLayer | null;
+    seamark: L.TileLayer | null;
+    active: L.TileLayer | null;
+  }>({ sat: null, sea: null, dark: null, seamark: null, active: null });
 
   useEffect(() => {
     const keepBuffer = 1;
@@ -387,59 +389,6 @@ function ChartRasterLayers({
       // Retina doubles tile requests and has blanked iOS under seamarks.
       detectRetina: false,
     };
-    const satellite = L.tileLayer(SAT_TILE, {
-      ...raster,
-      maxNativeZoom: 18,
-      attribution: "Tiles © Esri",
-    });
-    const sea = L.tileLayer(OSM_RASTER_TILE, {
-      ...raster,
-      maxNativeZoom: 19,
-      attribution: "© OpenStreetMap",
-    });
-    const dark = L.tileLayer(DARK_BASE_TILE, {
-      ...raster,
-      maxNativeZoom: 16,
-      attribution: "Tiles © Esri",
-    });
-    const seamark = L.tileLayer(SEAMARK_TILE, {
-      minZoom: 11,
-      maxZoom: CHART_MAX_ZOOM,
-      maxNativeZoom: 18,
-      zIndex: 450,
-      opacity: 0.95,
-      errorTileUrl: CLEAR_ERROR_TILE,
-      keepBuffer,
-      updateWhenZooming: false,
-      updateWhenIdle: true,
-      detectRetina: false,
-      className: "thalvo-seamark-tiles",
-    });
-
-    satelliteLayerRef.current = satellite;
-    seaLayerRef.current = sea;
-    darkLayerRef.current = dark;
-    seamarkLayerRef.current = seamark;
-
-    return () => {
-      map.removeLayer(satellite);
-      map.removeLayer(sea);
-      map.removeLayer(dark);
-      map.removeLayer(seamark);
-      satelliteLayerRef.current = null;
-      seaLayerRef.current = null;
-      darkLayerRef.current = null;
-      seamarkLayerRef.current = null;
-      activeBasemapRef.current = null;
-    };
-  }, [map]);
-
-  useEffect(() => {
-    const satellite = satelliteLayerRef.current;
-    const sea = seaLayerRef.current;
-    const dark = darkLayerRef.current;
-    const seamark = seamarkLayerRef.current;
-    if (!satellite || !sea || !dark || !seamark) return;
 
     const purge = (layer: L.TileLayer) => {
       const tiles = (layer as unknown as { _tiles?: Record<string, { el?: HTMLElement }> })._tiles;
@@ -457,26 +406,80 @@ function ChartRasterLayers({
       purge(layer);
     };
 
-    const next =
-      basemap === "sat" ? satellite : basemap === "dark" ? dark : sea;
+    /** Build a basemap only when the captain selects it — no idle tile layers. */
+    const ensureBasemap = (id: BasemapId): L.TileLayer => {
+      const bag = layersRef.current;
+      if (id === "sat") {
+        if (!bag.sat) {
+          bag.sat = L.tileLayer(SAT_TILE, {
+            ...raster,
+            maxNativeZoom: 18,
+            attribution: "Tiles © Esri",
+          });
+        }
+        return bag.sat;
+      }
+      if (id === "dark") {
+        if (!bag.dark) {
+          bag.dark = L.tileLayer(DARK_BASE_TILE, {
+            ...raster,
+            maxNativeZoom: 16,
+            attribution: "Tiles © Esri",
+          });
+        }
+        return bag.dark;
+      }
+      if (!bag.sea) {
+        bag.sea = L.tileLayer(OSM_RASTER_TILE, {
+          ...raster,
+          maxNativeZoom: 19,
+          attribution: "© OpenStreetMap",
+        });
+      }
+      return bag.sea;
+    };
 
-    // Always remount the active basemap when the stack changes so WebKit
-    // cannot keep a blank composited tile pane under seamarks.
-    if (activeBasemapRef.current && activeBasemapRef.current !== next) {
-      hide(activeBasemapRef.current);
+    const ensureSeamark = (): L.TileLayer => {
+      const bag = layersRef.current;
+      if (!bag.seamark) {
+        bag.seamark = L.tileLayer(SEAMARK_TILE, {
+          minZoom: 11,
+          maxZoom: CHART_MAX_ZOOM,
+          maxNativeZoom: 18,
+          zIndex: 450,
+          opacity: 0.95,
+          errorTileUrl: CLEAR_ERROR_TILE,
+          keepBuffer,
+          updateWhenZooming: false,
+          updateWhenIdle: true,
+          detectRetina: false,
+          className: "thalvo-seamark-tiles",
+        });
+      }
+      return bag.seamark;
+    };
+
+    const next = ensureBasemap(basemap);
+
+    // Remount the active basemap when the stack changes so WebKit cannot
+    // keep a blank composited tile pane under seamarks.
+    if (layersRef.current.active && layersRef.current.active !== next) {
+      hide(layersRef.current.active);
     }
     if (map.hasLayer(next)) {
       map.removeLayer(next);
     }
     map.addLayer(next);
-    activeBasemapRef.current = next;
+    layersRef.current.active = next;
 
-    if (basemap !== "sat") hide(satellite);
-    if (basemap !== "sea") hide(sea);
-    if (basemap !== "dark") hide(dark);
+    const bag = layersRef.current;
+    if (basemap !== "sat" && bag.sat) hide(bag.sat);
+    if (basemap !== "sea" && bag.sea) hide(bag.sea);
+    if (basemap !== "dark" && bag.dark) hide(bag.dark);
 
-    hide(seamark);
-    if (showSeamarks && map.getZoom() >= 11) {
+    const seamark = showSeamarks ? ensureSeamark() : bag.seamark;
+    if (seamark) hide(seamark);
+    if (showSeamarks && seamark && map.getZoom() >= 11) {
       map.addLayer(seamark);
     }
 
@@ -501,7 +504,7 @@ function ChartRasterLayers({
   // attach/detach without waiting for a React toggle.
   useEffect(() => {
     if (!showSeamarks) return;
-    const seamark = seamarkLayerRef.current;
+    const seamark = layersRef.current.seamark;
     if (!seamark) return;
     const sync = () => {
       const want = map.getZoom() >= 11;
@@ -515,6 +518,17 @@ function ChartRasterLayers({
       map.off("zoomend", sync);
     };
   }, [map, showSeamarks]);
+
+  useEffect(() => {
+    return () => {
+      const bag = layersRef.current;
+      for (const layer of [bag.sat, bag.sea, bag.dark, bag.seamark]) {
+        if (!layer) continue;
+        if (map.hasLayer(layer)) map.removeLayer(layer);
+      }
+      layersRef.current = { sat: null, sea: null, dark: null, seamark: null, active: null };
+    };
+  }, [map]);
 
   return null;
 }

@@ -5,7 +5,7 @@ const LiveMapEager = lazy(() =>
   import("@/components/LiveMap").then((m) => ({ default: m.LiveMap })),
 );
 
-export type { LiveAlert, LivePin } from "@/components/LiveMap";
+export type { LiveAlert, LivePin, LiveRoute } from "@/components/LiveMap";
 
 type LiveMapProps = ComponentProps<typeof LiveMapEager>;
 

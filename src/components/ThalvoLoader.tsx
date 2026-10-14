@@ -1,8 +1,38 @@
 import { useTranslation } from "react-i18next";
 import { Wordmark } from "./Wordmark";
 
-export function ThalvoLoader() {
+type Props = {
+  /** Full-screen splash (cold boot) vs soft in-shell pending for tab switches. */
+  variant?: "fullscreen" | "inline";
+};
+
+export function ThalvoLoader({ variant = "fullscreen" }: Props) {
   const { t } = useTranslation();
+
+  if (variant === "inline") {
+    return (
+      <div
+        className="flex min-h-[42vh] flex-col items-center justify-center gap-5 px-6 py-14 text-white"
+        role="status"
+        aria-live="polite"
+        aria-busy="true"
+      >
+        <Wordmark size="md" className="opacity-90" />
+        <div className="h-0.5 w-28 overflow-hidden rounded-full bg-white/10">
+          <div className="thalvo-inline-bar h-full w-1/2 rounded-full bg-amber-400/85" />
+        </div>
+        <p className="text-[10px] tracking-wide text-white/45">{t("loading.caption")}</p>
+        <style>{`
+          @keyframes thalvoInlineBar {
+            0% { transform: translateX(-120%); }
+            100% { transform: translateX(220%); }
+          }
+          .thalvo-inline-bar { animation: thalvoInlineBar 1.05s ease-in-out infinite; }
+        `}</style>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-[80] flex flex-col items-center justify-between py-16 bg-[#0A192F] text-white overflow-hidden">
       <div aria-hidden className="absolute inset-0 opacity-40"

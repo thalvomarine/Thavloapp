@@ -1,6 +1,6 @@
-/* Leaflet pane/transform rules must load with the app shell — if they
-   arrive late (or not at all), iconAnchor + zoom transforms drift. */
-@import "leaflet/dist/leaflet.css";
+/* Leaflet CSS loads with LiveMap / CoverageChart / ReportMiniMap chunks
+   so non-chart routes skip the stylesheet. Those modules import it at the
+   top of their entry so panes exist before the first MapContainer paint. */
 @import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";

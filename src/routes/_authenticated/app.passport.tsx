@@ -140,7 +140,7 @@ function Passport({ userId }: { userId: string }) {
       });
   }, [userId]);
 
-  if (vesselLoading) return <ThalvoLoader />;
+  if (vesselLoading) return <ThalvoLoader variant="inline" />;
 
   const saveVessel = async () => {
     const name = sanitizePlainText(spec.name, 80);

@@ -69,7 +69,7 @@ function ReputationInner({ userId }: { userId: string }) {
     })();
   }, [userId]);
 
-  if (!profile) return <ThalvoLoader />;
+  if (!profile) return <ThalvoLoader variant="inline" />;
 
   if (profile.role !== "Provider") {
     return (
@@ -85,7 +85,7 @@ function ReputationInner({ userId }: { userId: string }) {
     );
   }
 
-  if (!report) return <ThalvoLoader />;
+  if (!report) return <ThalvoLoader variant="inline" />;
 
   return (
     <BoatPassportShell title={t("trust.page_title")} eyebrow={t("trust.eyebrow")}>

@@ -134,7 +134,7 @@ function CaptainOrders({ userId }: { userId: string }) {
     };
   }, [userId, reloadToken]);
 
-  if (loading) return <ThalvoLoader />;
+  if (loading) return <ThalvoLoader variant="inline" />;
 
   const open = rows.find((r) => r.id === openId) ?? null;
 
