@@ -937,6 +937,7 @@ html[data-thalvo-theme="day"] .bg-\[\#0A192F\]\/95,
 html[data-thalvo-theme="day"] .bg-\[\#0a192f\]\/70,
 html[data-thalvo-theme="day"] .bg-\[\#0a192f\]\/88,
 html[data-thalvo-theme="day"] .bg-\[\#0a192f\]\/90,
+html[data-thalvo-theme="day"] .bg-\[\#0a192f\]\/92,
 html[data-thalvo-theme="day"] .bg-\[\#0a192f\]\/95,
 html[data-thalvo-theme="day"] .bg-\[\#0a192f\]\/97,
 html[data-thalvo-theme="day"] .bg-\[oklch\(0\.13_0\.02_250\/0\.7\)\],
@@ -1005,6 +1006,7 @@ html[data-thalvo-theme="day"] .hover\:bg-white\/5:hover,
 html[data-thalvo-theme="day"] .hover\:bg-white\/10:hover,
 html[data-thalvo-theme="day"] .hover\:bg-white\/\[0\.06\]:hover,
 html[data-thalvo-theme="day"] .hover\:bg-white\/\[0\.08\]:hover,
+html[data-thalvo-theme="day"] .hover\:bg-white\/\[0\.1\]:hover,
 html[data-thalvo-theme="day"] .hover\:bg-white\/\[0\.12\]:hover,
 html[data-thalvo-theme="day"] .hover\:bg-white\/20:hover {
   background-color: rgb(15 23 42 / 0.1) !important;
@@ -1023,6 +1025,7 @@ html[data-thalvo-theme="day"] .bg-cyan-500\/15 {
 
 html[data-thalvo-theme="day"] .border-white\/5,
 html[data-thalvo-theme="day"] .border-white\/10,
+html[data-thalvo-theme="day"] .border-white\/12,
 html[data-thalvo-theme="day"] .border-white\/\[0\.06\],
 html[data-thalvo-theme="day"] .border-white\/\[0\.07\],
 html[data-thalvo-theme="day"] .border-white\/\[0\.08\],
@@ -1122,12 +1125,14 @@ html[data-thalvo-theme="day"] .thalvo-on-dark .bg-\[\#06101c\] {
 }
 html[data-thalvo-theme="day"] .thalvo-on-dark .bg-\[\#0A192F\]\/90,
 html[data-thalvo-theme="day"] .thalvo-on-dark .bg-\[\#0a192f\]\/90,
+html[data-thalvo-theme="day"] .thalvo-on-dark .bg-\[\#0a192f\]\/92,
 html[data-thalvo-theme="day"] .thalvo-on-dark .bg-\[\#0A192F\]\/95,
 html[data-thalvo-theme="day"] .thalvo-on-dark .bg-\[\#0a192f\]\/95 {
   background-color: rgb(10 25 47 / 0.92) !important;
 }
 html[data-thalvo-theme="day"] .thalvo-on-dark .border-white\/5,
 html[data-thalvo-theme="day"] .thalvo-on-dark .border-white\/10,
+html[data-thalvo-theme="day"] .thalvo-on-dark .border-white\/12,
 html[data-thalvo-theme="day"] .thalvo-on-dark .border-white\/15,
 html[data-thalvo-theme="day"] .thalvo-on-dark .border-white\/20 {
   border-color: rgb(255 255 255 / 0.18) !important;

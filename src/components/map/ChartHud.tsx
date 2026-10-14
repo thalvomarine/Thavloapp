@@ -2,20 +2,22 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Anchor,
-  ChevronDown,
   Crosshair,
+  Download,
   Fuel,
   Globe2,
   Layers,
   Loader2,
+  Map,
   MapPin,
+  Menu,
   Moon,
-  Navigation,
   Plus,
   Satellite,
   Ship,
   Wrench,
 } from "lucide-react";
+import { formatDegrees } from "@/lib/marine-data";
 import { LeafletPointerGuard, stopMapEvent } from "@/lib/leaflet-dom";
 import { CompassMark } from "@/components/brand/CompassMark";
 import { openThalvoAi } from "@/lib/thalvo-ai-bus";
@@ -80,22 +82,24 @@ function Switch({ on }: { on: boolean }) {
     <span
       className={
         "relative inline-flex h-[18px] w-[32px] shrink-0 items-center rounded-full border transition-all duration-200 " +
-        (on
-          ? "border-cyan-300/60 bg-cyan-400/25 shadow-[inset_0_0_8px_rgba(0,240,255,0.25)]"
-          : "border-white/15 bg-white/[0.07]")
+        (on ? "border-cyan-300/50 bg-cyan-400/20" : "border-white/15 bg-white/[0.07]")
       }
     >
       <span
         className={
           "absolute size-3 rounded-full transition-all duration-200 " +
-          (on
-            ? "left-[17px] bg-cyan-200 shadow-[0_0_6px_rgba(0,240,255,0.7)]"
-            : "left-[3px] bg-white/50")
+          (on ? "left-[17px] bg-cyan-200" : "left-[3px] bg-white/50")
         }
       />
     </span>
   );
 }
+
+const RAIL_BTN =
+  "grid size-8 place-items-center rounded-[10px] border text-white/75 transition-colors hover:bg-white/[0.08] hover:text-white";
+const RAIL_BTN_ACTIVE =
+  "border-cyan-300/55 bg-cyan-400/15 text-cyan-100 hover:bg-cyan-400/20 hover:text-cyan-50";
+const RAIL_BTN_IDLE = "border-white/12 bg-transparent";
 
 /**
  * Shared body — region quick-jump pills, layer toggles and the
@@ -156,7 +160,7 @@ function ChartHudBody({
               stopMapEvent(e);
               onJump(id);
             }}
-            className="h-9 rounded-lg border border-cyan-300/30 bg-cyan-400/10 text-[12px] font-semibold text-cyan-50 transition-colors hover:bg-cyan-400/20"
+            className="h-9 rounded-xl border border-white/12 bg-white/[0.05] text-[12px] font-semibold text-white/90 transition-colors hover:bg-white/[0.1]"
           >
             {t(labelKey)}
           </button>
@@ -184,7 +188,7 @@ function ChartHudBody({
                 className={
                   "h-8 rounded-md border text-[10px] font-semibold " +
                   (on
-                    ? "border-cyan-300/50 bg-cyan-400/20 text-white"
+                    ? "border-cyan-300/45 bg-cyan-400/15 text-white"
                     : "border-white/10 bg-white/[0.03] text-white/40")
                 }
               >
@@ -196,7 +200,7 @@ function ChartHudBody({
       )}
 
       {onSelectBasemap && (
-        <div className="mt-2.5 space-y-1 rounded-lg border border-white/[0.07] p-1">
+        <div className="mt-2.5 space-y-1">
           {(
             [
               { id: "sat" as const, Icon: Satellite, labelKey: "chart.basemap_sat" },
@@ -216,8 +220,10 @@ function ChartHudBody({
                 }}
                 aria-pressed={on}
                 className={
-                  "flex h-8 w-full items-center gap-2 rounded-md px-2 text-left transition-colors " +
-                  (on ? "bg-cyan-400/15 text-white" : "text-white/70 hover:bg-white/[0.05]")
+                  "flex h-8 w-full items-center gap-2 rounded-xl px-2.5 text-left transition-colors " +
+                  (on
+                    ? "border border-cyan-300/45 bg-cyan-400/12 text-white"
+                    : "border border-white/10 text-white/70 hover:bg-white/[0.05]")
                 }
               >
                 <Icon className="size-3.5 shrink-0 text-cyan-200" />
@@ -275,10 +281,10 @@ function ChartHudBody({
               onDownloadOfflineTiles();
             }}
             className={
-              "flex h-10 w-full items-center justify-center gap-1.5 rounded-full border text-[10px] font-bold uppercase tracking-[0.06em] transition-all " +
+              "flex h-10 w-full items-center justify-center gap-1.5 rounded-xl border text-[10px] font-bold uppercase tracking-[0.06em] transition-all " +
               (tileDownloadActive
                 ? "border-amber-400/50 bg-amber-400/15 text-amber-100"
-                : "border-cyan-300/35 bg-cyan-400/10 text-cyan-100 hover:bg-cyan-400/20")
+                : "border-white/12 bg-white/[0.05] text-white/85 hover:bg-white/[0.1]")
             }
           >
             {tileDownloadActive ? (
@@ -310,7 +316,7 @@ function ChartHudBody({
                 stopMapEvent(e);
                 onAddReport?.();
               }}
-              className="flex h-10 w-full items-center justify-center gap-1.5 rounded-full border border-cyan-300/40 bg-cyan-400/15 text-[11px] font-bold uppercase tracking-[0.1em] text-cyan-100 transition-all hover:bg-cyan-400/30 hover:shadow-[0_0_16px_rgba(0,240,255,0.25)]"
+              className="flex h-10 w-full items-center justify-center gap-1.5 rounded-xl border border-white/12 bg-white/[0.05] text-[11px] font-bold uppercase tracking-[0.1em] text-white/90 transition-all hover:bg-white/[0.1]"
             >
               <Plus className="size-3.5 shrink-0" />
               <span className="truncate">{t("chart.add_report")}</span>
@@ -326,10 +332,10 @@ function ChartHudBody({
               }}
               aria-pressed={drawing}
               className={
-                "flex h-10 w-full items-center justify-center gap-1.5 rounded-full border text-[11px] font-bold uppercase tracking-[0.1em] transition-all " +
+                "flex h-10 w-full items-center justify-center gap-1.5 rounded-xl border text-[11px] font-bold uppercase tracking-[0.1em] transition-all " +
                 (drawing
-                  ? "border-orange-400/60 bg-orange-400/25 text-orange-100 shadow-[0_0_16px_rgba(251,146,60,0.3)]"
-                  : "border-white/15 bg-white/[0.05] text-white/70 hover:bg-white/[0.12] hover:text-white/90")
+                  ? "border-orange-400/60 bg-orange-400/25 text-orange-100"
+                  : "border-white/12 bg-white/[0.05] text-white/70 hover:bg-white/[0.12] hover:text-white/90")
               }
             >
               <Crosshair className="size-3.5 shrink-0" />
@@ -345,9 +351,9 @@ function ChartHudBody({
 }
 
 /**
- * ChartHud — desktop/tablet control panel anchored top-right of the map.
- * Phones use the Layers FAB popover in `ChartFabStack` instead, so this
- * card stays `lg:block` and never covers the chart on a narrow viewport.
+ * ChartHud — Command Bar icon rail (C) on desktop/tablet.
+ * Collapsed = compact vertical rail; expanded = Quiet Glass panel to the left.
+ * Phones keep using the Layers FAB in `ChartFabStack`.
  */
 export function ChartHud({
   layers,
@@ -369,62 +375,20 @@ export function ChartHud({
   tileDownloadActive,
 }: Props) {
   const { t } = useTranslation();
-  const [uncontrolledOpen, setUncontrolledOpen] = useState(true);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const open = panelOpen ?? uncontrolledOpen;
   const setOpen = (update: boolean | ((current: boolean) => boolean)) => {
     const next = typeof update === "function" ? update(open) : update;
     onPanelOpenChange?.(next);
     if (panelOpen === undefined) setUncontrolledOpen(next);
   };
+
   return (
-    <LeafletPointerGuard className="pointer-events-auto absolute top-[calc(env(safe-area-inset-top)+6.5rem)] right-3 z-[500] hidden w-[min(280px,calc(100vw-5.5rem))] overflow-hidden rounded-2xl border border-cyan-400/35 bg-[#071422]/95 text-xs shadow-[0_18px_50px_rgba(0,0,0,0.45)] backdrop-blur-md lg:block">
-      <div className="h-px w-full bg-gradient-to-r from-transparent via-cyan-300/60 to-transparent" />
-
-      <div className="p-3">
-        <div className="flex items-center justify-between gap-2">
-          <button
-            type="button"
-            onPointerDown={stopMapEvent}
-            onClick={(e) => {
-              stopMapEvent(e);
-              setOpen((v) => !v);
-            }}
-            className="flex min-w-0 items-center gap-2 text-left"
-            aria-expanded={open}
-          >
-            <span className="size-1.5 shrink-0 rounded-full bg-cyan-300 shadow-[0_0_8px_rgba(0,240,255,0.8)]" />
-            <p className="truncate text-[9px] font-bold uppercase leading-none tracking-[0.22em] text-cyan-200/90">
-              {t("chart.hud_title")}
-            </p>
-          </button>
-          <div className="flex shrink-0 items-center gap-1.5">
-            <button
-              type="button"
-              onPointerDown={stopMapEvent}
-              onClick={(e) => {
-                stopMapEvent(e);
-                setOpen((v) => !v);
-              }}
-              aria-label={open ? t("chart.collapse") : t("chart.expand")}
-              title={open ? t("chart.collapse") : t("chart.expand")}
-              className="grid size-7 place-items-center rounded-full border border-white/10 bg-white/[0.05] text-white/60 transition-colors hover:bg-white/[0.12] hover:text-white/90"
-            >
-              <ChevronDown
-                className={
-                  "size-3.5 transition-transform duration-200 " + (open ? "" : "-rotate-90")
-                }
-              />
-            </button>
-          </div>
-        </div>
-
-        <div
-          className={
-            "grid transition-all duration-300 ease-out " +
-            (open ? "mt-3 grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0")
-          }
-        >
-          <div className="min-h-0 overflow-hidden">
+    <LeafletPointerGuard className="pointer-events-auto absolute top-[calc(env(safe-area-inset-top)+4.75rem)] right-3 z-[500] hidden items-start gap-2 lg:flex">
+      {open ? (
+        <div className="thalvo-on-dark w-[min(260px,calc(100vw-6.5rem))] overflow-hidden rounded-2xl border border-white/12 bg-[#0a192f]/92 text-xs shadow-2xl backdrop-blur-md">
+          <div className="p-3">
+            <p className="mb-2.5 text-[12px] font-semibold text-white">{t("chart.hud_title")}</p>
             <ChartHudBody
               layers={layers}
               onToggleLayer={onToggleLayer}
@@ -444,56 +408,199 @@ export function ChartHud({
             />
           </div>
         </div>
+      ) : null}
+
+      <div className="thalvo-on-dark flex w-[52px] flex-col items-center gap-2 rounded-2xl border border-white/12 bg-[#0a192f]/92 p-2 shadow-2xl backdrop-blur-md">
+        <button
+          type="button"
+          onPointerDown={stopMapEvent}
+          onClick={(e) => {
+            stopMapEvent(e);
+            setOpen((v) => !v);
+          }}
+          aria-expanded={open}
+          aria-label={open ? t("chart.collapse") : t("chart.expand")}
+          title={t("chart.hud_title")}
+          className={RAIL_BTN + " " + (open ? RAIL_BTN_ACTIVE : RAIL_BTN_IDLE)}
+        >
+          {open ? <Menu className="size-3.5" /> : <Layers className="size-3.5" />}
+        </button>
+
+        {onSelectBasemap ? (
+          <button
+            type="button"
+            onPointerDown={stopMapEvent}
+            onClick={(e) => {
+              stopMapEvent(e);
+              onSelectBasemap(nextBasemap(basemap));
+            }}
+            title={t(`chart.basemap_${basemap}`)}
+            aria-label={t(`chart.basemap_${basemap}`)}
+            className={
+              RAIL_BTN +
+              " " +
+              (basemap !== "dark" ? RAIL_BTN_ACTIVE : RAIL_BTN_IDLE)
+            }
+          >
+            {basemap === "sea" ? (
+              <Globe2 className="size-3.5" />
+            ) : (
+              <Map className="size-3.5" />
+            )}
+          </button>
+        ) : null}
+
+        {onSelectBasemap ? (
+          <button
+            type="button"
+            onPointerDown={stopMapEvent}
+            onClick={(e) => {
+              stopMapEvent(e);
+              onSelectBasemap("dark");
+            }}
+            title={t("chart.basemap_dark")}
+            aria-label={t("chart.basemap_dark")}
+            aria-pressed={basemap === "dark"}
+            className={RAIL_BTN + " " + (basemap === "dark" ? RAIL_BTN_ACTIVE : RAIL_BTN_IDLE)}
+          >
+            <Moon className="size-3.5" />
+          </button>
+        ) : null}
+
+        {canContribute ? (
+          <button
+            type="button"
+            onPointerDown={stopMapEvent}
+            onClick={(e) => {
+              stopMapEvent(e);
+              onAddReport?.();
+            }}
+            title={t("chart.add_report")}
+            aria-label={t("chart.add_report")}
+            className={RAIL_BTN + " " + RAIL_BTN_IDLE}
+          >
+            <Plus className="size-3.5" />
+          </button>
+        ) : null}
+
+        {onDownloadOfflineTiles ? (
+          <button
+            type="button"
+            onPointerDown={stopMapEvent}
+            onClick={(e) => {
+              stopMapEvent(e);
+              onDownloadOfflineTiles();
+            }}
+            title={t("chart.offline_download")}
+            aria-label={t("chart.offline_download")}
+            className={
+              RAIL_BTN +
+              " " +
+              (tileDownloadActive ? RAIL_BTN_ACTIVE : RAIL_BTN_IDLE)
+            }
+          >
+            {tileDownloadActive ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <Download className="size-3.5" />
+            )}
+          </button>
+        ) : null}
+
+        {isAdmin ? (
+          <button
+            type="button"
+            onPointerDown={stopMapEvent}
+            onClick={(e) => {
+              stopMapEvent(e);
+              onToggleDraw?.();
+            }}
+            title={drawing ? t("chart.draw_active") : t("chart.draw_point")}
+            aria-label={drawing ? t("chart.draw_active") : t("chart.draw_point")}
+            aria-pressed={drawing}
+            className={
+              RAIL_BTN +
+              " " +
+              (drawing
+                ? "border-orange-400/55 bg-orange-400/20 text-orange-100"
+                : RAIL_BTN_IDLE)
+            }
+          >
+            <Crosshair className="size-3.5" />
+          </button>
+        ) : null}
       </div>
     </LeafletPointerGuard>
   );
 }
 
 /**
- * Nautical coordinate + scale readout. On the fullscreen cockpit it sits
- * bottom-left, level with the FAB stack (`5.5rem` above the home-indicator
- * / dock) — never inside the bottom nav. Embedded maps keep the compact
- * in-widget corner chip.
+ * Quiet Glass (B) LAT / LON stamp + scale. Fullscreen cockpit: bottom-left.
+ * Embedded maps keep a compact corner chip.
  */
 export function ChartReadout({
   coords,
+  lat,
+  lng,
   scaleNm,
   viewportPinned = false,
   concealed = false,
 }: {
-  coords: string;
+  /** Legacy single-line DM string — used when lat/lng are not provided. */
+  coords?: string;
+  lat?: number;
+  lng?: number;
   scaleNm: number | null;
   viewportPinned?: boolean;
   /** Hide under the Kontrol Haritası drawer so the badge never stacks on top. */
   concealed?: boolean;
 }) {
   const { t } = useTranslation();
+  const hasParts = Number.isFinite(lat) && Number.isFinite(lng);
+  const formatted = hasParts
+    ? formatDegrees(lat as number, lng as number)
+    : (coords ?? "");
+  const [latPart, lonPart] = formatted.split(",").map((s) => s.trim());
+
   return (
     <div
       className={
-        "thalvo-on-dark z-[50] rounded-md border border-white/10 bg-[#07111E]/85 px-2.5 py-1.5 shadow-lg backdrop-blur-sm transition-opacity duration-200 " +
+        "thalvo-on-dark z-[50] rounded-xl border border-white/12 bg-[#0a192f]/90 px-3 py-2 shadow-lg backdrop-blur-md transition-opacity duration-200 " +
         (concealed ? "pointer-events-none opacity-0" : "pointer-events-auto opacity-100") +
         " " +
         (viewportPinned
-          ? "absolute left-4 bottom-28 max-w-[min(16.5rem,calc(100vw-6.5rem))] text-left"
-          : "absolute bottom-3 right-3 max-w-[min(11.5rem,calc(100vw-5.5rem))] text-right")
+          ? "absolute left-4 bottom-28 max-w-[min(18rem,calc(100vw-6.5rem))] text-left"
+          : "absolute bottom-3 right-3 max-w-[min(14rem,calc(100vw-5.5rem))] text-left")
       }
     >
-      <p className="font-mono text-[11px] leading-tight tracking-tight text-cyan-100">
-        {coords}
-      </p>
-      <p
-        className={
-          "mt-0.5 flex items-center gap-1 font-mono text-[9px] uppercase tracking-[0.12em] text-cyan-200/80 " +
-          (viewportPinned ? "justify-start" : "justify-end")
-        }
-      >
-        <Navigation className="size-2.5 shrink-0 text-cyan-300/80" />
-        <span className="truncate">
-          {t("common.distance")}
-          {scaleNm == null ? "" : ` · ${t("chart.scale_nm", { value: scaleNm.toFixed(scaleNm < 1 ? 2 : 1) })}`}
-        </span>
-      </p>
+      {latPart && lonPart ? (
+        <div className="flex items-start gap-3.5">
+          <div className="min-w-0">
+            <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-white/40">
+              {t("chart.coord_lat")}
+            </p>
+            <p className="mt-0.5 font-mono text-[11px] font-semibold tabular-nums leading-tight text-white">
+              {latPart}
+            </p>
+          </div>
+          <div className="min-w-0">
+            <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-white/40">
+              {t("chart.coord_lon")}
+            </p>
+            <p className="mt-0.5 font-mono text-[11px] font-semibold tabular-nums leading-tight text-white">
+              {lonPart}
+            </p>
+          </div>
+        </div>
+      ) : (
+        <p className="font-mono text-[11px] tabular-nums leading-tight text-white">{formatted}</p>
+      )}
+      {scaleNm != null ? (
+        <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.1em] text-white/40">
+          {t("common.distance")} ·{" "}
+          {t("chart.scale_nm", { value: scaleNm.toFixed(scaleNm < 1 ? 2 : 1) })}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -579,11 +686,10 @@ export function ChartFabStack({
         <LeafletPointerGuard className="pointer-events-auto lg:hidden">
           <div
             ref={menuRef}
-            className="thalvo-on-dark w-[min(252px,calc(100vw-5.5rem))] overflow-hidden rounded-xl border border-cyan-500/30 bg-[#0a192f]/95 text-xs shadow-2xl backdrop-blur-md"
+            className="thalvo-on-dark w-[min(252px,calc(100vw-5.5rem))] overflow-hidden rounded-2xl border border-white/12 bg-[#0a192f]/95 text-xs shadow-2xl backdrop-blur-md"
           >
-            <div className="h-px w-full bg-gradient-to-r from-transparent via-cyan-300/60 to-transparent" />
             <div className="p-3">
-              <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.22em] text-cyan-200/90">
+              <p className="mb-2.5 text-[12px] font-semibold text-white">
                 {t("chart.hud_title")}
               </p>
               <ChartHudBody
