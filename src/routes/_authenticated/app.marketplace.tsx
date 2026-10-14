@@ -3,8 +3,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { AppShell } from "@/components/AppShell";
-import { ThalvoLoader } from "@/components/ThalvoLoader";
 import { useProfile, useSessionUser } from "@/lib/session";
 import { formatTL, harborDistanceKm } from "@/lib/filter";
 import { useCart } from "@/lib/cart";
@@ -73,14 +71,11 @@ interface Part {
 }
 
 function MarketplacePage() {
-  const { user, loading } = useSessionUser();
-  if (loading) return <ThalvoLoader />;
+  const routeUser = Route.useRouteContext().user;
+  const { user: sessionUser } = useSessionUser();
+  const user = sessionUser ?? routeUser;
   if (!user) return null;
-  return (
-    <AppShell userId={user.id}>
-      <Marketplace userId={user.id} />
-    </AppShell>
-  );
+  return <Marketplace userId={user.id} />;
 }
 
 function Marketplace({ userId }: { userId: string }) {

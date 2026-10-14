@@ -2,7 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
-import { AppShell } from "@/components/AppShell";
 import { ThalvoLoader } from "@/components/ThalvoLoader";
 import { useProfile, useSessionUser } from "@/lib/session";
 import { BoatPassportShell } from "@/components/passport/BoatPassportShell";
@@ -18,14 +17,11 @@ export const Route = createFileRoute("/_authenticated/app/reputation")({
 });
 
 function ReputationPage() {
-  const { user, loading } = useSessionUser();
-  if (loading) return <ThalvoLoader />;
+  const routeUser = Route.useRouteContext().user;
+  const { user: sessionUser } = useSessionUser();
+  const user = sessionUser ?? routeUser;
   if (!user) return null;
-  return (
-    <AppShell userId={user.id}>
-      <ReputationInner userId={user.id} />
-    </AppShell>
-  );
+  return <ReputationInner userId={user.id} />;
 }
 
 function ReputationInner({ userId }: { userId: string }) {
@@ -73,7 +69,7 @@ function ReputationInner({ userId }: { userId: string }) {
     })();
   }, [userId]);
 
-  if (!profile) return <ThalvoLoader />;
+  if (!profile) return <ThalvoLoader variant="inline" />;
 
   if (profile.role !== "Provider") {
     return (
@@ -89,7 +85,7 @@ function ReputationInner({ userId }: { userId: string }) {
     );
   }
 
-  if (!report) return <ThalvoLoader />;
+  if (!report) return <ThalvoLoader variant="inline" />;
 
   return (
     <BoatPassportShell title={t("trust.page_title")} eyebrow={t("trust.eyebrow")}>

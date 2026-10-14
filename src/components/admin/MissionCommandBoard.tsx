@@ -1,7 +1,7 @@
 import { formatTL } from "@/lib/filter";
 import { GlassPanel } from "@/components/mission/GlassPanel";
 import { StatusChip } from "@/components/mission/StatusChip";
-import { LiveMap, type LivePin, type LiveRoute } from "@/components/LiveMap";
+import { LiveMap, type LivePin, type LiveRoute } from "@/components/LiveMapLazy";
 import { pickValidCoordinates } from "@/lib/geolocation";
 import { AlertTriangle, ChevronRight, Ship } from "lucide-react";
 

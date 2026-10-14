@@ -1,16 +1,40 @@
 import { Link, Navigate, useRouterState } from "@tanstack/react-router";
-import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent, type PointerEvent, type ReactNode, type TouchEvent } from "react";
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type MouseEvent,
+  type PointerEvent,
+  type ReactNode,
+  type TouchEvent,
+} from "react";
 import { createPortal } from "react-dom";
 import { Wordmark } from "@/components/Wordmark";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
-import { ThalvoChat } from "@/components/ThalvoChat";
 import { AccountMenuButton } from "@/components/mission/AccountMenuButton";
-import { SosSheet } from "@/components/mission/SosSheet";
-import { EmergencyServiceSheet } from "@/components/mission/EmergencyServiceSheet";
 import { ClipboardList, Map as MapIcon, Store, UserCircle2, AlertOctagon, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { OnboardingOverlay } from "@/components/onboarding/OnboardingOverlay";
 import { useFirstRun } from "@/components/onboarding/useFirstRun";
+
+const ThalvoChat = lazy(() =>
+  import("@/components/ThalvoChat").then((m) => ({ default: m.ThalvoChat })),
+);
+const SosSheet = lazy(() =>
+  import("@/components/mission/SosSheet").then((m) => ({ default: m.SosSheet })),
+);
+const EmergencyServiceSheet = lazy(() =>
+  import("@/components/mission/EmergencyServiceSheet").then((m) => ({
+    default: m.EmergencyServiceSheet,
+  })),
+);
+const OnboardingOverlay = lazy(() =>
+  import("@/components/onboarding/OnboardingOverlay").then((m) => ({
+    default: m.OnboardingOverlay,
+  })),
+);
 import { THALVO_SOS_OPEN_EVENT } from "@/lib/sos-bus";
 import {
   THALVO_EMERGENCY_SERVICE_EVENT,
@@ -74,6 +98,15 @@ export function MissionShell({ profile, children, fullBleed = false }: Props) {
   useEffect(() => {
     return runWhenIdle(() => setOpsReady(true), 1200);
   }, []);
+  useEffect(() => {
+    // Warm SOS / AI chunks while the captain is still on the dock.
+    return runWhenIdle(() => {
+      void import("@/components/ThalvoChat");
+      if (!hasSos) return;
+      void import("@/components/mission/SosSheet");
+      void import("@/components/mission/EmergencyServiceSheet");
+    }, 1800);
+  }, [hasSos]);
   useOpsAlerts(isProvider && opsReady);
   useEffect(() => {
     if (!user) return;
@@ -329,36 +362,45 @@ export function MissionShell({ profile, children, fullBleed = false }: Props) {
 
       {/* Above the dock on every screen except the chart, where ChartFabStack
           owns the corner and opens this same panel through THALVO_AI_OPEN_EVENT. */}
-      <ThalvoChat showLauncher={!fullBleed} />
+      <Suspense fallback={null}>
+        <ThalvoChat showLauncher={!fullBleed} />
+      </Suspense>
 
       {hasSos &&
         sheetHostReady &&
+        (sosOpen || svcOpen) &&
         createPortal(
-          <>
-            <SosSheet
-              open={sosOpen}
-              onClose={() => {
-                setSosOpen(false);
-                setMapChromeOverlay("sos", false);
-              }}
-              initialCategory={sosCat}
-              initialNote={sosDetails}
-            />
-            <EmergencyServiceSheet
-              open={svcOpen}
-              onClose={() => {
-                setSvcOpen(false);
-                setMapChromeOverlay("sos", false);
-              }}
-              initialBayName={svcBay}
-              initialCategory={svcCat}
-            />
-          </>,
+          <Suspense fallback={null}>
+            {sosOpen ? (
+              <SosSheet
+                open={sosOpen}
+                onClose={() => {
+                  setSosOpen(false);
+                  setMapChromeOverlay("sos", false);
+                }}
+                initialCategory={sosCat}
+                initialNote={sosDetails}
+              />
+            ) : null}
+            {svcOpen ? (
+              <EmergencyServiceSheet
+                open={svcOpen}
+                onClose={() => {
+                  setSvcOpen(false);
+                  setMapChromeOverlay("sos", false);
+                }}
+                initialBayName={svcBay}
+                initialCategory={svcCat}
+              />
+            ) : null}
+          </Suspense>,
           document.body,
         )}
 
       {firstRun.open && !isSupplier && (
-        <OnboardingOverlay profile={profile} isAdmin={isAdmin} onComplete={firstRun.complete} />
+        <Suspense fallback={null}>
+          <OnboardingOverlay profile={profile} isAdmin={isAdmin} onComplete={firstRun.complete} />
+        </Suspense>
       )}
     </div>
   );

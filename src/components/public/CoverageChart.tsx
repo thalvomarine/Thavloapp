@@ -134,7 +134,7 @@ export function CoverageChart({
 }) {
   const { t } = useTranslation();
   const [mounted, setMounted] = useState(false);
-  const [zones, setZones] = useState<MarineZone[] | null>(null);
+  const [zones, setZones] = useState<MarineZone[]>([]);
   const center = COVERAGE_BAYS[bay];
 
   useEffect(() => {
@@ -157,7 +157,7 @@ export function CoverageChart({
 
   const pins = useMemo(
     () =>
-      (zones ?? []).filter(
+      zones.filter(
         (z) =>
           COVERAGE_KINDS.has(z.kind) &&
           Number.isFinite(z.lat) &&
@@ -166,7 +166,8 @@ export function CoverageChart({
     [zones],
   );
 
-  if (!mounted || zones === null) {
+  // Paint basemap on first client frame — do not wait on marine_zones.
+  if (!mounted) {
     return (
       <MapPlaceholder
         className={fill ? "min-h-0" : "min-h-0 rounded-2xl"}

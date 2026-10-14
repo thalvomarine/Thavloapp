@@ -2,8 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
-import { AppShell } from "@/components/AppShell";
-import { ThalvoLoader } from "@/components/ThalvoLoader";
 import { useProfile, useSessionUser } from "@/lib/session";
 import { formatTL } from "@/lib/filter";
 import { MarketplaceShell } from "@/components/marketplace/MarketplaceShell";
@@ -43,19 +41,24 @@ interface Row {
 }
 
 function DealerPage() {
-  const { user, loading } = useSessionUser();
+  const routeUser = Route.useRouteContext().user;
+  const { user: sessionUser } = useSessionUser();
+  const user = sessionUser ?? routeUser;
   const { profile, loading: pl } = useProfile(user?.id);
-  if (loading || pl) return <ThalvoLoader />;
-  if (!user || !profile) return null;
+  if (!user) return null;
+  if (pl && !profile) {
+    return (
+      <div className="grid min-h-[40vh] place-items-center text-white/50">
+        <Loader2 className="size-6 animate-spin" />
+      </div>
+    );
+  }
+  if (!profile) return null;
   const isDealer = profile.role === "Supplier";
-  return (
-    <AppShell userId={user.id}>
-      {isDealer ? (
-        <DealerConsole userId={user.id} businessName={profile.business_name} marina={profile.home_marina} />
-      ) : (
-        <NotDealer />
-      )}
-    </AppShell>
+  return isDealer ? (
+    <DealerConsole userId={user.id} businessName={profile.business_name} marina={profile.home_marina} />
+  ) : (
+    <NotDealer />
   );
 }
 

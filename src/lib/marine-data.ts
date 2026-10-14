@@ -164,74 +164,132 @@ function num(v: unknown): number {
   return typeof v === "number" ? v : Number(v);
 }
 
+const ZONE_TTL_MS = 90_000;
+const REPORT_TTL_MS = 60_000;
+const zoneCache = new Map<string, { at: number; rows: MarineZone[] }>();
+const reportCache = new Map<string, { at: number; rows: CommunityReport[] }>();
+const zoneInflight = new Map<string, Promise<MarineZone[]>>();
+const reportInflight = new Map<string, Promise<CommunityReport[]>>();
+
+/** Drop chart pin caches after realtime mutations. */
+export function invalidateMarineCaches() {
+  zoneCache.clear();
+  reportCache.clear();
+}
+
 export async function fetchMarineZones(includeInactive = false): Promise<MarineZone[]> {
-  let zonesQuery = supabase
-    .from("marine_zones")
-    .select(
-      "id, kind, name, lat, lng, vhf_channel, depth_m, description, active, created_at, metadata",
-    )
-    .order("created_at", { ascending: false });
-  if (!includeInactive) zonesQuery = zonesQuery.eq("active", true);
-  zonesQuery = zonesQuery.limit(800);
-  const primary = await zonesQuery;
+  const key = includeInactive ? "all" : "active";
+  const hit = zoneCache.get(key);
+  if (hit && Date.now() - hit.at < ZONE_TTL_MS) return hit.rows;
 
-  // `metadata` (added alongside the curated coastal seed data) may predate
-  // its migration actually landing on a given environment — retry without
-  // it rather than losing every zone pin to one missing column.
-  let rows: Array<Record<string, unknown>> | null = primary.data;
-  if (primary.error) {
-    let fallbackQuery = supabase
-      .from("marine_zones")
-      .select("id, kind, name, lat, lng, vhf_channel, depth_m, description, active, created_at")
-      .order("created_at", { ascending: false });
-    if (!includeInactive) fallbackQuery = fallbackQuery.eq("active", true);
-    fallbackQuery = fallbackQuery.limit(800);
-    const fallback = await fallbackQuery;
-    if (fallback.error) {
-      console.warn("[marine] marine_zones unavailable", fallback.error.message);
-      return [];
+  const pending = zoneInflight.get(key);
+  if (pending) return pending;
+
+  const task = (async () => {
+    const withBudget = <T,>(p: PromiseLike<T>, ms = 4_500): Promise<T> =>
+      Promise.race([
+        Promise.resolve(p),
+        new Promise<T>((_, reject) => {
+          globalThis.setTimeout(() => reject(new Error("marine_zones timeout")), ms);
+        }),
+      ]);
+
+    try {
+      let zonesQuery = supabase
+        .from("marine_zones")
+        .select(
+          "id, kind, name, lat, lng, vhf_channel, depth_m, description, active, created_at, metadata",
+        )
+        .order("created_at", { ascending: false });
+      if (!includeInactive) zonesQuery = zonesQuery.eq("active", true);
+      zonesQuery = zonesQuery.limit(800);
+      const primary = await withBudget(zonesQuery);
+
+      // `metadata` (added alongside the curated coastal seed data) may predate
+      // its migration actually landing on a given environment — retry without
+      // it rather than losing every zone pin to one missing column.
+      let rows: Array<Record<string, unknown>> | null = primary.data;
+      if (primary.error) {
+        let fallbackQuery = supabase
+          .from("marine_zones")
+          .select("id, kind, name, lat, lng, vhf_channel, depth_m, description, active, created_at")
+          .order("created_at", { ascending: false });
+        if (!includeInactive) fallbackQuery = fallbackQuery.eq("active", true);
+        fallbackQuery = fallbackQuery.limit(800);
+        const fallback = await withBudget(fallbackQuery);
+        if (fallback.error) {
+          console.warn("[marine] marine_zones unavailable", fallback.error.message);
+          return hit?.rows ?? [];
+        }
+        rows = fallback.data;
+      }
+
+      const mapped = (rows ?? []).map((r) => ({
+        id: r.id as string,
+        kind: r.kind as MarineZoneKind,
+        name: r.name as string,
+        lat: num(r.lat),
+        lng: num(r.lng),
+        vhf_channel: (r.vhf_channel as string | null) ?? null,
+        depth_m: r.depth_m == null ? null : num(r.depth_m),
+        description: (r.description as string | null) ?? null,
+        active: r.active as boolean,
+        created_at: r.created_at as string,
+        metadata: (r.metadata as MarineZoneMetadata | null) ?? {},
+      }));
+      zoneCache.set(key, { at: Date.now(), rows: mapped });
+      return mapped;
+    } catch (err) {
+      console.warn("[marine] marine_zones fetch failed", err);
+      return hit?.rows ?? [];
     }
-    rows = fallback.data;
-  }
+  })().finally(() => {
+    zoneInflight.delete(key);
+  });
 
-  return (rows ?? []).map((r) => ({
-    id: r.id as string,
-    kind: r.kind as MarineZoneKind,
-    name: r.name as string,
-    lat: num(r.lat),
-    lng: num(r.lng),
-    vhf_channel: (r.vhf_channel as string | null) ?? null,
-    depth_m: r.depth_m == null ? null : num(r.depth_m),
-    description: (r.description as string | null) ?? null,
-    active: r.active as boolean,
-    created_at: r.created_at as string,
-    metadata: (r.metadata as MarineZoneMetadata | null) ?? {},
-  }));
+  zoneInflight.set(key, task);
+  return task;
 }
 
 export async function fetchCommunityReports(status?: ReportStatus): Promise<CommunityReport[]> {
-  let q = supabase
-    .from("community_reports")
-    .select(
-      "id, reporter_id, title, category, lat, lng, depth_m, seabed, note, submitted_by, status, created_at",
-    )
-    .order("created_at", { ascending: false });
-  if (status) q = q.eq("status", status);
-  q = q.limit(400);
-  const { data, error } = await q;
-  if (error) {
-    console.warn("[marine] community_reports unavailable", error.message);
-    return [];
-  }
-  return (data ?? []).map((r) => ({
-    ...r,
-    category: r.category as ReportCategory,
-    seabed: (r.seabed as Seabed | null) ?? null,
-    status: r.status as ReportStatus,
-    lat: num(r.lat),
-    lng: num(r.lng),
-    depth_m: r.depth_m == null ? null : num(r.depth_m),
-  }));
+  const key = status ?? "any";
+  const hit = reportCache.get(key);
+  if (hit && Date.now() - hit.at < REPORT_TTL_MS) return hit.rows;
+
+  const pending = reportInflight.get(key);
+  if (pending) return pending;
+
+  const task = (async () => {
+    let q = supabase
+      .from("community_reports")
+      .select(
+        "id, reporter_id, title, category, lat, lng, depth_m, seabed, note, submitted_by, status, created_at",
+      )
+      .order("created_at", { ascending: false });
+    if (status) q = q.eq("status", status);
+    q = q.limit(400);
+    const { data, error } = await q;
+    if (error) {
+      console.warn("[marine] community_reports unavailable", error.message);
+      return hit?.rows ?? [];
+    }
+    const mapped = (data ?? []).map((r) => ({
+      ...r,
+      category: r.category as ReportCategory,
+      seabed: (r.seabed as Seabed | null) ?? null,
+      status: r.status as ReportStatus,
+      lat: num(r.lat),
+      lng: num(r.lng),
+      depth_m: r.depth_m == null ? null : num(r.depth_m),
+    }));
+    reportCache.set(key, { at: Date.now(), rows: mapped });
+    return mapped;
+  })().finally(() => {
+    reportInflight.delete(key);
+  });
+
+  reportInflight.set(key, task);
+  return task;
 }
 
 /** Chartplotter-style readout: 36°45.28' N, 028°56.14' E */

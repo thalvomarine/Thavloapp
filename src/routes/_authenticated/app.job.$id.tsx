@@ -3,7 +3,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { AppShell } from "@/components/AppShell";
 import { MockMap, type MapPin } from "@/components/MockMap";
 import { CheckoutModal } from "@/components/CheckoutModal";
 import { JobChat } from "@/components/JobChat";
@@ -133,9 +132,8 @@ function JobPage() {
   }
   const isClient = profile.role === "Client";
   return (
-    <AppShell userId={user.id}>
-      {isClient ? <ClientJob job={job} meId={user.id} /> : <ProviderJob job={job} meId={user.id} />}
-    </AppShell>
+    <>{isClient ? <ClientJob job={job} meId={user.id} /> : <ProviderJob job={job} meId={user.id} />}
+    </>
   );
 }
 

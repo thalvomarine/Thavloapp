@@ -4,7 +4,6 @@ import { getFix, fixToJobFields, formatAccuracy, isStale, isLowAccuracy, type Ge
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
-import { AppShell } from "@/components/AppShell";
 import { useSessionUser } from "@/lib/session";
 import { PROBLEM_KEYS } from "@/i18n";
 import { Anchor, Loader2, MapPin, Wrench } from "lucide-react";
@@ -118,8 +117,7 @@ function ReportPage() {
   const isDiver = cat === "diver";
 
   return (
-    <AppShell userId={user.id}>
-      <div className="space-y-4">
+    <div className="space-y-4">
         <div className="flex items-center gap-3">
           <div className={"size-12 shrink-0 rounded-2xl text-white grid place-items-center " + (isDiver ? "aqua-gradient" : "marine-gradient")}>
             {isDiver ? <Anchor className="size-6" /> : <Wrench className="size-6" />}
@@ -194,6 +192,5 @@ function ReportPage() {
           {t("owner.submit_sos")}
         </button>
       </div>
-    </AppShell>
   );
 }

@@ -13,6 +13,28 @@ export default defineConfig({
     host: "::",
     port: 8080,
   },
+  build: {
+    target: "es2022",
+    cssCodeSplit: true,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return;
+          if (id.includes("leaflet")) return "leaflet";
+          if (id.includes("@supabase")) return "supabase";
+          if (id.includes("i18next") || id.includes("react-i18next")) return "i18n";
+          if (id.includes("@tanstack/react-router") || id.includes("@tanstack/router-core")) {
+            return "router";
+          }
+          if (id.includes("@tanstack/react-query") || id.includes("@tanstack/query-core")) {
+            return "query";
+          }
+          if (id.includes("lucide-react")) return "icons";
+          if (id.includes("/react-dom") || id.includes("/react/")) return "react-vendor";
+        },
+      },
+    },
+  },
   resolve: {
     alias: { "@": `${rootDir}src` },
     dedupe: [

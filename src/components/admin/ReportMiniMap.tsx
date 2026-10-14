@@ -3,7 +3,10 @@ import { MapContainer, TileLayer, Marker } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { MapPlaceholder } from "@/components/ClientOnly";
-import { MARINE_DARK_TILE_URL, MARINE_DARK_TILE_MAX_NATIVE_ZOOM } from "@/components/LiveMap";
+import {
+  MARINE_DARK_TILE_MAX_NATIVE_ZOOM,
+  MARINE_DARK_TILE_URL,
+} from "@/lib/chart-tiles";
 
 const focusIcon = L.divIcon({
   className: "thalvo-map-marker",
