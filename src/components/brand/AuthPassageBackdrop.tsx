@@ -17,15 +17,14 @@ const CSS = `
 .ap-star3{animation-duration:6.4s;animation-delay:-2.4s}
 .ap-star4{animation-duration:5.2s;animation-delay:-3.1s}
 .ap-guide{animation:ap-glow 5.2s ease-in-out infinite}
-.ap-horizon{animation:ap-glow 9s ease-in-out infinite}
 .ap-nav{animation:ap-nav 6s ease-in-out infinite}
 .ap-nav2{animation-duration:7s;animation-delay:-2.2s}
 @keyframes ap-twinkle{0%,100%{opacity:.22}50%{opacity:.95}}
 @keyframes ap-glow{0%,100%{opacity:.55}50%{opacity:1}}
 @keyframes ap-nav{0%,100%{opacity:.35}50%{opacity:.95}}
 @media (prefers-reduced-motion: reduce){
-  .ap-star,.ap-star2,.ap-star3,.ap-star4,.ap-guide,.ap-horizon,.ap-nav,.ap-nav2{animation:none!important}
-  .ap-guide,.ap-horizon{opacity:.8}
+  .ap-star,.ap-star2,.ap-star3,.ap-star4,.ap-guide,.ap-nav,.ap-nav2{animation:none!important}
+  .ap-guide{opacity:.8}
 }
 `;
 
@@ -44,19 +43,6 @@ export function AuthPassageBackdrop({ className = "" }: { className?: string }) 
         preserveAspectRatio="xMidYMid slice"
         focusable="false"
       >
-        <defs>
-          <radialGradient id="ap-horizon-glow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#F5B942" stopOpacity="0.2" />
-            <stop offset="55%" stopColor="#F5B942" stopOpacity="0.06" />
-            <stop offset="100%" stopColor="#F5B942" stopOpacity="0" />
-          </radialGradient>
-          <radialGradient id="ap-lamp" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#FFF6D0" stopOpacity="1" />
-            <stop offset="40%" stopColor="#F5B942" stopOpacity="0.35" />
-            <stop offset="100%" stopColor="#F5B942" stopOpacity="0" />
-          </radialGradient>
-        </defs>
-
         {/* Star field */}
         <g fill="#F8F1DC">
           <circle className="ap-star" cx="60" cy="40" r="1" />
@@ -83,17 +69,7 @@ export function AuthPassageBackdrop({ className = "" }: { className?: string }) 
           <path d="M0-7 L1.6-1.6 L7 0 L1.6 1.6 L0 7 L-1.6 1.6 L-7 0 L-1.6-1.6 Z" opacity="0.92" />
         </g>
 
-        {/* Soft horizon bloom — continuous, no hard sea band */}
-        <ellipse
-          className="ap-horizon"
-          cx="400"
-          cy="340"
-          rx="300"
-          ry="44"
-          fill="url(#ap-horizon-glow)"
-        />
-
-        {/* Single continuous horizon stroke — full span, round caps */}
+        {/* Single continuous horizon stroke — no bloom / lamp glow */}
         <path
           d="M60 340 C 200 318, 300 358, 400 336 S 600 318, 740 340"
           fill="none"
@@ -102,10 +78,6 @@ export function AuthPassageBackdrop({ className = "" }: { className?: string }) 
           strokeWidth="1.15"
           strokeLinecap="round"
         />
-
-        {/* Far-shore lamp on the horizon */}
-        <ellipse cx="400" cy="336" rx="36" ry="14" fill="url(#ap-lamp)" opacity="0.7" />
-        <circle cx="400" cy="334" r="2.1" fill="#FFF6D0" />
 
         {/* Seyir ışıkları */}
         <circle className="ap-nav" cx="470" cy="348" r="1.7" fill="#f87171" />
