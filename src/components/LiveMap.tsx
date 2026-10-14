@@ -46,6 +46,7 @@ import {
 import {
   fetchCommunityReports,
   fetchMarineZones,
+  invalidateMarineCaches,
   formatDegrees,
   toNauticalMiles,
   chartPointCoords,
@@ -1007,13 +1008,15 @@ function LiveMapCanvas({
   }, []);
 
   useEffect(() => {
+    // Paint basemap first; hydrate pins almost immediately after mount.
     return runWhenIdle(() => {
       void loadChartData();
-    }, 900);
+    }, 120);
   }, [loadChartData]);
 
   useEffect(() => {
     const buffer = createRealtimeBuffer(() => {
+      invalidateMarineCaches();
       void loadChartData();
     }, 180);
     const channel = supabase
@@ -1039,14 +1042,15 @@ function LiveMapCanvas({
     let cancelled = false;
     const stopIdle = runWhenIdle(() => {
       void (async () => {
-        const { data: auth } = await supabase.auth.getUser();
+        const { getValidUser } = await import("@/lib/auth-guard");
+        const authUser = await getValidUser();
         if (cancelled) return;
-        setSignedIn(!!auth.user);
-        if (!auth.user) return;
+        setSignedIn(!!authUser);
+        if (!authUser) return;
         const { data } = await supabase
           .from("user_roles")
           .select("role")
-          .eq("user_id", auth.user.id)
+          .eq("user_id", authUser.id)
           .eq("role", "admin")
           .maybeSingle();
         if (!cancelled) setIsAdmin(!!data);

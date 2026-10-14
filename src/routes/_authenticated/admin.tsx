@@ -2,10 +2,9 @@ import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { getValidUser } from "@/lib/auth-guard";
 import { ensureSuperadminRouteAccess } from "@/lib/superadmin";
 import { n, useSessionUser } from "@/lib/session";
-import { ThalvoLoader } from "@/components/ThalvoLoader";
-import { MissionShell } from "@/components/mission/MissionShell";
 import { SuperadminDesk } from "@/components/admin/SuperadminDesk";
 import { useTranslation } from "react-i18next";
+import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   ssr: false,
@@ -25,13 +24,22 @@ export const Route = createFileRoute("/_authenticated/admin")({
 
 function SuperadminPage() {
   const { t } = useTranslation();
-  const { user, loading: sessionLoading } = useSessionUser();
+  const routeUser = Route.useRouteContext().user;
+  const { user: sessionUser } = useSessionUser();
+  const user = sessionUser ?? routeUser;
   const { profile, loading } = n(user?.id);
-  if ((!user && sessionLoading) || loading) return <ThalvoLoader />;
+  if (!user) return null;
+  if (loading && !profile) {
+    return (
+      <div className="grid min-h-[40vh] place-items-center">
+        <Loader2 className="size-6 animate-spin text-white/50" />
+      </div>
+    );
+  }
   if (!profile) return null;
 
   return (
-    <MissionShell profile={profile}>
+    <>
       <div className="mb-4 flex justify-end">
         <Link
           to="/app/admin"
@@ -41,6 +49,6 @@ function SuperadminPage() {
         </Link>
       </div>
       <SuperadminDesk />
-    </MissionShell>
+    </>
   );
 }

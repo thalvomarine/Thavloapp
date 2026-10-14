@@ -1,6 +1,5 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
-import { AppShell } from "@/components/AppShell";
-import { ThalvoLoader } from "@/components/ThalvoLoader";
+import { Loader2 } from "lucide-react";
 import { TransferCaptainPanel } from "@/components/transfer-captain/TransferCaptainPanel";
 import { useProfile, useSessionUser } from "@/lib/session";
 
@@ -10,19 +9,22 @@ export const Route = createFileRoute("/_authenticated/app/transfer-captain")({
 });
 
 function TransferCaptainPage() {
-  const { user, loading } = useSessionUser();
-  if (loading) return <ThalvoLoader />;
+  const routeUser = Route.useRouteContext().user;
+  const { user: sessionUser } = useSessionUser();
+  const user = sessionUser ?? routeUser;
   if (!user) return null;
-  return (
-    <AppShell userId={user.id}>
-      <TransferCaptainGate userId={user.id} />
-    </AppShell>
-  );
+  return <TransferCaptainGate userId={user.id} />;
 }
 
 function TransferCaptainGate({ userId }: { userId: string }) {
   const { profile, loading } = useProfile(userId);
-  if (loading) return <ThalvoLoader />;
+  if (loading && !profile) {
+    return (
+      <div className="grid min-h-[40vh] place-items-center text-white/50">
+        <Loader2 className="size-6 animate-spin" />
+      </div>
+    );
+  }
   if (profile?.role === "Supplier") return <Navigate to="/app/dealer" replace />;
   return <TransferCaptainPanel />;
 }

@@ -13,8 +13,9 @@ export const getRouter = () => {
     trailingSlash: "never",
     scrollRestoration: true,
     defaultPreload: "intent",
-    defaultPreloadStaleTime: 30_000,
-    defaultPendingMs: 800,
+    defaultPreloadStaleTime: 60_000,
+    // Show pending UI quickly on slow networks; keep shell chrome mounted.
+    defaultPendingMs: 120,
     defaultPendingMinMs: 0,
     ...(history ? { history } : {}),
   });

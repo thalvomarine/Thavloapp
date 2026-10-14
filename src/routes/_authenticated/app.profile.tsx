@@ -5,8 +5,6 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { noteSchemaMiss, skipMissing } from "@/lib/schema-gap";
-import { AppShell } from "@/components/AppShell";
-import { ThalvoLoader } from "@/components/ThalvoLoader";
 import { n, useSessionUser, type Profile } from "@/lib/session";
 import { Anchor, Loader2, Plus, Save, Ship, Trash2 } from "lucide-react";
 import { CockpitHeader } from "@/components/core/CockpitHeader";
@@ -46,19 +44,25 @@ function blankVessel(): VesselSpec {
 }
 
 function ProfilePage() {
-  const { user, loading: sessionLoading } = useSessionUser();
+  const routeUser = Route.useRouteContext().user;
+  const { user: sessionUser } = useSessionUser();
+  const user = sessionUser ?? routeUser;
   const { profile, loading } = n(user?.id);
-  if ((!user && sessionLoading) || loading || !profile) return <ThalvoLoader />;
-  return (
-    <AppShell userId={user!.id}>
-      {profile.role === "Provider" ? (
-        <ProviderProfile profile={profile} />
-      ) : profile.role === "Supplier" ? (
-        <SupplierProfile profile={profile} />
-      ) : (
-        <ClientProfile profile={profile} />
-      )}
-    </AppShell>
+  if (!user) return null;
+  if (loading && !profile) {
+    return (
+      <div className="grid min-h-[40vh] place-items-center">
+        <Loader2 className="size-6 animate-spin text-white/50" />
+      </div>
+    );
+  }
+  if (!profile) return null;
+  return profile.role === "Provider" ? (
+    <ProviderProfile profile={profile} />
+  ) : profile.role === "Supplier" ? (
+    <SupplierProfile profile={profile} />
+  ) : (
+    <ClientProfile profile={profile} />
   );
 }
 

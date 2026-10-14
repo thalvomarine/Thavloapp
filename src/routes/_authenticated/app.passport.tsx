@@ -2,7 +2,6 @@ import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
-import { AppShell } from "@/components/AppShell";
 import { ThalvoLoader } from "@/components/ThalvoLoader";
 import { useProfile, useSessionUser } from "@/lib/session";
 import { BoatPassportShell } from "@/components/passport/BoatPassportShell";
@@ -43,14 +42,11 @@ function blankSpec(): VesselSpec {
 }
 
 function PassportPage() {
-  const { user, loading } = useSessionUser();
-  if (loading) return <ThalvoLoader />;
+  const routeUser = Route.useRouteContext().user;
+  const { user: sessionUser } = useSessionUser();
+  const user = sessionUser ?? routeUser;
   if (!user) return null;
-  return (
-    <AppShell userId={user.id}>
-      <Passport userId={user.id} />
-    </AppShell>
-  );
+  return <Passport userId={user.id} />;
 }
 
 interface JobRow {

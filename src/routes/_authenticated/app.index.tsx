@@ -2,13 +2,11 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
-import { LiveMap, type LiveAlert, type LivePin } from "@/components/LiveMap";
+import { LiveMap, type LiveAlert, type LivePin } from "@/components/LiveMapLazy";
 import { asCoordinate } from "@/lib/emergency-service";
 import { pickValidCoordinates } from "@/lib/geolocation";
-import { ThalvoLoader } from "@/components/ThalvoLoader";
 import { Wordmark } from "@/components/Wordmark";
 import { n, useSessionUser, type Profile, cockpitFallbackProfile, recalledCockpitRole } from "@/lib/session";
-import { MissionShell } from "@/components/mission/MissionShell";
 import { GlassPanel } from "@/components/mission/GlassPanel";
 import { EmergencyCallRadar } from "@/components/mission/EmergencyCallRadar";
 import { ActiveJobPool } from "@/components/mission/ActiveJobPool";
@@ -52,23 +50,17 @@ export const Route = createFileRoute("/_authenticated/app/")({
 
 function MissionControl() {
   const routeUser = Route.useRouteContext().user;
-  const { user: sessionUser, loading: sessionLoading } = useSessionUser();
+  const { user: sessionUser } = useSessionUser();
   const user = sessionUser ?? routeUser;
   const { profile } = n(user?.id);
-  // Auth is enough to paint the chart. Profile / admin / job lists fill in behind it.
-  if (!user && sessionLoading) return <ThalvoLoader />;
+  // Shell chrome lives in /_authenticated layout — only swap cockpit content here.
   if (!user) return null;
   const cockpitProfile =
     profile ?? cockpitFallbackProfile(user.id, recalledCockpitRole(user.id) ?? "Client");
-  const mapCockpit = cockpitProfile.role === "Client" || cockpitProfile.role === "Provider";
-  return (
-    <MissionShell profile={cockpitProfile} fullBleed={mapCockpit}>
-      {cockpitProfile.role === "Provider" ? (
-        <OperatorCockpit profile={cockpitProfile} />
-      ) : (
-        <CaptainCockpit profile={cockpitProfile} />
-      )}
-    </MissionShell>
+  return cockpitProfile.role === "Provider" ? (
+    <OperatorCockpit profile={cockpitProfile} />
+  ) : (
+    <CaptainCockpit profile={cockpitProfile} />
   );
 }
 

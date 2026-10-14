@@ -5,10 +5,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { n, useSessionUser } from "@/lib/session";
 import { ensureAdminAccess } from "@/lib/superadmin";
-import { ThalvoLoader } from "@/components/ThalvoLoader";
-import { MissionShell } from "@/components/mission/MissionShell";
 import { GlassPanel } from "@/components/mission/GlassPanel";
-import { Lock, ShieldCheck } from "lucide-react";
+import { Loader2, Lock, ShieldCheck } from "lucide-react";
 import type { LivePin } from "@/components/LiveMap";
 import { AdminControlTowerShell } from "@/components/admin/AdminControlTowerShell";
 import { AdminKpiRail, type KpiItem } from "@/components/admin/AdminKpiRail";
@@ -99,12 +97,16 @@ function AdminControlTowerPage() {
     void ensureAdminAccess(user).then(setIsAdmin);
   }, [user]);
 
-  if ((!user && sessionLoading) || loading || isAdmin === null) return <ThalvoLoader />;
+  if ((!user && sessionLoading) || loading || isAdmin === null) {
+    return (
+      <div className="grid min-h-[40vh] place-items-center text-white/50">
+        <Loader2 className="size-6 animate-spin" />
+      </div>
+    );
+  }
   if (!profile) return null;
 
-  return (
-    <MissionShell profile={profile}>{isAdmin ? <ControlTower /> : <LockedTower />}</MissionShell>
-  );
+  return isAdmin ? <ControlTower /> : <LockedTower />;
 }
 
 function LockedTower() {

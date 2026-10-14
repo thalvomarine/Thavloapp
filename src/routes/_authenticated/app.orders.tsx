@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
-import { AppShell } from "@/components/AppShell";
 import { ThalvoLoader } from "@/components/ThalvoLoader";
 import { useSessionUser } from "@/lib/session";
 import { formatTL } from "@/lib/filter";
@@ -41,14 +40,11 @@ interface OrderRow {
 }
 
 function OrdersPage() {
-  const { user, loading } = useSessionUser();
-  if (loading) return <ThalvoLoader />;
+  const routeUser = Route.useRouteContext().user;
+  const { user: sessionUser } = useSessionUser();
+  const user = sessionUser ?? routeUser;
   if (!user) return null;
-  return (
-    <AppShell userId={user.id}>
-      <CaptainOrders userId={user.id} />
-    </AppShell>
-  );
+  return <CaptainOrders userId={user.id} />;
 }
 
 function normalizeOrder(row: OrderRow): OrderRow {

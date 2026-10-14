@@ -3,9 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
-import { AppShell } from "@/components/AppShell";
 import { CheckoutModal } from "@/components/CheckoutModal";
-import { ThalvoLoader } from "@/components/ThalvoLoader";
 import { useSessionUser } from "@/lib/session";
 
 import { Wrench, Anchor, Star, Clock } from "lucide-react";
@@ -31,10 +29,11 @@ interface Offer {
 }
 
 function ServicesPage() {
-  const { user, loading } = useSessionUser();
-  if (loading) return <ThalvoLoader />;
+  const routeUser = Route.useRouteContext().user;
+  const { user: sessionUser } = useSessionUser();
+  const user = sessionUser ?? routeUser;
   if (!user) return null;
-  return <AppShell userId={user.id}><Services /></AppShell>;
+  return <Services />;
 }
 
 function Services() {
