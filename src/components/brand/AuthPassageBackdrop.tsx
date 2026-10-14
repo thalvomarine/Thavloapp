@@ -1,65 +1,31 @@
 /**
- * AuthPassageBackdrop — cold-night passage for /auth.
+ * AuthPassageBackdrop — D4 “Yıldız Geçidi” for /auth.
  *
- * Motifs (decorative only, no real chart / place / live data):
- *   Piri Reis portolan echo · seyir ışıkları · distant beacon · dalga · yıldız
- *
- * The beacon is a far-shore lantern (glow + water wash), not a cartoon tower.
- * Pure CSS + SVG. Respects prefers-reduced-motion.
+ * Night sky, guiding star, one continuous horizon (no cut band),
+ * soft beacon + red/green seyir ışıkları. CSS + SVG only.
+ * Decorative — no real chart, place, or live data.
  */
 
 const CSS = `
 .ap-root{position:absolute;inset:0;overflow:hidden;contain:strict;background:#000}
 .ap-layer{position:absolute;inset:0;pointer-events:none}
 .ap-sky{
-  background:
-    radial-gradient(70% 55% at 50% 120%, rgba(12,48,78,.5), transparent 58%),
-    linear-gradient(180deg,#000 0%,#040912 44%,#091421 70%,#02060c 100%);
+  background:radial-gradient(70% 55% at 50% 100%, #0c1a28 0%, #000 58%);
 }
-.ap-piri{
-  opacity:.2;
-  background:
-    radial-gradient(45% 35% at 22% 30%, rgba(217,184,106,.12), transparent 70%),
-    radial-gradient(40% 30% at 78% 55%, rgba(125,211,252,.07), transparent 72%);
-  animation:ap-drift 80s ease-in-out infinite alternate;
-}
-/* Far-shore lantern — soft bloom, no rotating cone */
-.ap-lantern-bloom{
-  left:22%; top:54%; width:min(52vw,420px); height:min(38vw,280px);
-  margin-left:calc(min(52vw,420px) / -2); margin-top:calc(min(38vw,280px) / -2);
-  background:
-    radial-gradient(ellipse 42% 28% at 50% 48%, rgba(252,211,77,.22), transparent 70%),
-    radial-gradient(ellipse 70% 55% at 50% 52%, rgba(245,185,66,.08), transparent 72%);
-  animation:ap-lantern 7.5s ease-in-out infinite;
-}
-.ap-lantern-wash{
-  left:0; right:0; top:52%; height:28%;
-  background:linear-gradient(90deg,
-    transparent 0%,
-    transparent 8%,
-    rgba(245,185,66,.045) 18%,
-    rgba(245,185,66,.09) 22%,
-    rgba(245,185,66,.04) 32%,
-    transparent 48%,
-    transparent 100%);
-  animation:ap-wash 9s ease-in-out infinite;
-  filter:blur(0.2px);
-}
-.ap-star{animation:ap-twinkle 5.2s ease-in-out infinite}
-.ap-star2{animation-duration:6.6s;animation-delay:-2s}
-.ap-star3{animation-duration:5.8s;animation-delay:-3.4s}
+.ap-star{animation:ap-twinkle 4.8s ease-in-out infinite}
+.ap-star2{animation-duration:5.8s;animation-delay:-1.2s}
+.ap-star3{animation-duration:6.4s;animation-delay:-2.4s}
+.ap-star4{animation-duration:5.2s;animation-delay:-3.1s}
+.ap-guide{animation:ap-glow 5.2s ease-in-out infinite}
+.ap-horizon{animation:ap-glow 9s ease-in-out infinite}
 .ap-nav{animation:ap-nav 6s ease-in-out infinite}
-.ap-nav2{animation-duration:7.2s;animation-delay:-2.8s}
-.ap-wave{animation:ap-swell 12s ease-in-out infinite}
-@keyframes ap-drift{from{transform:translate3d(-1%,0,0)}to{transform:translate3d(1%,.5%,0)}}
-@keyframes ap-lantern{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:1;transform:scale(1.03)}}
-@keyframes ap-wash{0%,100%{opacity:.55}50%{opacity:1}}
-@keyframes ap-twinkle{0%,100%{opacity:.22}50%{opacity:.9}}
-@keyframes ap-nav{0%,100%{opacity:.3}50%{opacity:.92}}
-@keyframes ap-swell{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(0,-2px,0)}}
+.ap-nav2{animation-duration:7s;animation-delay:-2.2s}
+@keyframes ap-twinkle{0%,100%{opacity:.22}50%{opacity:.95}}
+@keyframes ap-glow{0%,100%{opacity:.55}50%{opacity:1}}
+@keyframes ap-nav{0%,100%{opacity:.35}50%{opacity:.95}}
 @media (prefers-reduced-motion: reduce){
-  .ap-piri,.ap-lantern-bloom,.ap-lantern-wash,.ap-star,.ap-star2,.ap-star3,.ap-nav,.ap-nav2,.ap-wave{animation:none!important}
-  .ap-lantern-bloom,.ap-lantern-wash{opacity:.75}
+  .ap-star,.ap-star2,.ap-star3,.ap-star4,.ap-guide,.ap-horizon,.ap-nav,.ap-nav2{animation:none!important}
+  .ap-guide,.ap-horizon{opacity:.8}
 }
 `;
 
@@ -71,112 +37,79 @@ export function AuthPassageBackdrop({ className = "" }: { className?: string }) 
     >
       <style>{CSS}</style>
       <div className="ap-layer ap-sky" />
-      <div className="ap-layer ap-piri" />
 
       <svg
         className="ap-layer h-full w-full"
-        viewBox="0 0 400 400"
+        viewBox="0 0 800 500"
         preserveAspectRatio="xMidYMid slice"
         focusable="false"
       >
         <defs>
-          <linearGradient id="ap-rhumb" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#D9B86A" stopOpacity="0" />
-            <stop offset="45%" stopColor="#D9B86A" stopOpacity="0.22" />
-            <stop offset="100%" stopColor="#7dd3fc" stopOpacity="0" />
-          </linearGradient>
-          <linearGradient id="ap-coast" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#9FB8C8" stopOpacity="0" />
-            <stop offset="40%" stopColor="#9FB8C8" stopOpacity="0.28" />
-            <stop offset="100%" stopColor="#D9B86A" stopOpacity="0.1" />
-          </linearGradient>
+          <radialGradient id="ap-horizon-glow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#F5B942" stopOpacity="0.2" />
+            <stop offset="55%" stopColor="#F5B942" stopOpacity="0.06" />
+            <stop offset="100%" stopColor="#F5B942" stopOpacity="0" />
+          </radialGradient>
           <radialGradient id="ap-lamp" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#FFF4C8" stopOpacity="0.95" />
-            <stop offset="35%" stopColor="#F5B942" stopOpacity="0.55" />
+            <stop offset="0%" stopColor="#FFF6D0" stopOpacity="1" />
+            <stop offset="40%" stopColor="#F5B942" stopOpacity="0.35" />
             <stop offset="100%" stopColor="#F5B942" stopOpacity="0" />
           </radialGradient>
         </defs>
 
-        {/* Quiet portolan rhumb — chart geometry, not a sunburst */}
-        <g stroke="url(#ap-rhumb)" strokeWidth="0.55" fill="none" opacity="0.45">
-          <path d="M88 228L340 52" />
-          <path d="M88 228L372 148" />
-          <path d="M88 228L318 292" />
-          <path d="M88 228L210 36" />
-        </g>
-
-        {/* Invented coast line */}
-        <g fill="none" stroke="url(#ap-coast)" strokeWidth="1">
-          <path d="M-20 216C48 196 96 232 154 214S260 168 330 196S408 226 440 214" />
-          <path
-            d="M-20 244C58 222 108 262 168 244S278 192 348 226S416 256 440 246"
-            opacity="0.55"
-          />
-        </g>
-
-        {/* Stars */}
+        {/* Star field */}
         <g fill="#F8F1DC">
-          <circle className="ap-star" cx="52" cy="38" r="1" />
-          <circle className="ap-star2" cx="124" cy="24" r="0.85" />
-          <circle className="ap-star3" cx="182" cy="52" r="1.1" />
-          <circle className="ap-star" cx="252" cy="30" r="0.75" />
-          <circle className="ap-star2" cx="308" cy="58" r="1" />
-          <circle className="ap-star3" cx="352" cy="22" r="0.85" />
-          <circle className="ap-star" cx="376" cy="84" r="0.65" />
-          <circle className="ap-star2" cx="90" cy="72" r="0.65" />
-          <circle className="ap-star3" cx="214" cy="18" r="0.9" />
+          <circle className="ap-star" cx="60" cy="40" r="1" />
+          <circle className="ap-star2" cx="110" cy="70" r="0.7" />
+          <circle className="ap-star3" cx="160" cy="28" r="1.2" />
+          <circle className="ap-star4" cx="220" cy="55" r="0.8" />
+          <circle className="ap-star" cx="280" cy="22" r="1" />
+          <circle className="ap-star2" cx="340" cy="48" r="0.9" />
+          <circle className="ap-star3" cx="400" cy="30" r="1.3" />
+          <circle className="ap-star4" cx="460" cy="62" r="0.7" />
+          <circle className="ap-star" cx="520" cy="36" r="1.1" />
+          <circle className="ap-star2" cx="580" cy="50" r="0.8" />
+          <circle className="ap-star3" cx="640" cy="24" r="1" />
+          <circle className="ap-star4" cx="700" cy="58" r="0.9" />
+          <circle className="ap-star" cx="740" cy="38" r="1.1" />
+          <circle className="ap-star2" cx="190" cy="90" r="0.6" />
+          <circle className="ap-star3" cx="490" cy="88" r="0.6" />
+          <circle className="ap-star4" cx="80" cy="110" r="0.55" />
+          <circle className="ap-star" cx="620" cy="95" r="0.55" />
         </g>
 
-        {/* Seyir ışıkları — small, chart-like, not festive */}
-        <g>
-          <circle className="ap-nav" cx="292" cy="262" r="5.5" fill="#ef4444" fillOpacity="0.1" />
-          <circle className="ap-nav" cx="292" cy="262" r="1.6" fill="#f87171" />
-          <circle className="ap-nav2" cx="322" cy="248" r="5.5" fill="#22c55e" fillOpacity="0.1" />
-          <circle className="ap-nav2" cx="322" cy="248" r="1.6" fill="#4ade80" />
+        {/* Guiding star */}
+        <g className="ap-guide" transform="translate(400 120)" fill="#F5B942">
+          <path d="M0-7 L1.6-1.6 L7 0 L1.6 1.6 L0 7 L-1.6 1.6 L-7 0 L-1.6-1.6 Z" opacity="0.92" />
         </g>
 
-        {/*
-          Distant beacon — lamp only on the horizon.
-          No tower silhouette (those read as clipart).
-        */}
-        <g transform="translate(88 214)">
-          <ellipse cx="0" cy="2" rx="28" ry="10" fill="url(#ap-lamp)" opacity="0.55" />
-          <circle cx="0" cy="0" r="2.4" fill="#FFF4C8" />
-          <circle cx="0" cy="0" r="1.1" fill="#fff" fillOpacity="0.9" />
-        </g>
-      </svg>
+        {/* Soft horizon bloom — continuous, no hard sea band */}
+        <ellipse
+          className="ap-horizon"
+          cx="400"
+          cy="340"
+          rx="300"
+          ry="44"
+          fill="url(#ap-horizon-glow)"
+        />
 
-      <div className="ap-layer ap-lantern-bloom" style={{ position: "absolute" }} />
-      <div className="ap-layer ap-lantern-wash" style={{ position: "absolute", inset: "auto 0" }} />
-
-      {/* Wave band */}
-      <svg
-        className="ap-layer ap-wave"
-        style={{ top: "auto", height: "40%", bottom: 0 }}
-        viewBox="0 0 400 160"
-        preserveAspectRatio="none"
-        focusable="false"
-      >
-        <path d="M0 62q50-18 100 0t100 0t100 0t100 0v98H0Z" fill="#07131e" opacity="0.94" />
+        {/* Single continuous horizon stroke — full span, round caps */}
         <path
-          d="M0 78q50-15 100 0t100 0t100 0t100 0"
+          d="M60 340 C 200 318, 300 358, 400 336 S 600 318, 740 340"
           fill="none"
           stroke="#F5B942"
           strokeOpacity="0.26"
-          strokeWidth="1.1"
+          strokeWidth="1.15"
+          strokeLinecap="round"
         />
-        <path
-          d="M0 98q50-12 100 0t100 0t100 0t100 0"
-          fill="none"
-          stroke="#7dd3fc"
-          strokeOpacity="0.1"
-        />
-        <path
-          d="M0 118q50-10 100 0t100 0t100 0t100 0"
-          fill="none"
-          stroke="#F5B942"
-          strokeOpacity="0.12"
-        />
+
+        {/* Far-shore lamp on the horizon */}
+        <ellipse cx="400" cy="336" rx="36" ry="14" fill="url(#ap-lamp)" opacity="0.7" />
+        <circle cx="400" cy="334" r="2.1" fill="#FFF6D0" />
+
+        {/* Seyir ışıkları */}
+        <circle className="ap-nav" cx="470" cy="348" r="1.7" fill="#f87171" />
+        <circle className="ap-nav2" cx="496" cy="342" r="1.7" fill="#4ade80" />
       </svg>
     </div>
   );

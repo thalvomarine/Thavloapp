@@ -41,12 +41,9 @@
   },
   "auth": {
     "welcome": "Welcome to THALVO",
-    "subtitle": "A modern passage in the spirit of Piri Reis: SOS, technicians and spare parts — one cockpit on the Aegean and Mediterranean.",
+    "subtitle": "The trusted marketplace for marine emergencies across the Aegean & Mediterranean.",
     "brand_kicker": "MarineOS",
     "coverage_ports": "Aegean · Mediterranean",
-    "pitch_chart": "Chart sense for the coast — the spirit of Piri Reis.",
-    "pitch_lights": "Navigation lights: clear red / green for a safe pass.",
-    "pitch_beacon": "A lighthouse mark: SOS, skilled hands and parts together.",
     "pick_role_hint": "Choose your desk. You can change this later.",
     "sign_in": "Sign in",
     "sign_up": "Create account",

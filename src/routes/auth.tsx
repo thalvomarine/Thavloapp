@@ -229,33 +229,23 @@ function AuthPage() {
       </header>
 
       <main className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col justify-center gap-8 px-5 py-8 lg:grid lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-14 lg:py-12">
-        {/* Brand plane — Piri / passage motifs, not a dashboard strip */}
+        {/* Brand plane — D4 star passage: mark + wordmark, ports only */}
         <section className="auth-rise text-center lg:text-left">
           <p className="text-[11px] font-semibold tracking-[0.28em] text-[color:var(--pm-gold)]">
-            {t("auth.brand_kicker", { defaultValue: "MarineOS" })}
+            {t("auth.brand_kicker")}
           </p>
-          <h1 className="thalvo-display mt-3 text-[3.25rem] leading-none tracking-[0.18em] text-white sm:text-6xl lg:text-[4.5rem]">
-            THALVO
-          </h1>
-          <p className="mx-auto mt-4 max-w-md text-[15px] leading-relaxed text-white/65 lg:mx-0">
-            {t("auth.subtitle")}
-          </p>
-          <ul className="mx-auto mt-6 hidden max-w-md space-y-2.5 text-left text-[13px] leading-snug text-white/70 lg:mx-0 lg:block">
-            <li className="flex items-start gap-2.5">
-              <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-amber-400" />
-              <span>{t("auth.pitch_chart")}</span>
-            </li>
-            <li className="flex items-start gap-2.5">
-              <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-rose-400" />
-              <span>{t("auth.pitch_lights")}</span>
-            </li>
-            <li className="flex items-start gap-2.5">
-              <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-emerald-400" />
-              <span>{t("auth.pitch_beacon")}</span>
-            </li>
-          </ul>
-          <p className="mt-6 hidden text-[11px] font-semibold tracking-[0.22em] text-[color:var(--pm-gold)] lg:block">
-            {t("auth.coverage_ports", { defaultValue: "Ege · Akdeniz" })}
+          <div className="mt-4 flex items-center justify-center gap-3 sm:gap-4 lg:justify-start">
+            <Wordmark
+              size="nav"
+              decorative
+              className="shrink-0 drop-shadow-[0_0_28px_rgba(245,185,66,0.22)]"
+            />
+            <h1 className="thalvo-display text-[2.75rem] leading-none tracking-[0.16em] text-white sm:text-5xl lg:text-[4.25rem]">
+              THALVO
+            </h1>
+          </div>
+          <p className="mt-7 text-[11px] font-semibold tracking-[0.22em] text-[color:var(--pm-gold)] max-lg:hidden">
+            {t("auth.coverage_ports")}
           </p>
         </section>
 
