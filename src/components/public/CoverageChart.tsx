@@ -216,7 +216,7 @@ export function CoverageChart({
           <CircleMarker
             center={[own.lat, own.lng]}
             radius={8}
-            pathOptions={{ color: "#67e8f9", fillColor: "#67e8f9", fillOpacity: 0.95, weight: 2 }}
+            pathOptions={{ color: "#f5b942", fillColor: "#f5b942", fillOpacity: 0.95, weight: 2 }}
           >
             <Popup>
               <p className="text-sm font-semibold text-slate-900">{t("chart.locate_me")}</p>

@@ -13,7 +13,7 @@ export function ThalvoLoader() {
           <Wordmark size="xl" />
         </span>
         <svg width="180" height="24" viewBox="0 0 180 24" fill="none" className="thalvo-wave" aria-hidden>
-          <path d="M0 12 Q 22.5 0 45 12 T 90 12 T 135 12 T 180 12" stroke="#00B4D8" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+          <path d="M0 12 Q 22.5 0 45 12 T 90 12 T 135 12 T 180 12" stroke="#F5B942" strokeWidth="2.5" strokeLinecap="round" fill="none" />
         </svg>
       </div>
 
