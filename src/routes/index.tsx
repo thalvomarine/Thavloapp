@@ -20,7 +20,14 @@ export const Route = createFileRoute("/")({
     ],
   }),
   beforeLoad: async () => {
-    const user = await getValidUser();
+    // Cap wait so a hung Supabase session check cannot blank the landing on
+    // mobile networks — public home must paint even if auth is slow.
+    const user = await Promise.race([
+      getValidUser(),
+      new Promise<null>((resolve) => {
+        setTimeout(() => resolve(null), 1800);
+      }),
+    ]);
     if (user) throw redirect({ to: "/app" });
   },
   component: BrandLanding,

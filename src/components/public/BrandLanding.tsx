@@ -100,7 +100,7 @@ export function BrandLanding() {
   ];
 
   return (
-    <div className="thalvo-dark min-h-dvh overflow-x-hidden bg-[#06101c] text-white">
+    <div className="thalvo-dark min-h-dvh overflow-x-clip bg-[#06101c] text-white">
       {/* ——— HERO ——— */}
       <section className="relative flex min-h-svh flex-col">
         <PiriChartBackdrop />

@@ -111,7 +111,7 @@ const cssLinks = cssFiles
   .join("\n");
 
 const indexHtml = `<!doctype html>
-<html lang="tr" class="h-full w-full max-w-[100vw] overflow-x-hidden bg-[#0A192F]" suppressHydrationWarning>
+<html lang="tr" class="min-h-dvh w-full max-w-[100vw] bg-[#0A192F]" suppressHydrationWarning>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -122,8 +122,13 @@ const indexHtml = `<!doctype html>
     <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
 ${cssLinks}
     <style>
-      html, body { margin: 0; height: 100%; background: #0A192F; }
-      #thalvo-root { height: 100%; }
+      /* min-height (not height:100%): marketing pages must grow with content so
+         mobile Safari can scroll the document. Cockpit/chart use their own
+         h-svh / fixed inset shells and do not need a locked root height.
+         Prefer overflow-x: clip over hidden — hidden forces overflow-y:auto and
+         traps scroll inside a viewport-tall box on WebKit. */
+      html, body { margin: 0; min-height: 100%; min-height: 100dvh; background: #0A192F; overflow-x: clip; }
+      #thalvo-root { min-height: 100%; min-height: 100dvh; }
       #thalvo-boot {
         min-height: 100%; display: flex; align-items: center; justify-content: center;
         font-family: -apple-system, "Segoe UI", Roboto, Inter, sans-serif;
@@ -184,7 +189,7 @@ ${cssLinks}
       })();
     </script>
   </head>
-  <body class="h-full w-full max-w-[100vw] overflow-x-hidden bg-[#0A192F]" suppressHydrationWarning>
+  <body class="min-h-dvh w-full max-w-[100vw] bg-[#0A192F]" suppressHydrationWarning>
     <div id="thalvo-root">
       <div id="thalvo-boot">
         <div>
