@@ -30,7 +30,7 @@ type SafetyFlag = "smoke" | "water" | "fuel" | "person";
 const PHOTO_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const PHOTO_MAX = 5 * 1024 * 1024;
 
-const MARINAS = [...COAST_MARINAS];
+const MARINAS: string[] = [...COAST_MARINAS];
 
 function composeBrief(parts: {
   situation: string;

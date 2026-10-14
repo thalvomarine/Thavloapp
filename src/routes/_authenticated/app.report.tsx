@@ -25,7 +25,7 @@ export const Route = createFileRoute("/_authenticated/app/report")({
   component: ReportPage,
 });
 
-const MARINAS = [...COAST_MARINAS];
+const MARINAS: string[] = [...COAST_MARINAS];
 
 function ReportPage() {
   const { cat } = Route.useSearch();
