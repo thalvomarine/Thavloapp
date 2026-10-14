@@ -17,7 +17,7 @@ import {
   markSignupWelcome,
 } from "@/lib/signup-welcome";
 import { normalizeAppLng } from "@/i18n";
-import { SeaBackdrop } from "@/components/brand/SeaBackdrop";
+import { AuthPassageBackdrop } from "@/components/brand/AuthPassageBackdrop";
 import { ENGINE_BRANDS } from "@/lib/marine-catalog";
 
 type AuthIntent = "captain" | "dealer" | "provider";
@@ -218,8 +218,8 @@ function AuthPage() {
         : t("auth.role_supplier");
 
   return (
-    <div className="thalvo-premium thalvo-dark relative flex min-h-dvh flex-col overflow-hidden">
-      <SeaBackdrop subtle />
+    <div className="thalvo-premium thalvo-dark relative flex min-h-dvh flex-col overflow-hidden bg-black">
+      <AuthPassageBackdrop />
 
       <header className="relative z-50 flex items-center justify-between px-5 pt-[calc(env(safe-area-inset-top)+1rem)]">
         <a href="/" className="thalvo-brand-mark" aria-label="THALVO">
@@ -229,7 +229,7 @@ function AuthPage() {
       </header>
 
       <main className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col justify-center gap-8 px-5 py-8 lg:grid lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-14 lg:py-12">
-        {/* Brand plane — hero signal, not a dashboard strip */}
+        {/* Brand plane — Piri / passage motifs, not a dashboard strip */}
         <section className="auth-rise text-center lg:text-left">
           <p className="text-[11px] font-semibold tracking-[0.28em] text-[color:var(--pm-gold)]">
             {t("auth.brand_kicker", { defaultValue: "MarineOS" })}
@@ -240,7 +240,21 @@ function AuthPage() {
           <p className="mx-auto mt-4 max-w-md text-[15px] leading-relaxed text-white/65 lg:mx-0">
             {t("auth.subtitle")}
           </p>
-          <p className="mt-5 hidden text-[11px] font-semibold tracking-[0.22em] text-[color:var(--pm-gold)] lg:block">
+          <ul className="mx-auto mt-6 hidden max-w-md space-y-2.5 text-left text-[13px] leading-snug text-white/70 lg:mx-0 lg:block">
+            <li className="flex items-start gap-2.5">
+              <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-amber-400" />
+              <span>{t("auth.pitch_chart")}</span>
+            </li>
+            <li className="flex items-start gap-2.5">
+              <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-rose-400" />
+              <span>{t("auth.pitch_lights")}</span>
+            </li>
+            <li className="flex items-start gap-2.5">
+              <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-emerald-400" />
+              <span>{t("auth.pitch_beacon")}</span>
+            </li>
+          </ul>
+          <p className="mt-6 hidden text-[11px] font-semibold tracking-[0.22em] text-[color:var(--pm-gold)] lg:block">
             {t("auth.coverage_ports", { defaultValue: "Ege · Akdeniz" })}
           </p>
         </section>

@@ -41,9 +41,12 @@
   },
   "auth": {
     "welcome": "THALVO'ya hoş geldiniz",
-    "subtitle": "Ege ve Akdeniz kıyılarında denizcilik acilleri için güvenilir pazar yeri.",
+    "subtitle": "Piri’nin kıyı ruhuyla yazılmış modern seyir: SOS, teknisyen ve yedek parça — Ege ile Akdeniz’de tek kokpit.",
     "brand_kicker": "MarineOS",
     "coverage_ports": "Ege · Akdeniz",
+    "pitch_chart": "Harita ve liman bilgisi — kıyıyı tanıyan Piri Reis ruhu.",
+    "pitch_lights": "Seyir ışıkları gibi net yön: kırmızı / yeşil, güvenli geçiş.",
+    "pitch_beacon": "Deniz feneri gibi işaret: SOS, usta ve parça bir arada.",
     "pick_role_hint": "Masayı seçin. Daha sonra değiştirebilirsiniz.",
     "sign_in": "Giriş yap",
     "sign_up": "Hesap oluştur",
