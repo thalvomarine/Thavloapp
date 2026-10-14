@@ -17,7 +17,7 @@ import {
   markSignupWelcome,
 } from "@/lib/signup-welcome";
 import { normalizeAppLng } from "@/i18n";
-import { SeaBackdrop } from "@/components/brand/SeaBackdrop";
+import { AuthPassageBackdrop } from "@/components/brand/AuthPassageBackdrop";
 import { ENGINE_BRANDS } from "@/lib/marine-catalog";
 
 type AuthIntent = "captain" | "dealer" | "provider";
@@ -218,8 +218,8 @@ function AuthPage() {
         : t("auth.role_supplier");
 
   return (
-    <div className="thalvo-premium thalvo-dark relative flex min-h-dvh flex-col overflow-hidden">
-      <SeaBackdrop subtle />
+    <div className="thalvo-premium thalvo-dark relative flex min-h-dvh flex-col overflow-hidden bg-black">
+      <AuthPassageBackdrop />
 
       <header className="relative z-50 flex items-center justify-between px-5 pt-[calc(env(safe-area-inset-top)+1rem)]">
         <a href="/" className="thalvo-brand-mark" aria-label="THALVO">
@@ -229,19 +229,23 @@ function AuthPage() {
       </header>
 
       <main className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col justify-center gap-8 px-5 py-8 lg:grid lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-14 lg:py-12">
-        {/* Brand plane — hero signal, not a dashboard strip */}
+        {/* Brand plane — D4 star passage: mark + wordmark, ports only */}
         <section className="auth-rise text-center lg:text-left">
           <p className="text-[11px] font-semibold tracking-[0.28em] text-[color:var(--pm-gold)]">
-            {t("auth.brand_kicker", { defaultValue: "MarineOS" })}
+            {t("auth.brand_kicker")}
           </p>
-          <h1 className="thalvo-display mt-3 text-[3.25rem] leading-none tracking-[0.18em] text-white sm:text-6xl lg:text-[4.5rem]">
-            THALVO
-          </h1>
-          <p className="mx-auto mt-4 max-w-md text-[15px] leading-relaxed text-white/65 lg:mx-0">
-            {t("auth.subtitle")}
-          </p>
-          <p className="mt-5 hidden text-[11px] font-semibold tracking-[0.22em] text-[color:var(--pm-gold)] lg:block">
-            {t("auth.coverage_ports", { defaultValue: "Ege · Akdeniz" })}
+          <div className="mt-4 flex items-center justify-center gap-3 sm:gap-4 lg:justify-start">
+            <Wordmark
+              size="nav"
+              decorative
+              className="shrink-0 drop-shadow-[0_0_28px_rgba(245,185,66,0.22)]"
+            />
+            <h1 className="thalvo-display text-[2.75rem] leading-none tracking-[0.16em] text-white sm:text-5xl lg:text-[4.25rem]">
+              THALVO
+            </h1>
+          </div>
+          <p className="mt-7 text-[11px] font-semibold tracking-[0.22em] text-[color:var(--pm-gold)] max-lg:hidden">
+            {t("auth.coverage_ports")}
           </p>
         </section>
 
