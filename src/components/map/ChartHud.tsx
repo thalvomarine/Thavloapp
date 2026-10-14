@@ -16,6 +16,7 @@ import {
   Satellite,
   Ship,
   Wrench,
+  X,
 } from "lucide-react";
 import { formatDegrees } from "@/lib/marine-data";
 import { LeafletPointerGuard, stopMapEvent } from "@/lib/leaflet-dom";
@@ -80,26 +81,35 @@ const LAYER_ROWS: Array<{ key: ChartLayerKey; labelKey: string; dot: string }> =
 function Switch({ on }: { on: boolean }) {
   return (
     <span
-      className={
-        "relative inline-flex h-[18px] w-[32px] shrink-0 items-center rounded-full border transition-all duration-200 " +
-        (on ? "border-cyan-300/50 bg-cyan-400/20" : "border-white/15 bg-white/[0.07]")
-      }
+      className="relative inline-flex h-[18px] w-[32px] shrink-0 items-center rounded-full border transition-all duration-200"
+      style={{
+        borderColor: on ? "var(--sheet-active-border)" : "var(--sheet-border)",
+        background: on ? "var(--sheet-active-bg)" : "var(--sheet-switch-off)",
+      }}
     >
       <span
         className={
           "absolute size-3 rounded-full transition-all duration-200 " +
-          (on ? "left-[17px] bg-cyan-200" : "left-[3px] bg-white/50")
+          (on ? "left-[17px]" : "left-[3px]")
         }
+        style={{
+          background: on ? "var(--sheet-active-ink)" : "var(--sheet-faint)",
+        }}
       />
     </span>
   );
 }
 
+const SHEET_BTN =
+  "border border-[var(--sheet-border)] bg-[var(--sheet-chip)] text-[var(--sheet-ink)] hover:bg-[var(--sheet-chip-hover)]";
+const SHEET_BTN_ACTIVE =
+  "border border-[var(--sheet-active-border)] bg-[var(--sheet-active-bg)] text-[var(--sheet-ink)]";
+
 const RAIL_BTN =
-  "grid size-8 place-items-center rounded-[10px] border text-white/75 transition-colors hover:bg-white/[0.08] hover:text-white";
+  "grid size-8 place-items-center rounded-[10px] border text-[var(--sheet-muted)] transition-colors hover:bg-[var(--sheet-chip-hover)] hover:text-[var(--sheet-ink)]";
 const RAIL_BTN_ACTIVE =
-  "border-cyan-300/55 bg-cyan-400/15 text-cyan-100 hover:bg-cyan-400/20 hover:text-cyan-50";
-const RAIL_BTN_IDLE = "border-white/12 bg-transparent";
+  "border-[var(--sheet-active-border)] bg-[var(--sheet-active-bg)] text-[var(--sheet-active-ink)] hover:bg-[var(--sheet-active-bg)]";
+const RAIL_BTN_IDLE = "border-[var(--sheet-border)] bg-transparent";
 
 /**
  * Shared body — region quick-jump pills, layer toggles and the
@@ -144,8 +154,6 @@ function ChartHudBody({
   const { t } = useTranslation();
   return (
     <>
-      {/* Region quick-jump pills — horizontally scrollable so adding a 4th/5th
-          region never squeezes existing labels into unreadable slivers. */}
       <div className="grid grid-cols-2 gap-1.5">
         {(
           [
@@ -160,14 +168,14 @@ function ChartHudBody({
               stopMapEvent(e);
               onJump(id);
             }}
-            className="h-9 rounded-xl border border-white/12 bg-white/[0.05] text-[12px] font-semibold text-white/90 transition-colors hover:bg-white/[0.1]"
+            className={"h-10 rounded-xl text-[12px] font-semibold transition-colors " + SHEET_BTN}
           >
             {t(labelKey)}
           </button>
         ))}
       </div>
       {filters && onToggleFilter && (
-        <div className="mt-2 grid grid-cols-3 gap-1">
+        <div className="mt-2 grid grid-cols-3 gap-1.5">
           {(
             [
               ["marinas", "chart.filter_marinas"],
@@ -186,10 +194,8 @@ function ChartHudBody({
                   onToggleFilter(key);
                 }}
                 className={
-                  "h-8 rounded-md border text-[10px] font-semibold " +
-                  (on
-                    ? "border-cyan-300/45 bg-cyan-400/15 text-white"
-                    : "border-white/10 bg-white/[0.03] text-white/40")
+                  "h-9 rounded-lg text-[10px] font-semibold " +
+                  (on ? SHEET_BTN_ACTIVE : SHEET_BTN)
                 }
               >
                 {t(labelKey)}
@@ -200,7 +206,7 @@ function ChartHudBody({
       )}
 
       {onSelectBasemap && (
-        <div className="mt-2.5 space-y-1">
+        <div className="mt-3 space-y-1.5">
           {(
             [
               { id: "sat" as const, Icon: Satellite, labelKey: "chart.basemap_sat" },
@@ -220,22 +226,27 @@ function ChartHudBody({
                 }}
                 aria-pressed={on}
                 className={
-                  "flex h-8 w-full items-center gap-2 rounded-xl px-2.5 text-left transition-colors " +
-                  (on
-                    ? "border border-cyan-300/45 bg-cyan-400/12 text-white"
-                    : "border border-white/10 text-white/70 hover:bg-white/[0.05]")
+                  "flex h-11 w-full items-center gap-2.5 rounded-xl px-3 text-left transition-colors " +
+                  (on ? SHEET_BTN_ACTIVE : SHEET_BTN)
                 }
               >
-                <Icon className="size-3.5 shrink-0 text-cyan-200" />
-                <span className="truncate text-[11px] font-medium">{t(labelKey)}</span>
+                <Icon
+                  className="size-4 shrink-0"
+                  style={{ color: "var(--sheet-active-ink)" }}
+                />
+                <span className="min-w-0 flex-1 text-[12px] font-medium leading-snug">
+                  {t(labelKey)}
+                </span>
               </button>
             );
           })}
         </div>
       )}
 
-      {/* Layer toggles */}
-      <ul className="mt-2.5 space-y-0.5 border-t border-white/[0.07] pt-2.5">
+      <ul
+        className="mt-3 space-y-0.5 border-t pt-3"
+        style={{ borderColor: "var(--sheet-border)" }}
+      >
         {LAYER_ROWS.map((row) => (
           <li key={row.key}>
             <button
@@ -246,9 +257,9 @@ function ChartHudBody({
                 onToggleLayer(row.key);
               }}
               aria-pressed={layers[row.key]}
-              className="flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-white/[0.05]"
+              className="flex w-full items-center justify-between gap-3 rounded-xl px-2.5 py-2.5 text-left transition-colors hover:bg-[var(--sheet-chip-hover)]"
             >
-              <span className="flex min-w-0 items-center gap-2">
+              <span className="flex min-w-0 items-center gap-2.5">
                 <span
                   className={
                     "size-1.5 shrink-0 rounded-full transition-opacity " +
@@ -257,10 +268,12 @@ function ChartHudBody({
                   }
                 />
                 <span
-                  className={
-                    "truncate text-[11px] font-medium leading-tight transition-colors " +
-                    (layers[row.key] ? "text-white/90" : "text-white/40")
-                  }
+                  className="text-[12px] font-medium leading-snug"
+                  style={{
+                    color: layers[row.key]
+                      ? "var(--sheet-ink)"
+                      : "var(--sheet-faint)",
+                  }}
                 >
                   {t(row.labelKey)}
                 </span>
@@ -272,7 +285,10 @@ function ChartHudBody({
       </ul>
 
       {onDownloadOfflineTiles && (
-        <div className="mt-2.5 border-t border-white/[0.07] pt-2.5">
+        <div
+          className="mt-3 border-t pt-3"
+          style={{ borderColor: "var(--sheet-border)" }}
+        >
           <button
             type="button"
             onPointerDown={stopMapEvent}
@@ -281,16 +297,16 @@ function ChartHudBody({
               onDownloadOfflineTiles();
             }}
             className={
-              "flex h-10 w-full items-center justify-center gap-1.5 rounded-xl border text-[10px] font-bold uppercase tracking-[0.06em] transition-all " +
+              "flex h-11 w-full items-center justify-center gap-1.5 rounded-xl border text-[11px] font-bold uppercase tracking-[0.04em] transition-all " +
               (tileDownloadActive
                 ? "border-amber-400/50 bg-amber-400/15 text-amber-100"
-                : "border-white/12 bg-white/[0.05] text-white/85 hover:bg-white/[0.1]")
+                : SHEET_BTN)
             }
           >
             {tileDownloadActive ? (
               <>
                 <Loader2 className="size-3.5 shrink-0 animate-spin" />
-                <span className="truncate">
+                <span className="min-w-0 truncate">
                   {t("chart.offline_download_progress", {
                     percent: tileDownloadPercent ?? 0,
                   })}
@@ -299,7 +315,9 @@ function ChartHudBody({
             ) : (
               <>
                 <Ship className="size-3.5 shrink-0" />
-                <span className="truncate">{t("chart.offline_download")}</span>
+                <span className="min-w-0 text-center leading-snug">
+                  {t("chart.offline_download")}
+                </span>
               </>
             )}
           </button>
@@ -307,7 +325,10 @@ function ChartHudBody({
       )}
 
       {(canContribute || isAdmin) && (
-        <div className="mt-2.5 space-y-1.5 border-t border-white/[0.07] pt-2.5">
+        <div
+          className="mt-3 space-y-1.5 border-t pt-3"
+          style={{ borderColor: "var(--sheet-border)" }}
+        >
           {canContribute && (
             <button
               type="button"
@@ -316,10 +337,15 @@ function ChartHudBody({
                 stopMapEvent(e);
                 onAddReport?.();
               }}
-              className="flex h-10 w-full items-center justify-center gap-1.5 rounded-xl border border-white/12 bg-white/[0.05] text-[11px] font-bold uppercase tracking-[0.1em] text-white/90 transition-all hover:bg-white/[0.1]"
+              className={
+                "flex h-11 w-full items-center justify-center gap-1.5 rounded-xl text-[11px] font-bold uppercase tracking-[0.06em] transition-all " +
+                SHEET_BTN
+              }
             >
               <Plus className="size-3.5 shrink-0" />
-              <span className="truncate">{t("chart.add_report")}</span>
+              <span className="min-w-0 text-center leading-snug">
+                {t("chart.add_report")}
+              </span>
             </button>
           )}
           {isAdmin && (
@@ -332,14 +358,14 @@ function ChartHudBody({
               }}
               aria-pressed={drawing}
               className={
-                "flex h-10 w-full items-center justify-center gap-1.5 rounded-xl border text-[11px] font-bold uppercase tracking-[0.1em] transition-all " +
+                "flex h-11 w-full items-center justify-center gap-1.5 rounded-xl text-[11px] font-bold uppercase tracking-[0.06em] transition-all " +
                 (drawing
-                  ? "border-orange-400/60 bg-orange-400/25 text-orange-100"
-                  : "border-white/12 bg-white/[0.05] text-white/70 hover:bg-white/[0.12] hover:text-white/90")
+                  ? "border border-orange-400/60 bg-orange-400/25 text-orange-100"
+                  : SHEET_BTN)
               }
             >
               <Crosshair className="size-3.5 shrink-0" />
-              <span className="truncate">
+              <span className="min-w-0 text-center leading-snug">
                 {drawing ? t("chart.draw_active") : t("chart.draw_point")}
               </span>
             </button>
@@ -386,9 +412,13 @@ export function ChartHud({
   return (
     <LeafletPointerGuard className="pointer-events-auto absolute top-[calc(env(safe-area-inset-top)+4.75rem)] right-3 z-[500] hidden items-start gap-2 lg:flex">
       {open ? (
-        <div className="thalvo-on-dark w-[min(260px,calc(100vw-6.5rem))] overflow-hidden rounded-2xl border border-white/12 bg-[#0a192f]/92 text-xs shadow-2xl backdrop-blur-md">
-          <div className="p-3">
-            <p className="mb-2.5 text-[12px] font-semibold text-white">{t("chart.hud_title")}</p>
+        <div className="thalvo-chart-sheet flex max-h-[min(72vh,36rem)] w-[min(280px,calc(100vw-6.5rem))] flex-col overflow-hidden rounded-2xl border shadow-2xl backdrop-blur-md">
+          <div className="shrink-0 border-b px-3 py-2.5" style={{ borderColor: "var(--sheet-border)" }}>
+            <p className="text-[12px] font-semibold" style={{ color: "var(--sheet-ink)" }}>
+              {t("chart.hud_title")}
+            </p>
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-3 text-xs">
             <ChartHudBody
               layers={layers}
               onToggleLayer={onToggleLayer}
@@ -410,7 +440,7 @@ export function ChartHud({
         </div>
       ) : null}
 
-      <div className="thalvo-on-dark flex w-[52px] flex-col items-center gap-2 rounded-2xl border border-white/12 bg-[#0a192f]/92 p-2 shadow-2xl backdrop-blur-md">
+      <div className="thalvo-chart-sheet flex w-[52px] flex-col items-center gap-2 rounded-2xl border p-2 shadow-2xl backdrop-blur-md">
         <button
           type="button"
           onPointerDown={stopMapEvent}
@@ -676,22 +706,64 @@ export function ChartFabStack({
   }, [layersOpen, onLayersOpenChange]);
 
   return (
-    <div
-      className={
-        "pointer-events-none absolute right-4 bottom-28 z-[500] flex flex-col items-end gap-3 transition-opacity duration-200 " +
-        (concealed ? "opacity-0" : "opacity-100")
-      }
-    >
-      {layersOpen && (
-        <LeafletPointerGuard className="pointer-events-auto lg:hidden">
-          <div
+    <>
+      {/* Mobile-first: full-width bottom sheet so every control is reachable. */}
+      {layersOpen ? (
+        <LeafletPointerGuard className="pointer-events-auto absolute inset-0 z-[560] lg:hidden">
+          <button
+            type="button"
+            className="thalvo-chart-sheet-scrim absolute inset-0"
+            aria-label={t("common.close")}
+            onPointerDown={stopMapEvent}
+            onClick={(e) => {
+              stopMapEvent(e);
+              onLayersOpenChange?.(false);
+            }}
+          />
+          <aside
             ref={menuRef}
-            className="thalvo-on-dark w-[min(252px,calc(100vw-5.5rem))] overflow-hidden rounded-2xl border border-white/12 bg-[#0a192f]/95 text-xs shadow-2xl backdrop-blur-md"
+            role="dialog"
+            aria-modal="true"
+            aria-label={t("chart.hud_title")}
+            className="thalvo-chart-sheet absolute inset-x-0 bottom-0 flex max-h-[min(82dvh,40rem)] w-full flex-col rounded-t-3xl border border-b-0 shadow-2xl"
+            style={{
+              paddingBottom: "calc(env(safe-area-inset-bottom) + 4.75rem)",
+            }}
           >
-            <div className="p-3">
-              <p className="mb-2.5 text-[12px] font-semibold text-white">
+            <div className="flex flex-col items-center pt-2">
+              <span
+                className="mb-1 h-1 w-10 rounded-full"
+                style={{ background: "var(--sheet-handle)" }}
+              />
+            </div>
+            <div
+              className="flex items-center justify-between gap-3 border-b px-4 py-3"
+              style={{ borderColor: "var(--sheet-border)" }}
+            >
+              <p
+                className="min-w-0 truncate text-[14px] font-bold"
+                style={{ color: "var(--sheet-ink)" }}
+              >
                 {t("chart.hud_title")}
               </p>
+              <button
+                type="button"
+                onPointerDown={stopMapEvent}
+                onClick={(e) => {
+                  stopMapEvent(e);
+                  onLayersOpenChange?.(false);
+                }}
+                className="grid size-10 shrink-0 place-items-center rounded-xl border"
+                style={{
+                  borderColor: "var(--sheet-border)",
+                  color: "var(--sheet-muted)",
+                }}
+                aria-label={t("common.close")}
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3 text-xs">
               <ChartHudBody
                 layers={layers}
                 onToggleLayer={onToggleLayer}
@@ -710,63 +782,71 @@ export function ChartFabStack({
                 tileDownloadActive={tileDownloadActive}
               />
             </div>
-          </div>
+          </aside>
         </LeafletPointerGuard>
-      )}
-      <LeafletPointerGuard className="pointer-events-auto flex w-11 flex-col items-center gap-3">
-        <button
-          type="button"
-          onPointerDown={stopMapEvent}
-          onClick={(e) => {
-            stopMapEvent(e);
-            openThalvoAi();
-          }}
-          title="THALVO AI"
-          aria-label="THALVO AI"
-          className={FAB_BTN}
-        >
-          <CompassMark size={18} />
-        </button>
-        <button
-          ref={layersBtnRef}
-          className={FAB_BTN + " lg:hidden"}
-          type="button"
-          onPointerDown={stopMapEvent}
-          onContextMenu={(e) => {
-            e.preventDefault();
-            stopMapEvent(e);
-            onCycleBasemap?.();
-          }}
-          onClick={(e) => {
-            stopMapEvent(e);
-            onLayersOpenChange?.(!layersOpen);
-          }}
-          title={layersLabel}
-          aria-label={layersLabel}
-          aria-pressed={layersOpen}
-        >
-          <Layers className="size-[18px]" />
-        </button>
-        <button
-          type="button"
-          onPointerDown={stopMapEvent}
-          onClick={(e) => {
-            stopMapEvent(e);
-            onLocateMe();
-          }}
-          disabled={locating}
-          title={t("chart.locate_me")}
-          aria-label={t("chart.locate_me")}
-          className={FAB_BTN}
-        >
-          {locating ? (
-            <Loader2 className="size-[18px] animate-spin" />
-          ) : (
-            <Crosshair className="size-[18px]" />
-          )}
-        </button>
-      </LeafletPointerGuard>
-    </div>
+      ) : null}
+
+      <div
+        className={
+          "pointer-events-none absolute right-3 bottom-28 z-[500] flex flex-col items-end gap-3 transition-opacity duration-200 " +
+          (concealed || layersOpen ? "opacity-0" : "opacity-100")
+        }
+      >
+        <LeafletPointerGuard className="pointer-events-auto flex w-11 flex-col items-center gap-3">
+          <button
+            type="button"
+            onPointerDown={stopMapEvent}
+            onClick={(e) => {
+              stopMapEvent(e);
+              openThalvoAi();
+            }}
+            title="THALVO AI"
+            aria-label="THALVO AI"
+            className={FAB_BTN}
+          >
+            <CompassMark size={18} />
+          </button>
+          <button
+            ref={layersBtnRef}
+            className={FAB_BTN + " lg:hidden"}
+            type="button"
+            onPointerDown={stopMapEvent}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              stopMapEvent(e);
+              onCycleBasemap?.();
+            }}
+            onClick={(e) => {
+              stopMapEvent(e);
+              onLayersOpenChange?.(!layersOpen);
+            }}
+            title={layersLabel}
+            aria-label={layersLabel}
+            aria-pressed={layersOpen}
+          >
+            <Layers className="size-[18px]" />
+          </button>
+          <button
+            type="button"
+            onPointerDown={stopMapEvent}
+            onClick={(e) => {
+              stopMapEvent(e);
+              onLocateMe();
+            }}
+            disabled={locating}
+            title={t("chart.locate_me")}
+            aria-label={t("chart.locate_me")}
+            className={FAB_BTN}
+          >
+            {locating ? (
+              <Loader2 className="size-[18px] animate-spin" />
+            ) : (
+              <Crosshair className="size-[18px]" />
+            )}
+          </button>
+        </LeafletPointerGuard>
+      </div>
+    </>
   );
 }
 
