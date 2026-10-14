@@ -186,50 +186,63 @@ export async function fetchMarineZones(includeInactive = false): Promise<MarineZ
   if (pending) return pending;
 
   const task = (async () => {
-    let zonesQuery = supabase
-      .from("marine_zones")
-      .select(
-        "id, kind, name, lat, lng, vhf_channel, depth_m, description, active, created_at, metadata",
-      )
-      .order("created_at", { ascending: false });
-    if (!includeInactive) zonesQuery = zonesQuery.eq("active", true);
-    zonesQuery = zonesQuery.limit(800);
-    const primary = await zonesQuery;
+    const withBudget = <T,>(p: PromiseLike<T>, ms = 4_500): Promise<T> =>
+      Promise.race([
+        Promise.resolve(p),
+        new Promise<T>((_, reject) => {
+          globalThis.setTimeout(() => reject(new Error("marine_zones timeout")), ms);
+        }),
+      ]);
 
-    // `metadata` (added alongside the curated coastal seed data) may predate
-    // its migration actually landing on a given environment — retry without
-    // it rather than losing every zone pin to one missing column.
-    let rows: Array<Record<string, unknown>> | null = primary.data;
-    if (primary.error) {
-      let fallbackQuery = supabase
+    try {
+      let zonesQuery = supabase
         .from("marine_zones")
-        .select("id, kind, name, lat, lng, vhf_channel, depth_m, description, active, created_at")
+        .select(
+          "id, kind, name, lat, lng, vhf_channel, depth_m, description, active, created_at, metadata",
+        )
         .order("created_at", { ascending: false });
-      if (!includeInactive) fallbackQuery = fallbackQuery.eq("active", true);
-      fallbackQuery = fallbackQuery.limit(800);
-      const fallback = await fallbackQuery;
-      if (fallback.error) {
-        console.warn("[marine] marine_zones unavailable", fallback.error.message);
-        return hit?.rows ?? [];
-      }
-      rows = fallback.data;
-    }
+      if (!includeInactive) zonesQuery = zonesQuery.eq("active", true);
+      zonesQuery = zonesQuery.limit(800);
+      const primary = await withBudget(zonesQuery);
 
-    const mapped = (rows ?? []).map((r) => ({
-      id: r.id as string,
-      kind: r.kind as MarineZoneKind,
-      name: r.name as string,
-      lat: num(r.lat),
-      lng: num(r.lng),
-      vhf_channel: (r.vhf_channel as string | null) ?? null,
-      depth_m: r.depth_m == null ? null : num(r.depth_m),
-      description: (r.description as string | null) ?? null,
-      active: r.active as boolean,
-      created_at: r.created_at as string,
-      metadata: (r.metadata as MarineZoneMetadata | null) ?? {},
-    }));
-    zoneCache.set(key, { at: Date.now(), rows: mapped });
-    return mapped;
+      // `metadata` (added alongside the curated coastal seed data) may predate
+      // its migration actually landing on a given environment — retry without
+      // it rather than losing every zone pin to one missing column.
+      let rows: Array<Record<string, unknown>> | null = primary.data;
+      if (primary.error) {
+        let fallbackQuery = supabase
+          .from("marine_zones")
+          .select("id, kind, name, lat, lng, vhf_channel, depth_m, description, active, created_at")
+          .order("created_at", { ascending: false });
+        if (!includeInactive) fallbackQuery = fallbackQuery.eq("active", true);
+        fallbackQuery = fallbackQuery.limit(800);
+        const fallback = await withBudget(fallbackQuery);
+        if (fallback.error) {
+          console.warn("[marine] marine_zones unavailable", fallback.error.message);
+          return hit?.rows ?? [];
+        }
+        rows = fallback.data;
+      }
+
+      const mapped = (rows ?? []).map((r) => ({
+        id: r.id as string,
+        kind: r.kind as MarineZoneKind,
+        name: r.name as string,
+        lat: num(r.lat),
+        lng: num(r.lng),
+        vhf_channel: (r.vhf_channel as string | null) ?? null,
+        depth_m: r.depth_m == null ? null : num(r.depth_m),
+        description: (r.description as string | null) ?? null,
+        active: r.active as boolean,
+        created_at: r.created_at as string,
+        metadata: (r.metadata as MarineZoneMetadata | null) ?? {},
+      }));
+      zoneCache.set(key, { at: Date.now(), rows: mapped });
+      return mapped;
+    } catch (err) {
+      console.warn("[marine] marine_zones fetch failed", err);
+      return hit?.rows ?? [];
+    }
   })().finally(() => {
     zoneInflight.delete(key);
   });
