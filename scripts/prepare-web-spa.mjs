@@ -104,22 +104,23 @@ if (!entry) {
 
 // Absolute /assets/… paths are required on the web SPA: a deep link like
 // /app/marketplace would otherwise resolve ./assets/foo.js to
-// /app/assets/foo.js, get the HTML rewrite, and hang on the blue boot screen.
+// /app/assets/foo.js, get the HTML rewrite, and hang on the boot splash.
 // Capacitor serves the same files from the app origin root, so /assets works there too.
 const cssLinks = cssFiles
   .map((f) => `    <link rel="stylesheet" href="/assets/${f}" />`)
   .join("\n");
 
 const indexHtml = `<!doctype html>
-<html lang="tr" class="min-h-dvh w-full max-w-[100vw] bg-[#0A192F]" suppressHydrationWarning>
+<html lang="tr" class="min-h-dvh w-full max-w-[100vw] bg-black" suppressHydrationWarning>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>THALVO MarineOS</title>
-    <meta name="theme-color" content="#0A192F" />
+    <meta name="theme-color" content="#000000" />
     <meta name="color-scheme" content="dark" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+    <link rel="preload" as="image" href="/thalvo-mark-alpha.png" />
 ${cssLinks}
     <style>
       /* min-height (not height:100%): marketing pages must grow with content so
@@ -127,19 +128,41 @@ ${cssLinks}
          h-svh / fixed inset shells and do not need a locked root height.
          Prefer overflow-x: clip over hidden — hidden forces overflow-y:auto and
          traps scroll inside a viewport-tall box on WebKit. */
-      html, body { margin: 0; min-height: 100%; min-height: 100dvh; background: #0A192F; overflow-x: clip; }
+      html, body { margin: 0; min-height: 100%; min-height: 100dvh; background: #000; overflow-x: clip; }
       #thalvo-root { min-height: 100%; min-height: 100dvh; }
+      /* Cold-boot splash — shown until the hashed React entry hydrates. */
       #thalvo-boot {
-        min-height: 100%; display: flex; align-items: center; justify-content: center;
-        font-family: -apple-system, "Segoe UI", Roboto, Inter, sans-serif;
-        color: #E6F6FF; text-align: center; padding: 24px; box-sizing: border-box;
+        min-height: 100%; min-height: 100dvh;
+        display: flex; align-items: center; justify-content: center;
+        font-family: Montserrat, -apple-system, "Segoe UI", Roboto, sans-serif;
+        color: #f8fafc; text-align: center; padding: 24px; box-sizing: border-box;
+        background: #000;
       }
-      #thalvo-boot .dot {
-        width: 10px; height: 10px; border-radius: 999px; margin: 0 auto 18px;
-        background: #00F0FF; box-shadow: 0 0 24px 4px rgba(0,240,255,0.55);
-        animation: thalvo-pulse 1.6s ease-in-out infinite;
+      #thalvo-boot .mark {
+        width: min(42vw, 148px); height: min(42vw, 148px);
+        margin: 0 auto;
+        display: block;
+        object-fit: contain;
+        animation: thalvo-boot-pulse 1.45s ease-in-out infinite;
+        filter: drop-shadow(0 0 28px rgba(245, 185, 66, 0.28));
       }
-      @keyframes thalvo-pulse { 0%,100% { opacity: 0.35; } 50% { opacity: 1; } }
+      #thalvo-boot .word {
+        margin: 18px 0 0;
+        font-size: 13px; font-weight: 800; letter-spacing: 0.28em;
+        text-transform: uppercase; color: #fff;
+      }
+      #thalvo-boot .wave {
+        display: block; width: 150px; height: 22px; margin: 16px auto 0;
+        animation: thalvo-boot-wave 1.15s ease-in-out infinite;
+      }
+      @keyframes thalvo-boot-pulse {
+        0%,100% { transform: scale(0.96); opacity: 0.82; }
+        50% { transform: scale(1.04); opacity: 1; }
+      }
+      @keyframes thalvo-boot-wave {
+        0%,100% { transform: translateY(0); opacity: 0.55; }
+        50% { transform: translateY(-3px); opacity: 1; }
+      }
     </style>
     <script>
       (function () {
@@ -189,12 +212,23 @@ ${cssLinks}
       })();
     </script>
   </head>
-  <body class="min-h-dvh w-full max-w-[100vw] bg-[#0A192F]" suppressHydrationWarning>
+  <body class="min-h-dvh w-full max-w-[100vw] bg-black" suppressHydrationWarning>
     <div id="thalvo-root">
-      <div id="thalvo-boot">
+      <div id="thalvo-boot" role="status" aria-live="polite" aria-label="THALVO yükleniyor">
         <div>
-          <div class="dot"></div>
-          <p style="margin:0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.7">THALVO MarineOS</p>
+          <img
+            class="mark"
+            src="/thalvo-mark-alpha.png"
+            width="512"
+            height="512"
+            alt="THALVO"
+            decoding="async"
+            fetchpriority="high"
+          />
+          <p class="word">THALVO</p>
+          <svg class="wave" viewBox="0 0 180 24" fill="none" aria-hidden="true">
+            <path d="M0 12 Q 22.5 0 45 12 T 90 12 T 135 12 T 180 12" stroke="#F5B942" stroke-width="2.5" stroke-linecap="round" />
+          </svg>
         </div>
       </div>
     </div>
