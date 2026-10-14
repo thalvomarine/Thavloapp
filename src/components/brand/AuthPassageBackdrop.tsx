@@ -10,7 +10,7 @@ const CSS = `
 .ap-root{position:absolute;inset:0;overflow:hidden;contain:strict;background:#000}
 .ap-layer{position:absolute;inset:0;pointer-events:none}
 .ap-sky{
-  background:radial-gradient(70% 55% at 50% 100%, #0c1a28 0%, #000 58%);
+  background:#000;
 }
 .ap-star{animation:ap-twinkle 4.8s ease-in-out infinite}
 .ap-star2{animation-duration:5.8s;animation-delay:-1.2s}
