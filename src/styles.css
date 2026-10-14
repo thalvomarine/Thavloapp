@@ -382,6 +382,112 @@ html[data-thalvo-theme="night"] .thalvo-desk {
   letter-spacing: -0.01em;
 }
 
+/*
+ * Kontrol Haritası sheet / panel — follows appearance:
+ * system = ECDIS navy, night = black, day = paper.
+ * Used by the mobile bottom sheet and desktop command panel.
+ */
+.thalvo-chart-sheet {
+  --sheet-bg: rgb(10 25 47 / 0.97);
+  --sheet-ink: #f8fafc;
+  --sheet-muted: rgb(248 250 252 / 0.58);
+  --sheet-faint: rgb(248 250 252 / 0.4);
+  --sheet-border: rgb(255 255 255 / 0.14);
+  --sheet-chip: rgb(255 255 255 / 0.06);
+  --sheet-chip-hover: rgb(255 255 255 / 0.1);
+  --sheet-active-bg: rgb(34 211 238 / 0.14);
+  --sheet-active-border: rgb(103 232 249 / 0.45);
+  --sheet-active-ink: #ecfeff;
+  --sheet-overlay: rgb(0 0 0 / 0.55);
+  --sheet-switch-off: rgb(255 255 255 / 0.12);
+  --sheet-handle: rgb(255 255 255 / 0.22);
+  background: var(--sheet-bg);
+  color: var(--sheet-ink);
+  border-color: var(--sheet-border);
+  color-scheme: dark;
+}
+html[data-thalvo-theme="system"] .thalvo-chart-sheet {
+  --sheet-bg: rgb(10 25 47 / 0.97);
+  --sheet-ink: #f8fafc;
+  --sheet-muted: rgb(248 250 252 / 0.58);
+  --sheet-faint: rgb(248 250 252 / 0.4);
+  --sheet-border: rgb(255 255 255 / 0.14);
+  --sheet-chip: rgb(255 255 255 / 0.06);
+  --sheet-chip-hover: rgb(255 255 255 / 0.1);
+  --sheet-active-bg: rgb(34 211 238 / 0.14);
+  --sheet-active-border: rgb(103 232 249 / 0.45);
+  --sheet-active-ink: #ecfeff;
+  --sheet-overlay: rgb(0 0 0 / 0.55);
+  --sheet-switch-off: rgb(255 255 255 / 0.12);
+  --sheet-handle: rgb(255 255 255 / 0.22);
+  color-scheme: dark;
+}
+html[data-thalvo-theme="night"] .thalvo-chart-sheet {
+  --sheet-bg: rgb(0 0 0 / 0.97);
+  --sheet-ink: #f5f7fb;
+  --sheet-muted: rgb(245 247 251 / 0.58);
+  --sheet-faint: rgb(245 247 251 / 0.4);
+  --sheet-border: rgb(245 247 251 / 0.16);
+  --sheet-chip: rgb(245 247 251 / 0.06);
+  --sheet-chip-hover: rgb(245 247 251 / 0.1);
+  --sheet-active-bg: rgb(34 211 238 / 0.16);
+  --sheet-active-border: rgb(103 232 249 / 0.5);
+  --sheet-active-ink: #ecfeff;
+  --sheet-overlay: rgb(0 0 0 / 0.72);
+  --sheet-switch-off: rgb(245 247 251 / 0.12);
+  --sheet-handle: rgb(245 247 251 / 0.28);
+  color-scheme: dark;
+}
+html[data-thalvo-theme="day"] .thalvo-chart-sheet {
+  --sheet-bg: #ffffff;
+  --sheet-ink: #0f172a;
+  --sheet-muted: #64748b;
+  --sheet-faint: #94a3b8;
+  --sheet-border: rgb(15 23 42 / 0.14);
+  --sheet-chip: rgb(15 23 42 / 0.04);
+  --sheet-chip-hover: rgb(15 23 42 / 0.08);
+  --sheet-active-bg: rgb(8 145 178 / 0.12);
+  --sheet-active-border: rgb(8 145 178 / 0.45);
+  --sheet-active-ink: #0e7490;
+  --sheet-overlay: rgb(15 23 42 / 0.4);
+  --sheet-switch-off: rgb(15 23 42 / 0.12);
+  --sheet-handle: rgb(15 23 42 / 0.2);
+  color-scheme: light;
+}
+/* Day remaps must not flatten chart-sheet controls back to ink-on-ink. */
+html[data-thalvo-theme="day"] .thalvo-chart-sheet .text-white,
+html[data-thalvo-theme="day"] .thalvo-chart-sheet .text-white\/90,
+html[data-thalvo-theme="day"] .thalvo-chart-sheet .text-white\/85,
+html[data-thalvo-theme="day"] .thalvo-chart-sheet .text-white\/80,
+html[data-thalvo-theme="day"] .thalvo-chart-sheet .text-white\/75,
+html[data-thalvo-theme="day"] .thalvo-chart-sheet .text-white\/70 {
+  color: var(--sheet-ink) !important;
+}
+html[data-thalvo-theme="day"] .thalvo-chart-sheet .text-white\/60,
+html[data-thalvo-theme="day"] .thalvo-chart-sheet .text-white\/55,
+html[data-thalvo-theme="day"] .thalvo-chart-sheet .text-white\/50,
+html[data-thalvo-theme="day"] .thalvo-chart-sheet .text-white\/45,
+html[data-thalvo-theme="day"] .thalvo-chart-sheet .text-white\/40 {
+  color: var(--sheet-muted) !important;
+}
+html[data-thalvo-theme="day"] .thalvo-chart-sheet .text-cyan-200,
+html[data-thalvo-theme="day"] .thalvo-chart-sheet .text-cyan-100,
+html[data-thalvo-theme="day"] .thalvo-chart-sheet .text-cyan-50 {
+  color: var(--sheet-active-ink) !important;
+}
+html[data-thalvo-theme="night"] .thalvo-chart-sheet {
+  background-color: var(--sheet-bg) !important;
+}
+.thalvo-chart-sheet-scrim {
+  background: rgb(0 0 0 / 0.55);
+}
+html[data-thalvo-theme="night"] .thalvo-chart-sheet-scrim {
+  background: rgb(0 0 0 / 0.72);
+}
+html[data-thalvo-theme="day"] .thalvo-chart-sheet-scrim {
+  background: rgb(15 23 42 / 0.4);
+}
+
 @keyframes thalvo-catalog-rise {
   from {
     opacity: 0;
